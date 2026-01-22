@@ -7,6 +7,9 @@
   <!-- <script src="/_sdk/data_sdk.js"></script> -->
 <!-- <script src="/_sdk/element_sdk.js"></script> -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
@@ -222,10 +225,11 @@
       <div class="flex flex-wrap items-center gap-4">
        <label class="text-gray-700 font-medium">กรองปีการศึกษา:</label>
        <select id="filter-year" onchange="renderTable()" class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
-        <option value="all">ทั้งหมด</option>
-        <option value="2567">2567</option>
-        <option value="2568">2568</option>
-       </select>
+  <option value="all">ทั้งหมด</option>
+  <option value="2566">2566</option>
+  <option value="2567">2567</option>
+  <option value="2568">2568</option>
+</select>
 
        <label class="text-gray-700 font-medium ml-4">ค้นหา:</label>
        <input type="text" id="search-input" onkeyup="renderTable()" placeholder="รหัส, ชื่อ, เรือ..." class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
@@ -291,10 +295,11 @@
        <div>
         <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา <span class="text-red-500">*</span></label>
         <select id="form-academic-year" onchange="updateStudentDropdown()" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-         <option value="">-- เลือกปีการศึกษา --</option>
-         <option value="2567">2567</option>
-         <option value="2568">2568</option>
-        </select>
+  <option value="">-- เลือกปีการศึกษา --</option>
+  <option value="2566">2566</option>
+  <option value="2567">2567</option>
+  <option value="2568">2568</option>
+</select>
        </div>
 
        <!-- Student Selection -->
@@ -445,58 +450,69 @@
     // STUDENT DATABASE
     // ============================================
     const studentDatabase = {
-      "เดินเรือ": {
-        "2567": {
-          "ชนาธิป": { id: "1919", fullName: "นายชนาธิป ทิพย์อุทัย" },
-          "ณัฐพนธ์": { id: "2002", fullName: "นายณัฐพนธ์ แสงประเสริฐ" },
-          "ภานุพงศ์": { id: "2004", fullName: "นายภานุพงศ์ เอี่ยมโอด" },
-          "อุณพัทธ์": { id: "2005", fullName: "นายอุณพัทธ์ วงศ์อำนวยพร" },
-          "นันทวัฒน์": { id: "2007", fullName: "นายนันทวัฒน์ ยาดี" },
-          "ธนพล1": { id: "2008", fullName: "นายธนพล เขียวประชุม" },
-          "สมยศ": { id: "2009", fullName: "นายสมยศ พร้าเพรียง" },
-          "ธัชพล": { id: "2010", fullName: "นายธัชพล นิคม" },
-          "ศิวปรีชา": { id: "2011", fullName: "นายศิวปรีชา กำราบภัย" },
-          "เจษฎา": { id: "2014", fullName: "นายเจษฎา จิณณธนพงษ์" },
-          "อนุตร": { id: "2015", fullName: "นายอนุตร ท้วมสังข์" },
-          "ธนพล2": { id: "2073", fullName: "นายธนพล ปินตาไฝ" }
-        },
-        "2568": {
-          "ธนกร": { id: "2001", fullName: "นายธนกร สุขสันต์" },
-          "พิชัย": { id: "2002", fullName: "นายพิชัย เจริญศรี" }
-        }
-      },
-      "พาณิชย์ระหว่างประเทศ": {
-        "2567": {
-          "ณัฐพงศ์": { id: "1508", fullName: "นายณัฐพงศ์ หาคำเล" },
-          "สพลดนัย": { id: "1509", fullName: "นายสพลดนัย หาญณรงค์" },
-          "กฤษณ์": { id: "1510", fullName: "นายกฤษณ์ สุทธิวิรัตน์" },
-          "กิตติชัย": { id: "1511", fullName: "นายกิตติชัย มูลเทพพิชัย" },
-          "ปกรณ์": { id: "1513", fullName: "นายปกรณ์ ปิยะนันท์" },
-          "ไกรวิชญ์": { id: "1514", fullName: "นายไกรวิชญ์ บุญประเสริฐ" },
-          "อิศรานุวัฒน์": { id: "1516", fullName: "นายอิศรานุวัฒน์ ชัยภาสชมภู" },
-          "ธัญญสิทธิ์": { id: "1518", fullName: "นายธัญญสิทธิ์ จันทร" },
-          "วรพงศ์": { id: "1519", fullName: "นายวรพงศ์ ท้วมรอด" },
-          "พงศกร": { id: "1520", fullName: "นายพงศกร บุดดี" },
-          "กิตติภพ": { id: "1521", fullName: "นายกิตติภพ ฉัตรแก้ว" }
-        },
-        "2568": {
-          "กิตติ": { id: "2101", fullName: "นายกิตติ ภูมิใจ" },
-          "อรพรรณ": { id: "2102", fullName: "นางสาวอรพรรณ ดีงาม" }
-        }
-      },
-      "ห้องเครื่อง": {
-        "2567": {
-          "เกรียงไกร": { id: "1701", fullName: "นายเกรียงไกร แข็งแรง" },
-          "ธีรพงษ์": { id: "1702", fullName: "นายธีรพงษ์ ชำนาญ" },
-          "วัฒนา": { id: "1703", fullName: "นายวัฒนา พัฒนา" }
-        },
-        "2568": {
-          "ศักดิ์ชัย": { id: "2201", fullName: "นายศักดิ์ชัย ยิ่งใหญ่" },
-          "อภิสิทธิ์": { id: "2202", fullName: "นายอภิสิทธิ์ สำเร็จ" }
-        }
-      }
-    };
+  "เดินเรือ": {
+    "2566": {
+      "1571": { id: "1571", fullName: "นายกิตติศักดิ์ โสนะจิตร" },
+      "1569": { id: "1569", fullName: "นายพงศกร คำภู" },
+      "1568": { id: "1568", fullName: "นายศุภศักดิ์ ประเสริฐจิตต์" },
+      "1573": { id: "1573", fullName: "นายกฤษฎา หอมขจร" },
+      "1580": { id: "1580", fullName: "นายธันว์ พิทักษ์ธรรมณี" },
+      "1566": { id: "1566", fullName: "นายเลิศอนันต์ เตชวัฒน์ธนสิทธิ์" },
+      "1584": { id: "1584", fullName: "นายคุณานนต์ มัญชุสารัตน์" },
+      "1574": { id: "1574", fullName: "นายระพีพัฒน์ จองระหงษ์" },
+      "1570": { id: "1570", fullName: "นายสหัสวรรษ์ คิดมา" },
+      "1715": { id: "1715", fullName: "นายกิตติ ศรีสุข" },
+      "1575": { id: "1575", fullName: "นายศราวุธ หวันละเบ๊ะ" },
+      "1583": { id: "1583", fullName: "นายณัฐพงศ์ ประเสริฐดี" },
+      "1576": { id: "1576", fullName: "นายรชานนท์ สุดพุ่ม" },
+      "1717": { id: "1717", fullName: "นายธนพัฒน์ เชี่ยวชาญ" }
+    },
+    "2567": {
+      "ชนาธิป": { id: "1919", fullName: "นายชนาธิป ทิพย์อุทัย" },
+      "ณัฐพนธ์": { id: "2002", fullName: "นายณัฐพนธ์ แสงประเสริฐ" },
+      "ภานุพงศ์": { id: "2004", fullName: "นายภานุพงศ์ เอี่ยมโอด" },
+      "อุณพัทธ์": { id: "2005", fullName: "นายอุณพัทธ์ วงศ์อำนวยพร" },
+      "นันทวัฒน์": { id: "2007", fullName: "นายนันทวัฒน์ ยาดี" },
+      "ธนพล1": { id: "2008", fullName: "นายธนพล เขียวประชุม" },
+      "สมยศ": { id: "2009", fullName: "นายสมยศ พร้าเพรียง" },
+      "ธัชพล": { id: "2010", fullName: "นายธัชพล นิคม" },
+      "ศิวปรีชา": { id: "2011", fullName: "นายศิวปรีชา กำราบภัย" },
+      "เจษฎา": { id: "2014", fullName: "นายเจษฎา จิณณธนพงษ์" },
+      "อนุตร": { id: "2015", fullName: "นายอนุตร ท้วมสังข์" },
+      "ธนพล2": { id: "2073", fullName: "นายธนพล ปินตาไฝ" }
+    }
+  },
 
+  "พาณิชย์ระหว่างประเทศ": {
+    "2566": {
+      "1417": { id: "1417", fullName: "นายจิรวัฒน์ ศรีจันทร์" },
+      "1421": { id: "1421", fullName: "นายธนวินท์ สุปินบุตร" },
+      "1423": { id: "1423", fullName: "นายบดินทร์ สุขานคร" },
+      "1425": { id: "1425", fullName: "นายวัชระ สุทธิประภา" }
+    },
+    "2567": {
+      "ณัฐพงศ์": { id: "1508", fullName: "นายณัฐพงศ์ หาคำเล" },
+      "สพลดนัย": { id: "1509", fullName: "นายสพลดนัย หาญณรงค์" },
+      "กฤษณ์": { id: "1510", fullName: "นายกฤษณ์ สุทธิวิรัตน์" },
+      "กิตติชัย": { id: "1511", fullName: "นายกิตติชัย มูลเทพพิชัย" },
+      "ปกรณ์": { id: "1513", fullName: "นายปกรณ์ ปิยะนันท์" },
+      "ไกรวิชญ์": { id: "1514", fullName: "นายไกรวิชญ์ บุญประเสริฐ" },
+      "อิศรานุวัฒน์": { id: "1516", fullName: "นายอิศรานุวัฒน์ ชัยภาสชมภู" },
+      "ธัญญสิทธิ์": { id: "1518", fullName: "นายธัญญสิทธิ์ จันทร" },
+      "วรพงศ์": { id: "1519", fullName: "นายวรพงศ์ ท้วมรอด" },
+      "พงศกร": { id: "1520", fullName: "นายพงศกร บุดดี" },
+      "กิตติภพ": { id: "1521", fullName: "นายกิตติภพ ฉัตรแก้ว" }
+    }
+  },
+
+  "ห้องเครื่อง": {
+    "2566": {
+      "1563": { id: "1563", fullName: "นายอภิสิทธิ์ วงศ์หนูพะเนา" },
+      "1565": { id: "1565", fullName: "นายอภิสิทธิ์ ราโรจน์" },
+      "1562": { id: "1562", fullName: "นายชยณัฐ บุญครอง" }
+    }
+  }
+};
     // ============================================
     // DATA STATE
     // ============================================
@@ -719,87 +735,114 @@
       renderTable();
     }
    /** =========================================================
- *  dataSdk Fallback (LocalStorage) สำหรับ GitHub Pages
- *  - ทำให้ระบบเดิมไม่พัง (ยังเรียก dataSdk.init/create/update ได้)
- *  - เก็บข้อมูลลง localStorage เพื่อให้ refresh แล้วยังอยู่
+ *  dataSdk Fallback (Firestore) สำหรับ GitHub Pages
+ *  - แชร์ข้อมูลกลาง: ทุกคนเปิดลิงก์เห็นข้อมูลเดียวกัน
+ *  - ใช้ collection: reports
+ *  - ใช้ Anonymous Auth (ต้องเปิดใน Firebase Console)
  * ========================================================= */
 (function () {
-  if (window.dataSdk) return; // ถ้ามี SDK จริงอยู่แล้ว ไม่ต้องทับ
+  if (window.dataSdk) return;
 
-  const KEY = 'student_report_allReports_v1';
-  let handlerRef = null;
+  // ✅ 1) วาง firebaseConfig ของคุณตรงนี้
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "XXXX",
+    appId: "XXXX"
+  };
 
   const ok = (value) => ({ isOk: true, value });
   const err = (error) => ({ isOk: false, error });
 
-  function safeParse(json, fallback) {
-    try { return JSON.parse(json); } catch { return fallback; }
+  let handlerRef = null;
+  let appInited = false;
+  let unsubscribe = null;
+
+  function initFirebaseOnce() {
+    if (appInited) return;
+    firebase.initializeApp(firebaseConfig);
+    appInited = true;
   }
 
-  function load() {
-    const raw = localStorage.getItem(KEY);
-    const arr = safeParse(raw || '[]', []);
-    return Array.isArray(arr) ? arr : [];
-  }
-
-  function save(arr) {
-    localStorage.setItem(KEY, JSON.stringify(arr));
-  }
-
-  function genId() {
-    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-    return Date.now().toString(36) + Math.random().toString(36).slice(2);
-  }
-
-  function ensureBackendId(r) {
-    if (!r.__backendId) r.__backendId = genId();
-    return r;
-  }
-
-  function emitChanged(arr) {
-    if (handlerRef && typeof handlerRef.onDataChanged === 'function') {
-      handlerRef.onDataChanged(arr);
+  async function ensureAuth() {
+    initFirebaseOnce();
+    const auth = firebase.auth();
+    if (auth.currentUser) return true;
+    try {
+      await auth.signInAnonymously();
+      return true;
+    } catch (e) {
+      console.error("Anonymous sign-in failed:", e);
+      return false;
     }
+  }
+
+  function mapDoc(docSnap) {
+    const data = docSnap.data() || {};
+    data.__backendId = docSnap.id; // ให้เข้ากับโค้ดเดิมของคุณ
+    return data;
   }
 
   window.dataSdk = {
     async init(handler) {
       try {
         handlerRef = handler;
-        const data = load().map(ensureBackendId);
-        save(data);
-        emitChanged(data);
+
+        const authed = await ensureAuth();
+        if (!authed) return err("Auth failed (check Anonymous sign-in).");
+
+        const db = firebase.firestore();
+
+        if (unsubscribe) unsubscribe();
+        unsubscribe = db.collection("reports").onSnapshot(
+          (snap) => {
+            const list = snap.docs.map(mapDoc);
+            handlerRef?.onDataChanged?.(list);
+          },
+          (e) => console.error("onSnapshot error:", e)
+        );
+
         return ok(true);
       } catch (e) {
-        return err(e?.message || 'init failed');
+        return err(e?.message || "init failed");
       }
     },
 
     async create(report) {
       try {
-        const data = load();
-        const item = ensureBackendId({ ...report });
-        data.push(item);
-        save(data);
-        emitChanged(data);
-        return ok(item);
+        const authed = await ensureAuth();
+        if (!authed) return err("Auth failed");
+
+        const db = firebase.firestore();
+        const payload = { ...report };
+        Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+        const ref = await db.collection("reports").add(payload);
+        return ok({ ...payload, __backendId: ref.id });
       } catch (e) {
-        return err(e?.message || 'create failed');
+        return err(e?.message || "create failed");
       }
     },
 
     async update(report) {
       try {
-        const data = load();
-        const idx = data.findIndex(r => r.__backendId === report.__backendId);
-        if (idx === -1) return err('not found');
+        const authed = await ensureAuth();
+        if (!authed) return err("Auth failed");
+        if (!report?.__backendId) return err("missing __backendId");
 
-        data[idx] = { ...data[idx], ...report };
-        save(data);
-        emitChanged(data);
-        return ok(data[idx]);
+        const db = firebase.firestore();
+        const id = report.__backendId;
+
+        const payload = { ...report };
+        delete payload.__backendId;
+        Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+        await db.collection("reports").doc(id).update(payload);
+        return ok(true);
       } catch (e) {
-        return err(e?.message || 'update failed');
+        return err(e?.message || "update failed");
       }
     }
   };
