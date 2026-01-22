@@ -79,11 +79,11 @@
     .toast {
       animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
     }
-    @keyframes slideIn {
+    @frames slideIn {
       from { transform: translateX(100%); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
-    @keyframes fadeOut {
+    @frames fadeOut {
       from { opacity: 1; }
       to { opacity: 0; }
     }
@@ -95,7 +95,7 @@
       height: 20px;
       animation: spin 0.8s linear infinite;
     }
-    @keyframes spin {
+    @frames spin {
       to { transform: rotate(360deg); }
     }
     select, input, textarea {
@@ -104,7 +104,7 @@
     .highlight-duplicate {
       animation: highlightPulse 2s ease;
     }
-    @keyframes highlightPulse {
+    @frames highlightPulse {
       0%, 100% { background: rgba(239, 68, 68, 0.1); }
       50% { background: rgba(239, 68, 68, 0.3); }
     }
@@ -232,7 +232,7 @@
 </select>
 
        <label class="text-gray-700 font-medium ml-4">ค้นหา:</label>
-       <input type="text" id="search-input" onkeyup="renderTable()" placeholder="รหัส, ชื่อ, เรือ..." class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+       <input type="text" id="search-input" onup="renderTable()" placeholder="รหัส, ชื่อ, เรือ..." class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
 
        <span id="filter-count" class="text-gray-500 text-sm ml-auto"></span>
       </div>
@@ -745,13 +745,15 @@
 
   // ✅ 1) วาง firebaseConfig ของคุณตรงนี้
   const firebaseConfig = {
-    Key: "AIzaSyC-kwdTAPH9Vdqy9PABUAjMv635aZLQh8s",
-    authDomain: "studentreport-management.firebaseapp.com",
-    projectId: "studentreport-management",
-    storageBucket: "studentreport-management.firebasestorage.app",
-    messagingSenderId: "1016576456872",
-    appId: "1:1016576456872:web:0d82f2a82e99e53a4b6a9d"
-  };
+  apiKey: "AIzaSyC-kwdTAPH9Vdqy9PABUAjMv635aZLQh8s",
+  authDomain: "studentreport-management.firebaseapp.com",
+  databaseURL: "https://studentreport-management-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "studentreport-management",
+  storageBucket: "studentreport-management.firebasestorage.app",
+  messagingSenderId: "1016576456872",
+  appId: "1:1016576456872:web:0d82f2a82e99e53a4b6a9d",
+  measurementId: "G-5TK1HK3HBC"
+};
 
   const ok = (value) => ({ isOk: true, value });
   const err = (error) => ({ isOk: false, error });
