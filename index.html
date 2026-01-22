@@ -820,7 +820,19 @@ async function startStudentsListener() {
   }, e => console.error('students onSnapshot error:', e));
 }
 
-document.getElementById('student-form').addEventListener('submit', async function(e){
+(function bindStudentForm(){
+  const sf = document.getElementById('student-form');
+  if (!sf) {
+    document.addEventListener('DOMContentLoaded', bindStudentForm, { once: true });
+    return;
+  }
+  if (sf.__bound) return;
+  sf.__bound = true;
+
+  sf.addEventListener('submit', async function(e){
+    // ✅ วางโค้ดเดิมของคุณที่อยู่ใน submit ของ student-form ทั้งหมดไว้ตรงนี้
+  });
+})();
   e.preventDefault();
 
   const year = document.getElementById('stu-year').value.trim();
@@ -1236,7 +1248,20 @@ async function deleteReport(backendId) {
   }
 }
 
-document.getElementById('edit-form').addEventListener('submit', async function (e) {
+(function bindEditForm(){
+  const ef = document.getElementById('edit-form');
+  if (!ef) {
+    document.addEventListener('DOMContentLoaded', bindEditForm, { once: true });
+    return;
+  }
+  if (ef.__bound) return;
+  ef.__bound = true;
+
+  ef.addEventListener('submit', async function (e) {
+    // ✅ วางโค้ดเดิมของคุณที่อยู่ใน submit ของ edit-form ทั้งหมดไว้ตรงนี้
+  });
+})();
+
   e.preventDefault();
   if (!editingBackendId) return;
 
