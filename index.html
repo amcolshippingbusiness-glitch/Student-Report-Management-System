@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="th" class="h-full">
  <head>
@@ -104,7 +105,7 @@
     .highlight-duplicate {
       animation: highlightPulse 2s ease;
     }
-    @frames highlightPulse {
+    @keyframes highlightPulse {
       0%, 100% { background: rgba(239, 68, 68, 0.1); }
       50% { background: rgba(239, 68, 68, 0.3); }
     }
@@ -460,6 +461,10 @@ Object.assign(window, {
   closeStudentModal,
   openSummaryModal,
   closeSummaryModal,
+
+  updateStudentDropdown,
+  fillStudentInfo,
+  clearStudentInfo,
 
   renderTable,
   updateStatus,
@@ -912,6 +917,9 @@ function getStudentsForYear(year) {
     return true;
   });
 }
+window.getStudentsForYear = getStudentsForYear;
+
+})(); // ✅ FIX: close bindStudentForm IIFE
 
     async function initApp() {
       if (window.elementSdk) {
@@ -1183,7 +1191,6 @@ startStudentsListener();
   </select>
 </td>
 
-            </td>
             <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.notes || '-')}</td>
             <td class="px-4 py-4 text-sm">
   <div class="flex gap-2">
@@ -1334,6 +1341,7 @@ async function deleteReport(backendId) {
     console.error('Edit error:', result?.error);
   }
 });
+})(); // ✅ FIX: close bindEditForm IIFE
 
     async function updateStatus(backendId, newStatus) {
   const report = allReports.find(r => r.__backendId === backendId);
@@ -1405,17 +1413,18 @@ async function deleteReport(backendId) {
       }
 
       let options = '<option value="">-- เลือกนักศึกษา --</option>';
-const list = getStudentsForYear(year);
+      const list = (window.getStudentsForYear ? window.getStudentsForYear(year) : []);
 
-list.forEach(s => {
-  options += `<option value="${s.department}|${s.id}|${s.fullName}">
-    ${s.id} - ${s.fullName} (${s.department})
-  </option>`;
-});
+      list.forEach(s => {
+        options += `<option value="${s.department}|${s.id}|${s.fullName}">
+          ${s.id} - ${s.fullName} (${s.department})
+        </option>`;
+      });
 
-studentSelect.innerHTML = options;
-studentSelect.disabled = false;
-clearStudentInfo();
+      studentSelect.innerHTML = options;
+      studentSelect.disabled = false;
+      clearStudentInfo();
+    }
 
     function fillStudentInfo() {
       const studentSelect = document.getElementById('form-student-select');
@@ -1613,6 +1622,7 @@ clearStudentInfo();
 
       await submitTrip(formData);
     });
+}
 
     async function submitTrip(formData) {
       if (allReports.length >= 999) {
@@ -1679,18 +1689,24 @@ clearStudentInfo();
     function countStatuses(reports) {
   const base = {
     total: 0,
+    STANDBYFORSHIP: 0,
     'READY TO JOIN SHIP': 0,
     'ON BOARD': 0,
     'ON LEAVE - GRADUATION PROCESS': 0,
     'ON LEAVE - WAIT FOR REJOIN': 0,
     'ON LEAVE - OWN BUSINESS': 0,
-    GRADUATED: 0
+    GRADUATED: 0,
+    GRADUATION: 0
   };
 
   reports.forEach(r => {
     base.total++;
     const s = normalizeStatus(r.status);
     if (base[s] !== undefined) base[s]++;
+
+    // alias fields for UI labels
+    if (s === 'READY TO JOIN SHIP') base.STANDBYFORSHIP++;
+    if (s === 'GRADUATED') base.GRADUATION++;
   });
 
   base.ON_LEAVE_TOTAL =
