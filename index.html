@@ -134,6 +134,10 @@
         เพิ่มทริป
        </button>
 
+       <button onclick="openStudentModal()" class="btn-secondary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
+  👤 เพิ่ม/ลบนักศึกษา
+</button>
+
        <button onclick="openSummaryModal()" class="btn-secondary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -232,7 +236,7 @@
 </select>
 
        <label class="text-gray-700 font-medium ml-4">ค้นหา:</label>
-       <input type="text" id="search-input" onup="renderTable()" placeholder="รหัส, ชื่อ, เรือ..." class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+       <input type="text" id="search-input" onkeyup="renderTable()" placeholder="รหัส, ชื่อ, เรือ..." class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
 
        <span id="filter-count" class="text-gray-500 text-sm ml-auto"></span>
       </div>
@@ -246,6 +250,7 @@
          <th class="px-4 py-4 text-left text-sm font-semibold">รหัส</th>
          <th class="px-4 py-4 text-left text-sm font-semibold">ชื่อ-นามสกุล</th>
          <th class="px-4 py-4 text-left text-sm font-semibold">Trip #</th>
+         <th class="px-4 py-4 text-left text-sm font-semibold">ลงลำที่</th>
          <th class="px-4 py-4 text-left text-sm font-semibold">ปีการศึกษา</th>
          <th class="px-4 py-4 text-left text-sm font-semibold">สาขา</th>
          <th class="px-4 py-4 text-left text-sm font-semibold">ช่วงเวลา</th>
@@ -253,6 +258,7 @@
          <th class="px-4 py-4 text-left text-sm font-semibold">บริษัท</th>
          <th class="px-4 py-4 text-left text-sm font-semibold">สถานะ</th>
          <th class="px-4 py-4 text-left text-sm font-semibold">หมายเหตุ</th>
+         <th class="px-4 py-4 text-left text-sm font-semibold">จัดการ</th>
         </tr>
        </thead>
        <tbody id="report-table-body" class="divide-y divide-gray-100">
@@ -532,48 +538,57 @@
     // STATUS NORMALIZATION (Backward Compatibility)
     // ============================================
     const ALLOWED_STATUSES = [
-      'STANDBYFORSHIP',
-      'ON BOARD',
-      'ON LEAVE - GRADUATION PROCESS',
-      'ON LEAVE - WAIT FOR REJOIN',
-      'ON LEAVE - OWN BUSINESS',
-      'GRADUATION'
-    ];
+  'NO REQUEST TO JOIN THE SHIP',
+  'THE VOYAGE PROCESS',
+  'READY TO JOIN SHIP',
+  'ON BOARD',
+  'ON LEAVE - GRADUATION PROCESS',
+  'ON LEAVE - OWN BUSINESS',
+  'ON LEAVE - WAIT FOR REJOIN',
+  'GRADUATED'
+];
+
 
     function normalizeStatus(status) {
-      if (status === null || status === undefined) return 'STANDBYFORSHIP';
-      const raw = String(status).trim();
-      if (!raw) return 'STANDBYFORSHIP';
+  const DEFAULT = 'NO REQUEST TO JOIN THE SHIP';
 
-      // Normalize spaces + uppercase
-      const u = raw.toUpperCase().replace(/\s+/g, ' ').trim();
+  if (status === null || status === undefined) return DEFAULT;
+  const raw = String(status).trim();
+  if (!raw) return DEFAULT;
 
-      // Common legacy/typo mappings
-      if (u === 'PENDING') return 'STANDBYFORSHIP';
-      if (u === 'STANDBY FOR SHIP') return 'STANDBYFORSHIP';
-      if (u === 'STANDBYFORSHIP') return 'STANDBYFORSHIP';
+  const u = raw.toUpperCase().replace(/\s+/g, ' ').trim();
 
-      // Legacy "On Board" variations
-      if (u === 'ONBOARD' || u === 'ON BOARD') return 'ON BOARD';
+  // --------- Backward compatibility ----------
+  if (u === 'PENDING') return 'READY TO JOIN SHIP';
+  if (u === 'STANDBYFORSHIP' || u === 'STANDBY FOR SHIP') return 'READY TO JOIN SHIP';
 
-      // Graduation variations
-      if (u === 'GRAD' || u === 'GRADUATED' || u === 'GRADUATION') return 'GRADUATION';
+  if (u === 'ONBOARD' || u === 'ON BOARD') return 'ON BOARD';
 
-      // ON LEAVE variations (try to map into 3 allowed sub-types)
-      if (u.startsWith('ON LEAVE')) {
-        if (u.includes('GRAD')) return 'ON LEAVE - GRADUATION PROCESS';
-        if (u.includes('OWN') || u.includes('BUSINESS')) return 'ON LEAVE - OWN BUSINESS';
-        if (u.includes('REJOIN') || u.includes('WAIT')) return 'ON LEAVE - WAIT FOR REJOIN';
-        // Generic ON LEAVE -> default sub-type
-        return 'ON LEAVE - WAIT FOR REJOIN';
-      }
+  if (u === 'GRADUATION' || u === 'GRAD' || u === 'GRADUATED') return 'GRADUATED';
 
-      // If already matches allowed list, accept (after normalized)
-      if (ALLOWED_STATUSES.includes(u)) return u;
+  // --------- Flexible new inputs ----------
+  if (u.includes('NO REQUEST')) return 'NO REQUEST TO JOIN THE SHIP';
+  if (u.includes('VOYAGE')) return 'THE VOYAGE PROCESS';
+  if (u.includes('READY') && u.includes('JOIN')) return 'READY TO JOIN SHIP';
 
-      // Unknown -> safe default (keeps UI consistent to allowed statuses)
-      return 'STANDBYFORSHIP';
-    }
+  // ON LEAVE variations
+  if (u.startsWith('ON LEAVE')) {
+    if (u.includes('GRAD')) return 'ON LEAVE - GRADUATION PROCESS';
+    if (u.includes('OWN') || u.includes('BUSINESS')) return 'ON LEAVE - OWN BUSINESS';
+    if (u.includes('REJOIN') || u.includes('WAIT')) return 'ON LEAVE - WAIT FOR REJOIN';
+    return 'ON LEAVE - WAIT FOR REJOIN';
+  }
+
+  // exact match
+  const exact = ALLOWED_STATUSES.find(s => s === u);
+  if (exact) return exact;
+
+  return DEFAULT;
+}
+
+function isOnLeaveStatus(status) {
+  return normalizeStatus(status).startsWith('ON LEAVE -');
+}
 
     // ============================================
     // CORE FUNCTIONS: MULTI-TRIP SUPPORT
@@ -702,6 +717,172 @@
     // ============================================
     // INIT
     // ============================================
+   let allStudents = [];
+let studentsUnsub = null;
+
+async function ensureAuthGlobal() {
+  if (!firebase?.apps?.length) return false;
+  const auth = firebase.auth();
+  if (auth.currentUser) return true;
+  try {
+    await auth.signInAnonymously();
+    return true;
+  } catch (e) {
+    console.error('Auth failed:', e);
+    return false;
+  }
+}
+
+function openStudentModal() {
+  document.getElementById('student-modal').classList.remove('hidden');
+  renderStudentList();
+}
+
+function closeStudentModal() {
+  document.getElementById('student-modal').classList.add('hidden');
+}
+
+function buildStudentDocId(year, dept, id) {
+  return `${year}_${id}_${dept}`.replace(/\s+/g, '_');
+}
+
+function renderStudentList() {
+  const el = document.getElementById('student-list');
+  if (!el) return;
+
+  const rows = allStudents
+    .slice()
+    .sort((a,b) => (a.academic_year||'').localeCompare(b.academic_year||'') || (a.department||'').localeCompare(b.department||'') || (a.id||'').localeCompare(b.id||''));
+
+  if (rows.length === 0) {
+    el.innerHTML = `<p class="text-gray-500 text-sm">ยังไม่มีนักศึกษาใน Firestore</p>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <table class="min-w-[900px] w-full text-sm">
+      <thead>
+        <tr class="bg-gray-50 text-gray-700">
+          <th class="text-left px-3 py-2 font-semibold">ปี</th>
+          <th class="text-left px-3 py-2 font-semibold">สาขา</th>
+          <th class="text-left px-3 py-2 font-semibold">รหัส</th>
+          <th class="text-left px-3 py-2 font-semibold">ชื่อ</th>
+          <th class="text-left px-3 py-2 font-semibold">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        ${rows.map(s => `
+          <tr>
+            <td class="px-3 py-2">${escapeHtml(s.academic_year || '')}</td>
+            <td class="px-3 py-2">${escapeHtml(s.department || '')}</td>
+            <td class="px-3 py-2 font-medium">${escapeHtml(s.id || '')}</td>
+            <td class="px-3 py-2">${escapeHtml(s.fullName || '')}</td>
+            <td class="px-3 py-2">
+              <button onclick="deleteStudent('${s.__backendId}')"
+                      class="px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium">
+                🗑️ ลบ
+              </button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function deleteStudent(docId) {
+  const ok = confirm('ต้องการลบนักศึกษารายการนี้ใช่ไหม?');
+  if (!ok) return;
+
+  const authed = await ensureAuthGlobal();
+  if (!authed) return showToast('Auth ไม่ผ่าน', 'error');
+
+  try {
+    const db = firebase.firestore();
+    await db.collection('students').doc(docId).delete();
+    showToast('ลบนักศึกษาสำเร็จ', 'success');
+  } catch (e) {
+    console.error(e);
+    showToast('ลบไม่สำเร็จ', 'error');
+  }
+}
+
+async function startStudentsListener() {
+  const authed = await ensureAuthGlobal();
+  if (!authed) return;
+
+  const db = firebase.firestore();
+  if (studentsUnsub) studentsUnsub();
+
+  studentsUnsub = db.collection('students').onSnapshot(snap => {
+    allStudents = snap.docs.map(d => ({ ...(d.data()||{}), __backendId: d.id }));
+    renderStudentList();
+  }, e => console.error('students onSnapshot error:', e));
+}
+
+document.getElementById('student-form').addEventListener('submit', async function(e){
+  e.preventDefault();
+
+  const year = document.getElementById('stu-year').value.trim();
+  const dept = document.getElementById('stu-dept').value.trim();
+  const id = document.getElementById('stu-id').value.trim();
+  const name = document.getElementById('stu-name').value.trim();
+
+  if (!year || !dept || !id || !name) return showToast('กรอกข้อมูลให้ครบ', 'error');
+
+  const authed = await ensureAuthGlobal();
+  if (!authed) return showToast('Auth ไม่ผ่าน', 'error');
+
+  try {
+    const db = firebase.firestore();
+    const docId = buildStudentDocId(year, dept, id);
+
+    await db.collection('students').doc(docId).set({
+      academic_year: year,
+      department: dept,
+      id,
+      fullName: name,
+      updated_at: new Date().toISOString()
+    }, { merge: true });
+
+    showToast('บันทึกนักศึกษาสำเร็จ', 'success');
+    document.getElementById('student-form').reset();
+
+    // อัปเดต dropdown ทันที
+    updateStudentDropdown();
+  } catch (e2) {
+    console.error(e2);
+    showToast('บันทึกไม่สำเร็จ', 'error');
+  }
+});
+
+// รวมข้อมูลนักศึกษา (ฐานเดิม + Firestore)
+function getStudentsForYear(year) {
+  const list = [];
+
+  // base (studentDatabase)
+  for (const [dept, years] of Object.entries(studentDatabase)) {
+    if (!years[year]) continue;
+    for (const info of Object.values(years[year])) {
+      list.push({ department: dept, id: info.id, fullName: info.fullName });
+    }
+  }
+
+  // dynamic (Firestore)
+  allStudents
+    .filter(s => String(s.academic_year || '') === String(year))
+    .forEach(s => list.push({ department: s.department || '', id: s.id || '', fullName: s.fullName || '' }));
+
+  // dedupe dept|id
+  const seen = new Set();
+  return list.filter(s => {
+    const key = `${s.department}|${s.id}`;
+    if (!s.id || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
     async function initApp() {
       if (window.elementSdk) {
         window.elementSdk.init({
@@ -730,7 +911,7 @@
           showToast('ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
         }
       }
-
+startStudentsListener();
       updateStats();
       renderTable();
     }
@@ -759,21 +940,17 @@
   const err = (error) => ({ isOk: false, error });
 
   let handlerRef = null;
-  let appInited = false;
   let unsubscribe = null;
 
   function initFirebaseOnce() {
-    if (appInited) return;
-    firebase.initializeApp(firebaseConfig);
-    appInited = true;
+    if (!firebase?.apps?.length) firebase.initializeApp(firebaseConfig);
   }
 
   async function ensureAuth() {
-    initFirebaseOnce();
-    const auth = firebase.auth();
-    if (auth.currentUser) return true;
     try {
-      await auth.signInAnonymously();
+      initFirebaseOnce();
+      const auth = firebase.auth();
+      if (!auth.currentUser) await auth.signInAnonymously();
       return true;
     } catch (e) {
       console.error("Anonymous sign-in failed:", e);
@@ -783,7 +960,7 @@
 
   function mapDoc(docSnap) {
     const data = docSnap.data() || {};
-    data.__backendId = docSnap.id; // ให้เข้ากับโค้ดเดิมของคุณ
+    data.__backendId = docSnap.id;
     return data;
   }
 
@@ -846,6 +1023,20 @@
       } catch (e) {
         return err(e?.message || "update failed");
       }
+    },
+
+    async delete(id) {
+      try {
+        const authed = await ensureAuth();
+        if (!authed) return err("Auth failed");
+        if (!id) return err("missing id");
+
+        const db = firebase.firestore();
+        await db.collection("reports").doc(id).delete();
+        return ok(true);
+      } catch (e) {
+        return err(e?.message || "delete failed");
+      }
     }
   };
 })();
@@ -856,25 +1047,20 @@
     // UPDATE STATS
     // ============================================
     function updateStats() {
-      const total = allReports.length;
-      const uniqueStudents = new Set(allReports.map(r => r.student_id)).size;
+  const total = allReports.length;
+  const uniqueStudents = new Set(allReports.map(r => r.student_id)).size;
 
-      const standby = allReports.filter(r => normalizeStatus(r.status) === 'STANDBYFORSHIP').length;
-      const onboard = allReports.filter(r => normalizeStatus(r.status) === 'ON BOARD').length;
-      const onleave = allReports.filter(r => isOnLeaveStatus(r.status)).length;
+  const ready = allReports.filter(r => normalizeStatus(r.status) === 'READY TO JOIN SHIP').length;
+  const onboard = allReports.filter(r => normalizeStatus(r.status) === 'ON BOARD').length;
+  const onleave = allReports.filter(r => isOnLeaveStatus(r.status)).length;
 
-      const statTotal = document.getElementById('stat-total');
-      const statStudents = document.getElementById('stat-students');
-      const statStandby = document.getElementById('stat-standby');
-      const statOnboard = document.getElementById('stat-onboard');
-      const statOnleave = document.getElementById('stat-onleave');
+  if (document.getElementById('stat-total')) document.getElementById('stat-total').textContent = total;
+  if (document.getElementById('stat-students')) document.getElementById('stat-students').textContent = uniqueStudents;
+  if (document.getElementById('stat-standby')) document.getElementById('stat-standby').textContent = ready; // ใช้ช่องเดิม แต่ค่าคือ READY
+  if (document.getElementById('stat-onboard')) document.getElementById('stat-onboard').textContent = onboard;
+  if (document.getElementById('stat-onleave')) document.getElementById('stat-onleave').textContent = onleave;
+}
 
-      if (statTotal) statTotal.textContent = total;
-      if (statStudents) statStudents.textContent = uniqueStudents;
-      if (statStandby) statStandby.textContent = standby;
-      if (statOnboard) statOnboard.textContent = onboard;
-      if (statOnleave) statOnleave.textContent = onleave;
-    }
 
     // ============================================
     // RENDER TABLE
@@ -940,6 +1126,7 @@
                 Trip #${report.trip_seq || 1}
               </span>
             </td>
+            <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(String(report.trip_number ?? '-'))}</td>
             <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.academic_year || '')}</td>
             <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.department || '')}</td>
             <td class="px-4 py-4 text-sm text-gray-600">
@@ -949,16 +1136,35 @@
             <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.company_name || '')}</td>
             <td class="px-4 py-4">
               <select onchange="updateStatus('${report.__backendId}', this.value)"
-                      class="px-3 py-1.5 rounded-lg text-sm font-medium border-0 cursor-pointer ${getStatusColorClass(displayStatus)}">
-                <option value="STANDBYFORSHIP" ${displayStatus === 'STANDBYFORSHIP' ? 'selected' : ''}>⏳ STANDBYFORSHIP</option>
-                <option value="ON BOARD" ${displayStatus === 'ON BOARD' ? 'selected' : ''}>✅ ON BOARD</option>
-                <option value="ON LEAVE - GRADUATION PROCESS" ${displayStatus === 'ON LEAVE - GRADUATION PROCESS' ? 'selected' : ''}>🎓 ON LEAVE - GRADUATION PROCESS</option>
-                <option value="ON LEAVE - WAIT FOR REJOIN" ${displayStatus === 'ON LEAVE - WAIT FOR REJOIN' ? 'selected' : ''}>⏸️ ON LEAVE - WAIT FOR REJOIN</option>
-                <option value="ON LEAVE - OWN BUSINESS" ${displayStatus === 'ON LEAVE - OWN BUSINESS' ? 'selected' : ''}>💼 ON LEAVE - OWN BUSINESS</option>
-                <option value="GRADUATION" ${displayStatus === 'GRADUATION' ? 'selected' : ''}>🎉 GRADUATION</option>
-              </select>
+  class="px-3 py-1.5 rounded-lg text-sm font-medium border-0 cursor-pointer ${getStatusColorClass(displayStatus)}">
+  
+<select>
+  <option value="NO REQUEST TO JOIN THE SHIP" ${displayStatus === 'NO REQUEST TO JOIN THE SHIP' ? 'selected' : ''}>🚫 NO REQUEST TO JOIN THE SHIP</option>
+<option value="THE VOYAGE PROCESS" ${displayStatus === 'THE VOYAGE PROCESS' ? 'selected' : ''}>🌊 THE VOYAGE PROCESS</option>
+<option value="READY TO JOIN SHIP" ${displayStatus === 'READY TO JOIN SHIP' ? 'selected' : ''}>⏳ READY TO JOIN SHIP</option>
+<option value="ON BOARD" ${displayStatus === 'ON BOARD' ? 'selected' : ''}>✅ ON BOARD</option>
+
+<option value="ON LEAVE - GRADUATION PROCESS" ${displayStatus === 'ON LEAVE - GRADUATION PROCESS' ? 'selected' : ''}>🎓 ON LEAVE - GRADUATION PROCESS</option>
+<option value="ON LEAVE - OWN BUSINESS" ${displayStatus === 'ON LEAVE - OWN BUSINESS' ? 'selected' : ''}>💼 ON LEAVE - OWN BUSINESS</option>
+<option value="ON LEAVE - WAIT FOR REJOIN" ${displayStatus === 'ON LEAVE - WAIT FOR REJOIN' ? 'selected' : ''}>⏸️ ON LEAVE - WAIT FOR REJOIN</option>
+
+<option value="GRADUATED" ${displayStatus === 'GRADUATED' ? 'selected' : ''}>🎉 GRADUATED</option>
+
+</select>
             </td>
             <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.notes || '-')}</td>
+            <td class="px-4 py-4 text-sm">
+  <div class="flex gap-2">
+    <button onclick="openEditModal('${report.__backendId}')"
+            class="px-3 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 font-medium">
+      ✏️ แก้ไข
+    </button>
+    <button onclick="deleteReport('${report.__backendId}')"
+            class="px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium">
+      🗑️ ลบ
+    </button>
+  </div>
+</td>
           </tr>
         `;
       }).join('');
@@ -981,6 +1187,112 @@
     // ============================================
     // UPDATE STATUS
     // ============================================
+   let editingBackendId = null;
+
+function openEditModal(backendId) {
+  const report = allReports.find(r => r.__backendId === backendId);
+  if (!report) return;
+
+  editingBackendId = backendId;
+
+  document.getElementById('edit-boarding-date').value = report.boarding_date || '';
+  document.getElementById('edit-return-date').value = report.return_date || '';
+  document.getElementById('edit-ship-name').value = report.ship_name || '';
+  document.getElementById('edit-company-name').value = report.company_name || '';
+  document.getElementById('edit-trip-number').value = (report.trip_number ?? 1);
+
+  document.getElementById('edit-modal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+  editingBackendId = null;
+  document.getElementById('edit-modal').classList.add('hidden');
+}
+
+async function deleteReport(backendId) {
+  const report = allReports.find(r => r.__backendId === backendId);
+  if (!report) return;
+
+  const okConfirm = confirm(
+    `ต้องการลบรายการนี้ใช่ไหม?\n` +
+    `${report.student_id || ''} ${report.student_name || ''}\n` +
+    `เรือ: ${report.ship_name || '-'}\n` +
+    `ช่วง: ${report.boarding_date || '-'} ถึง ${report.return_date || '-'}\n\n` +
+    `*ลบแล้วกู้คืนไม่ได้*`
+  );
+  if (!okConfirm) return;
+
+  const delFn = window.dataSdk?.delete;
+  if (!delFn) {
+    showToast('ระบบนี้ยังไม่รองรับการลบ', 'error');
+    return;
+  }
+
+  const result = await delFn.call(window.dataSdk, backendId);
+  if (result?.isOk) showToast('ลบสำเร็จ', 'success');
+  else {
+    showToast('ลบไม่สำเร็จ กรุณาลองใหม่', 'error');
+    console.error('Delete error:', result?.error);
+  }
+}
+
+document.getElementById('edit-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  if (!editingBackendId) return;
+
+  const old = allReports.find(r => r.__backendId === editingBackendId);
+  if (!old) return;
+
+  const boarding = document.getElementById('edit-boarding-date').value;
+  const ret = document.getElementById('edit-return-date').value;
+  if (!boarding || !ret) return showToast('กรุณากรอกวันที่ให้ครบ', 'error');
+  if (new Date(ret) < new Date(boarding)) return showToast('วันที่กลับต้องมากกว่าหรือเท่ากับวันลงเรือ', 'error');
+
+  const updated = {
+    ...old,
+    boarding_date: boarding,
+    return_date: ret,
+    ship_name: document.getElementById('edit-ship-name').value || '',
+    company_name: document.getElementById('edit-company-name').value || '',
+    trip_number: parseInt(document.getElementById('edit-trip-number').value) || 1,
+  };
+
+  // กันซ้ำ (ยกเว้นตัวเอง)
+  const dup = allReports.find(r =>
+    r.__backendId !== updated.__backendId &&
+    r.student_id === updated.student_id &&
+    r.academic_year === updated.academic_year &&
+    r.ship_name === updated.ship_name &&
+    r.boarding_date === updated.boarding_date &&
+    r.return_date === updated.return_date
+  );
+  if (dup) {
+    showToast('ซ้ำกับรายการเดิมในระบบ', 'error');
+    highlightDuplicateInTable(dup.__backendId);
+    return;
+  }
+
+  // (ถ้าต้องการเตือนทับซ้อนตอนแก้ไข)
+  const overlaps = allReports
+    .filter(r => r.__backendId !== updated.__backendId)
+    .filter(r => r.student_id === updated.student_id && r.academic_year === updated.academic_year)
+    .filter(r => isDateOverlap(updated.boarding_date, updated.return_date, r.boarding_date, r.return_date));
+
+  if (overlaps.length > 0) {
+    const okOverlap = confirm('ช่วงวันที่แก้ไข "ทับซ้อน" กับทริปเดิมของนักศึกษาในปีเดียวกัน\nต้องการบันทึกต่อไหม?');
+    if (!okOverlap) return;
+  }
+
+  const result = await window.dataSdk.update(updated);
+  if (result?.isOk) {
+    showToast('แก้ไขสำเร็จ', 'success');
+    closeEditModal();
+  } else {
+    showToast('แก้ไขไม่สำเร็จ', 'error');
+    console.error('Edit error:', result?.error);
+  }
+});
+
     async function updateStatus(backendId, newStatus) {
       const report = allReports.find(r => r.__backendId === backendId);
       if (!report) return;
@@ -1240,7 +1552,7 @@
         trip_number: parseInt(document.getElementById('form-trip-number').value) || 1,
         work_details: document.getElementById('form-work-details').value || '',
         notes: document.getElementById('form-notes').value || '',
-        status: 'STANDBYFORSHIP',  // ✅ default status (UPPERCASE)
+        status: 'READY TO JOIN SHIP',  // ✅ default status (UPPERCASE)
         submitted_at: new Date().toISOString()
       };
 
@@ -1323,29 +1635,29 @@
     }
 
     function countStatuses(reports) {
-      const base = {
-        total: 0,
-        STANDBYFORSHIP: 0,
-        'ON BOARD': 0,
-        'ON LEAVE - GRADUATION PROCESS': 0,
-        'ON LEAVE - WAIT FOR REJOIN': 0,
-        'ON LEAVE - OWN BUSINESS': 0,
-        GRADUATION: 0
-      };
+  const base = {
+    total: 0,
+    'READY TO JOIN SHIP': 0,
+    'ON BOARD': 0,
+    'ON LEAVE - GRADUATION PROCESS': 0,
+    'ON LEAVE - WAIT FOR REJOIN': 0,
+    'ON LEAVE - OWN BUSINESS': 0,
+    GRADUATED: 0
+  };
 
-      reports.forEach(r => {
-        base.total++;
-        const s = normalizeStatus(r.status);
-        if (base[s] !== undefined) base[s]++;
-      });
+  reports.forEach(r => {
+    base.total++;
+    const s = normalizeStatus(r.status);
+    if (base[s] !== undefined) base[s]++;
+  });
 
-      base.ON_LEAVE_TOTAL =
-        base['ON LEAVE - GRADUATION PROCESS'] +
-        base['ON LEAVE - WAIT FOR REJOIN'] +
-        base['ON LEAVE - OWN BUSINESS'];
+  base.ON_LEAVE_TOTAL =
+    base['ON LEAVE - GRADUATION PROCESS'] +
+    base['ON LEAVE - WAIT FOR REJOIN'] +
+    base['ON LEAVE - OWN BUSINESS'];
 
-      return base;
-    }
+  return base;
+}
 
     function renderBreakdownTable(groupCounts, groupLabel) {
       const rows = Object.entries(groupCounts);
@@ -1676,20 +1988,20 @@
     }
 
     function getStatusColorClass(status) {
-      const s = normalizeStatus(status);
+  const s = normalizeStatus(status);
 
-      // ✅ Colors aligned with uppercase statuses
-      if (s === 'STANDBYFORSHIP') return 'bg-yellow-100 text-yellow-800';
-      if (s === 'ON BOARD') return 'bg-green-100 text-green-800';
+  if (s === 'READY TO JOIN SHIP') return 'bg-yellow-100 text-yellow-800';
+  if (s === 'ON BOARD') return 'bg-green-100 text-green-800';
 
-      if (s === 'ON LEAVE - GRADUATION PROCESS') return 'bg-purple-100 text-purple-800';
-      if (s === 'ON LEAVE - WAIT FOR REJOIN') return 'bg-rose-100 text-rose-800';
-      if (s === 'ON LEAVE - OWN BUSINESS') return 'bg-orange-100 text-orange-800';
+  if (s === 'ON LEAVE - GRADUATION PROCESS') return 'bg-purple-100 text-purple-800';
+  if (s === 'ON LEAVE - WAIT FOR REJOIN') return 'bg-rose-100 text-rose-800';
+  if (s === 'ON LEAVE - OWN BUSINESS') return 'bg-orange-100 text-orange-800';
 
-      if (s === 'GRADUATION') return 'bg-gray-100 text-gray-800';
+  if (s === 'THE VOYAGE PROCESS') return 'bg-blue-100 text-blue-800';
+  if (s === 'GRADUATED') return 'bg-emerald-100 text-emerald-800';
 
-      return 'bg-gray-100 text-gray-800';
-    }
+  return 'bg-gray-100 text-gray-800';
+}
 
     function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
@@ -1712,6 +2024,112 @@
       }, 3000);
     }
   </script>
+<!-- Edit Report Modal -->
+<div id="edit-modal" class="fixed inset-0 z-50 hidden">
+  <div class="modal-overlay absolute inset-0" onclick="closeEditModal()"></div>
+  <div class="relative min-h-full flex items-center justify-center p-4">
+    <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto my-4">
+      <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold text-white">✏️ แก้ไขรายงาน</h2>
+          <button onclick="closeEditModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <form id="edit-form" class="p-6 space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ลงเรือ</label>
+            <input type="date" id="edit-boarding-date" required class="w-full px-4 py-3 rounded-xl border border-gray-300">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่กลับ/ลงจากเรือ</label>
+            <input type="date" id="edit-return-date" required class="w-full px-4 py-3 rounded-xl border border-gray-300">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อเรือ</label>
+            <input type="text" id="edit-ship-name" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">บริษัทเรือ</label>
+            <input type="text" id="edit-company-name" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">ลงลำที่</label>
+          <input type="number" id="edit-trip-number" min="1" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button type="button" onclick="closeEditModal()" class="flex-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
+            ยกเลิก
+          </button>
+          <button type="submit" class="flex-1 btn-primary text-white px-6 py-3 rounded-xl font-medium">
+            บันทึกการแก้ไข
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+ <!-- Student Modal -->
+<div id="student-modal" class="fixed inset-0 z-50 hidden">
+  <div class="modal-overlay absolute inset-0" onclick="closeStudentModal()"></div>
+  <div class="relative min-h-full flex items-center justify-center p-4">
+    <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto my-4">
+      <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-t-2xl">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold text-white">👤 จัดการนักศึกษา (เพิ่ม/ลบ)</h2>
+          <button onclick="closeStudentModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">✕</button>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-6">
+        <form id="student-form" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา</label>
+              <input id="stu-year" placeholder="เช่น 2568" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
+              <input id="stu-dept" placeholder="เช่น เดินเรือ" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
+              <input id="stu-id" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
+              <input id="stu-name" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl font-medium">➕ เพิ่ม/อัปเดต</button>
+          </div>
+        </form>
+
+        <div class="border-t pt-4">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="font-semibold text-gray-800">รายการนักศึกษาใน Firestore</span>
+            <span class="text-xs text-gray-500">(ลบได้เมื่อกรอกผิด)</span>
+          </div>
+          <div id="student-list" class="overflow-x-auto"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
  </body>
 </html>
