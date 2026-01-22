@@ -560,12 +560,12 @@
 
   // --------- Backward compatibility ----------
   if (u === 'PENDING') return 'READY TO JOIN SHIP';
-  if (u === 'STANDBYFORSHIP' || u === 'STANDBY FOR SHIP') return 'READY TO JOIN SHIP';
+
+ if (u === 'STANDBYFORSHIP' || u === 'STANDBY FOR SHIP') return 'READY TO JOIN SHIP';
 
   if (u === 'ONBOARD' || u === 'ON BOARD') return 'ON BOARD';
 
-  if (u === 'GRADUATION' || u === 'GRAD' || u === 'GRADUATED') return 'GRADUATED';
-
+ if (u === 'GRADUATION' || u === 'GRAD' || u === 'GRADUATED') return 'GRADUATED';
   // --------- Flexible new inputs ----------
   if (u.includes('NO REQUEST')) return 'NO REQUEST TO JOIN THE SHIP';
   if (u.includes('VOYAGE')) return 'THE VOYAGE PROCESS';
@@ -830,9 +830,7 @@ async function startStudentsListener() {
   sf.__bound = true;
 
   sf.addEventListener('submit', async function(e){
-    // ✅ วางโค้ดเดิมของคุณที่อยู่ใน submit ของ student-form ทั้งหมดไว้ตรงนี้
-  });
-})();
+    
   e.preventDefault();
 
   const year = document.getElementById('stu-year').value.trim();
@@ -1053,7 +1051,13 @@ startStudentsListener();
   };
 })();
 
-    initApp();
+    document.addEventListener('DOMContentLoaded', () => {
+  initApp();
+  startStudentsListener(); // ให้ student modal โหลดรายชื่อจาก firestore
+  bindAddForm();
+  bindEditForm();
+  bindStudentForm();
+});
 
     // ============================================
     // UPDATE STATS
@@ -1258,11 +1262,8 @@ async function deleteReport(backendId) {
   ef.__bound = true;
 
   ef.addEventListener('submit', async function (e) {
-    // ✅ วางโค้ดเดิมของคุณที่อยู่ใน submit ของ edit-form ทั้งหมดไว้ตรงนี้
-  });
-})();
-
-  e.preventDefault();
+  
+   e.preventDefault();
   if (!editingBackendId) return;
 
   const old = allReports.find(r => r.__backendId === editingBackendId);
@@ -1536,7 +1537,12 @@ async function deleteReport(backendId) {
     // ============================================
     // FORM SUBMISSION
     // ============================================
-    document.getElementById('add-form').addEventListener('submit', async function(e) {
+    function bindAddForm() {
+  const f = document.getElementById('add-form');
+  if (!f || f.__bound) return;
+  f.__bound = true;
+
+  f.addEventListener('submit', async function(e) {
       e.preventDefault();
 
       if (isSubmitting) return;
