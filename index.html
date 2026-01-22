@@ -718,6 +718,92 @@
       updateStats();
       renderTable();
     }
+   /** =========================================================
+ *  dataSdk Fallback (LocalStorage) สำหรับ GitHub Pages
+ *  - ทำให้ระบบเดิมไม่พัง (ยังเรียก dataSdk.init/create/update ได้)
+ *  - เก็บข้อมูลลง localStorage เพื่อให้ refresh แล้วยังอยู่
+ * ========================================================= */
+(function () {
+  if (window.dataSdk) return; // ถ้ามี SDK จริงอยู่แล้ว ไม่ต้องทับ
+
+  const KEY = 'student_report_allReports_v1';
+  let handlerRef = null;
+
+  const ok = (value) => ({ isOk: true, value });
+  const err = (error) => ({ isOk: false, error });
+
+  function safeParse(json, fallback) {
+    try { return JSON.parse(json); } catch { return fallback; }
+  }
+
+  function load() {
+    const raw = localStorage.getItem(KEY);
+    const arr = safeParse(raw || '[]', []);
+    return Array.isArray(arr) ? arr : [];
+  }
+
+  function save(arr) {
+    localStorage.setItem(KEY, JSON.stringify(arr));
+  }
+
+  function genId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  }
+
+  function ensureBackendId(r) {
+    if (!r.__backendId) r.__backendId = genId();
+    return r;
+  }
+
+  function emitChanged(arr) {
+    if (handlerRef && typeof handlerRef.onDataChanged === 'function') {
+      handlerRef.onDataChanged(arr);
+    }
+  }
+
+  window.dataSdk = {
+    async init(handler) {
+      try {
+        handlerRef = handler;
+        const data = load().map(ensureBackendId);
+        save(data);
+        emitChanged(data);
+        return ok(true);
+      } catch (e) {
+        return err(e?.message || 'init failed');
+      }
+    },
+
+    async create(report) {
+      try {
+        const data = load();
+        const item = ensureBackendId({ ...report });
+        data.push(item);
+        save(data);
+        emitChanged(data);
+        return ok(item);
+      } catch (e) {
+        return err(e?.message || 'create failed');
+      }
+    },
+
+    async update(report) {
+      try {
+        const data = load();
+        const idx = data.findIndex(r => r.__backendId === report.__backendId);
+        if (idx === -1) return err('not found');
+
+        data[idx] = { ...data[idx], ...report };
+        save(data);
+        emitChanged(data);
+        return ok(data[idx]);
+      } catch (e) {
+        return err(e?.message || 'update failed');
+      }
+    }
+  };
+})();
 
     initApp();
 
