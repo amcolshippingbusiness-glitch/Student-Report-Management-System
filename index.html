@@ -1,0 +1,1587 @@
+<!doctype html>
+<html lang="th" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Report Management System</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Kanit', sans-serif;
+    }
+    * {
+      font-family: 'Kanit', sans-serif;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .glass-card-solid {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 25%, #3d7ab5 50%, #5a9fd4 75%, #87ceeb 100%);
+    }
+    .stat-card {
+      transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+    }
+    .btn-secondary {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      transition: all 0.3s ease;
+    }
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+    }
+    .btn-warning {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      transition: all 0.3s ease;
+    }
+    .btn-warning:hover {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    }
+    .table-row {
+      transition: all 0.2s ease;
+    }
+    .table-row:hover {
+      background: rgba(59, 130, 246, 0.05);
+    }
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+    .toast {
+      animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    select, input, textarea {
+      font-family: 'Kanit', sans-serif;
+    }
+    .highlight-duplicate {
+      animation: highlightPulse 2s ease;
+    }
+    @keyframes highlightPulse {
+      0%, 100% { background: rgba(239, 68, 68, 0.1); }
+      50% { background: rgba(239, 68, 68, 0.3); }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full gradient-bg">
+  <div id="app" class="h-full overflow-auto">
+   <!-- Toast Container -->
+   <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+   <!-- Main Dashboard -->
+   <div class="min-h-full p-4 md:p-6 lg:p-8">
+    <!-- Header -->
+    <header class="glass-card rounded-2xl p-6 mb-6">
+     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+       <h1 id="dashboard-title" class="text-2xl md:text-3xl font-bold text-white">🚢 ระบบจัดการรายงานฝึกงาน</h1>
+       <p class="text-blue-100 mt-1">Teacher Dashboard - จัดการข้อมูลการฝึกงานของนักศึกษา (รองรับหลายทริป)</p>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+       <button onclick="openAddModal()" class="btn-primary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        เพิ่มทริป
+       </button>
+
+       <button onclick="openSummaryModal()" class="btn-secondary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        สรุปข้อมูล
+       </button>
+      </div>
+     </div>
+    </header>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+     <div class="stat-card glass-card rounded-2xl p-5">
+      <div class="flex items-center gap-4">
+       <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+       </div>
+       <div>
+        <p class="text-blue-100 text-sm">ทริปทั้งหมด</p>
+        <p id="stat-total" class="text-3xl font-bold text-white">0</p>
+       </div>
+      </div>
+     </div>
+
+     <div class="stat-card glass-card rounded-2xl p-5">
+      <div class="flex items-center gap-4">
+       <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+       </div>
+       <div>
+        <p class="text-blue-100 text-sm">นักศึกษา (ไม่ซ้ำ)</p>
+        <p id="stat-students" class="text-3xl font-bold text-white">0</p>
+       </div>
+      </div>
+     </div>
+
+     <div class="stat-card glass-card rounded-2xl p-5">
+      <div class="flex items-center gap-4">
+       <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+       </div>
+       <div>
+        <p class="text-blue-100 text-sm">STANDBYFORSHIP</p>
+        <p id="stat-standby" class="text-3xl font-bold text-white">0</p>
+       </div>
+      </div>
+     </div>
+
+     <div class="stat-card glass-card rounded-2xl p-5">
+      <div class="flex items-center gap-4">
+       <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+       </div>
+       <div>
+        <p class="text-blue-100 text-sm">ON BOARD</p>
+        <p id="stat-onboard" class="text-3xl font-bold text-white">0</p>
+       </div>
+      </div>
+     </div>
+
+     <div class="stat-card glass-card rounded-2xl p-5">
+      <div class="flex items-center gap-4">
+       <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+       </div>
+       <div>
+        <p class="text-blue-100 text-sm">ON LEAVE (TOTAL)</p>
+        <p id="stat-onleave" class="text-3xl font-bold text-white">0</p>
+       </div>
+      </div>
+     </div>
+    </div>
+
+    <!-- Filter & Table -->
+    <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden">
+     <!-- Filter Bar -->
+     <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div class="flex flex-wrap items-center gap-4">
+       <label class="text-gray-700 font-medium">กรองปีการศึกษา:</label>
+       <select id="filter-year" onchange="renderTable()" class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+        <option value="all">ทั้งหมด</option>
+        <option value="2567">2567</option>
+        <option value="2568">2568</option>
+       </select>
+
+       <label class="text-gray-700 font-medium ml-4">ค้นหา:</label>
+       <input type="text" id="search-input" onkeyup="renderTable()" placeholder="รหัส, ชื่อ, เรือ..." class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+
+       <span id="filter-count" class="text-gray-500 text-sm ml-auto"></span>
+      </div>
+     </div>
+
+     <!-- Table -->
+     <div class="overflow-x-auto">
+      <table class="w-full">
+       <thead class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+        <tr>
+         <th class="px-4 py-4 text-left text-sm font-semibold">รหัส</th>
+         <th class="px-4 py-4 text-left text-sm font-semibold">ชื่อ-นามสกุล</th>
+         <th class="px-4 py-4 text-left text-sm font-semibold">Trip #</th>
+         <th class="px-4 py-4 text-left text-sm font-semibold">ปีการศึกษา</th>
+         <th class="px-4 py-4 text-left text-sm font-semibold">สาขา</th>
+         <th class="px-4 py-4 text-left text-sm font-semibold">ช่วงเวลา</th>
+         <th class="px-4 py-4 text-left text-sm font-semibold">ชื่อเรือ</th>
+         <th class="px-4 py-4 text-left text-sm font-semibold">บริษัท</th>
+         <th class="px-4 py-4 text-left text-sm font-semibold">สถานะ</th>
+         <th class="px-4 py-4 text-left text-sm font-semibold">หมายเหตุ</th>
+        </tr>
+       </thead>
+       <tbody id="report-table-body" class="divide-y divide-gray-100">
+        <!-- Data rows will be inserted here -->
+       </tbody>
+      </table>
+     </div>
+
+     <!-- Empty State -->
+     <div id="empty-state" class="hidden p-12 text-center">
+      <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+       <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+       </svg>
+      </div>
+      <h3 class="text-xl font-semibold text-gray-700 mb-2">ยังไม่มีรายงาน</h3>
+      <p class="text-gray-500 mb-4">คลิกปุ่ม "เพิ่มทริป" เพื่อเริ่มบันทึกข้อมูลการฝึกงาน</p>
+     </div>
+    </div>
+   </div>
+
+   <!-- Add Report Modal -->
+   <div id="add-modal" class="fixed inset-0 z-40 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeAddModal()"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+     <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto my-4">
+      <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
+       <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-white">📝 เพิ่มทริปใหม่</h2>
+        <button onclick="closeAddModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
+         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+         </svg>
+        </button>
+       </div>
+      </div>
+
+      <form id="add-form" class="p-6 space-y-5">
+       <!-- Academic Year Selection -->
+       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา <span class="text-red-500">*</span></label>
+        <select id="form-academic-year" onchange="updateStudentDropdown()" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+         <option value="">-- เลือกปีการศึกษา --</option>
+         <option value="2567">2567</option>
+         <option value="2568">2568</option>
+        </select>
+       </div>
+
+       <!-- Student Selection -->
+       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">นักศึกษา <span class="text-red-500">*</span></label>
+        <select id="form-student-select" onchange="fillStudentInfo()" required disabled class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100">
+         <option value="">-- เลือกปีการศึกษาก่อน --</option>
+        </select>
+       </div>
+
+       <!-- Trip History Display -->
+       <div id="trip-history-display"></div>
+
+       <!-- Auto-filled Fields -->
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+         <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
+         <input type="text" id="form-student-id" readonly class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
+        </div>
+        <div>
+         <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
+         <input type="text" id="form-department" readonly class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
+        </div>
+       </div>
+
+       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
+        <input type="text" id="form-student-name" readonly class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
+       </div>
+
+       <!-- Boarding & Return Dates -->
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+         <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ลงเรือ <span class="text-red-500">*</span></label>
+         <input type="date" id="form-boarding-date" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+         <label class="block text-sm font-medium text-gray-700 mb-2">วันที่กลับ/ลงจากเรือ <span class="text-red-500">*</span></label>
+         <input type="date" id="form-return-date" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+       </div>
+
+       <!-- Ship & Company -->
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+         <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อเรือ <span class="text-red-500">*</span></label>
+         <input type="text" id="form-ship-name" required placeholder="เช่น M/V Ocean Star" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+         <label class="block text-sm font-medium text-gray-700 mb-2">บริษัท <span class="text-red-500">*</span></label>
+         <input type="text" id="form-company-name" required placeholder="ชื่อบริษัทเดินเรือ" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+       </div>
+
+       <!-- Optional Dates -->
+       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+         <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ JOIN</label>
+         <input type="date" id="form-join-date" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+         <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ LEAVE</label>
+         <input type="date" id="form-leave-date" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+         <label class="block text-sm font-medium text-gray-700 mb-2">ลงลำที่</label>
+         <input type="number" id="form-trip-number" min="1" placeholder="1" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+       </div>
+
+       <!-- Work Details -->
+       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">รายละเอียดการทำงาน</label>
+        <textarea id="form-work-details" rows="3" placeholder="รายละเอียดเกี่ยวกับการฝึกงาน..." class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
+       </div>
+
+       <!-- Notes -->
+       <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
+        <textarea id="form-notes" rows="2" placeholder="หมายเหตุเพิ่มเติม..." class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
+       </div>
+
+       <!-- Submit Button -->
+       <div class="flex gap-3 pt-4">
+        <button type="button" onclick="closeAddModal()" class="flex-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+         ยกเลิก
+        </button>
+        <button type="submit" id="submit-btn" class="flex-1 btn-primary text-white px-6 py-3 rounded-xl font-medium flex items-center justify-center gap-2">
+         <span id="submit-text">บันทึกทริป</span>
+         <div id="submit-spinner" class="spinner hidden"></div>
+        </button>
+       </div>
+      </form>
+     </div>
+    </div>
+   </div>
+
+   <!-- Summary Modal -->
+   <div id="summary-modal" class="fixed inset-0 z-40 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeSummaryModal()"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+     <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90%] overflow-y-auto">
+      <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-t-2xl">
+       <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-white">📊 สรุปข้อมูลรายงานฝึกงาน</h2>
+        <button onclick="closeSummaryModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
+         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+         </svg>
+        </button>
+       </div>
+      </div>
+
+      <div class="p-6 space-y-6">
+       <!-- Summary Date -->
+       <div class="text-right text-gray-500 text-sm">
+        วันที่สรุป: <span id="summary-date"></span>
+       </div>
+
+       <!-- Overall Summary -->
+       <div id="summary-overall" class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5"></div>
+
+       <!-- Top Insights -->
+       <div id="summary-top-insights" class="bg-white rounded-xl border border-gray-200 p-5"></div>
+
+       <!-- Department Breakdown -->
+       <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">🎓 Breakdown ตามสาขา</h3>
+        <div id="summary-by-department" class="overflow-x-auto"></div>
+       </div>
+
+       <!-- Year Breakdown -->
+       <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">📅 Breakdown ตามปีการศึกษา</h3>
+        <div id="summary-by-year" class="overflow-x-auto"></div>
+       </div>
+
+       <!-- Data Quality / Warnings -->
+       <div id="summary-warnings" class="bg-white rounded-xl border border-gray-200 p-5"></div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <script>
+    // ============================================
+    // STUDENT DATABASE
+    // ============================================
+    const studentDatabase = {
+      "เดินเรือ": {
+        "2567": {
+          "ชนาธิป": { id: "1919", fullName: "นายชนาธิป ทิพย์อุทัย" },
+          "ณัฐพนธ์": { id: "2002", fullName: "นายณัฐพนธ์ แสงประเสริฐ" },
+          "ภานุพงศ์": { id: "2004", fullName: "นายภานุพงศ์ เอี่ยมโอด" },
+          "อุณพัทธ์": { id: "2005", fullName: "นายอุณพัทธ์ วงศ์อำนวยพร" },
+          "นันทวัฒน์": { id: "2007", fullName: "นายนันทวัฒน์ ยาดี" },
+          "ธนพล1": { id: "2008", fullName: "นายธนพล เขียวประชุม" },
+          "สมยศ": { id: "2009", fullName: "นายสมยศ พร้าเพรียง" },
+          "ธัชพล": { id: "2010", fullName: "นายธัชพล นิคม" },
+          "ศิวปรีชา": { id: "2011", fullName: "นายศิวปรีชา กำราบภัย" },
+          "เจษฎา": { id: "2014", fullName: "นายเจษฎา จิณณธนพงษ์" },
+          "อนุตร": { id: "2015", fullName: "นายอนุตร ท้วมสังข์" },
+          "ธนพล2": { id: "2073", fullName: "นายธนพล ปินตาไฝ" }
+        },
+        "2568": {
+          "ธนกร": { id: "2001", fullName: "นายธนกร สุขสันต์" },
+          "พิชัย": { id: "2002", fullName: "นายพิชัย เจริญศรี" }
+        }
+      },
+      "พาณิชย์ระหว่างประเทศ": {
+        "2567": {
+          "ณัฐพงศ์": { id: "1508", fullName: "นายณัฐพงศ์ หาคำเล" },
+          "สพลดนัย": { id: "1509", fullName: "นายสพลดนัย หาญณรงค์" },
+          "กฤษณ์": { id: "1510", fullName: "นายกฤษณ์ สุทธิวิรัตน์" },
+          "กิตติชัย": { id: "1511", fullName: "นายกิตติชัย มูลเทพพิชัย" },
+          "ปกรณ์": { id: "1513", fullName: "นายปกรณ์ ปิยะนันท์" },
+          "ไกรวิชญ์": { id: "1514", fullName: "นายไกรวิชญ์ บุญประเสริฐ" },
+          "อิศรานุวัฒน์": { id: "1516", fullName: "นายอิศรานุวัฒน์ ชัยภาสชมภู" },
+          "ธัญญสิทธิ์": { id: "1518", fullName: "นายธัญญสิทธิ์ จันทร" },
+          "วรพงศ์": { id: "1519", fullName: "นายวรพงศ์ ท้วมรอด" },
+          "พงศกร": { id: "1520", fullName: "นายพงศกร บุดดี" },
+          "กิตติภพ": { id: "1521", fullName: "นายกิตติภพ ฉัตรแก้ว" }
+        },
+        "2568": {
+          "กิตติ": { id: "2101", fullName: "นายกิตติ ภูมิใจ" },
+          "อรพรรณ": { id: "2102", fullName: "นางสาวอรพรรณ ดีงาม" }
+        }
+      },
+      "ห้องเครื่อง": {
+        "2567": {
+          "เกรียงไกร": { id: "1701", fullName: "นายเกรียงไกร แข็งแรง" },
+          "ธีรพงษ์": { id: "1702", fullName: "นายธีรพงษ์ ชำนาญ" },
+          "วัฒนา": { id: "1703", fullName: "นายวัฒนา พัฒนา" }
+        },
+        "2568": {
+          "ศักดิ์ชัย": { id: "2201", fullName: "นายศักดิ์ชัย ยิ่งใหญ่" },
+          "อภิสิทธิ์": { id: "2202", fullName: "นายอภิสิทธิ์ สำเร็จ" }
+        }
+      }
+    };
+
+    // ============================================
+    // DATA STATE
+    // ============================================
+    let allReports = [];
+    let isSubmitting = false;
+    let pendingTripData = null;
+    let pendingOverlapConfirmed = false;
+
+    // ============================================
+    // CONFIG
+    // ============================================
+    const defaultConfig = {
+      dashboard_title: "🚢 ระบบจัดการรายงานฝึกงาน"
+    };
+
+    // ============================================
+    // STATUS NORMALIZATION (Backward Compatibility)
+    // ============================================
+    const ALLOWED_STATUSES = [
+      'STANDBYFORSHIP',
+      'ON BOARD',
+      'ON LEAVE - GRADUATION PROCESS',
+      'ON LEAVE - WAIT FOR REJOIN',
+      'ON LEAVE - OWN BUSINESS',
+      'GRADUATION'
+    ];
+
+    function normalizeStatus(status) {
+      if (status === null || status === undefined) return 'STANDBYFORSHIP';
+      const raw = String(status).trim();
+      if (!raw) return 'STANDBYFORSHIP';
+
+      // Normalize spaces + uppercase
+      const u = raw.toUpperCase().replace(/\s+/g, ' ').trim();
+
+      // Common legacy/typo mappings
+      if (u === 'PENDING') return 'STANDBYFORSHIP';
+      if (u === 'STANDBY FOR SHIP') return 'STANDBYFORSHIP';
+      if (u === 'STANDBYFORSHIP') return 'STANDBYFORSHIP';
+
+      // Legacy "On Board" variations
+      if (u === 'ONBOARD' || u === 'ON BOARD') return 'ON BOARD';
+
+      // Graduation variations
+      if (u === 'GRAD' || u === 'GRADUATED' || u === 'GRADUATION') return 'GRADUATION';
+
+      // ON LEAVE variations (try to map into 3 allowed sub-types)
+      if (u.startsWith('ON LEAVE')) {
+        if (u.includes('GRAD')) return 'ON LEAVE - GRADUATION PROCESS';
+        if (u.includes('OWN') || u.includes('BUSINESS')) return 'ON LEAVE - OWN BUSINESS';
+        if (u.includes('REJOIN') || u.includes('WAIT')) return 'ON LEAVE - WAIT FOR REJOIN';
+        // Generic ON LEAVE -> default sub-type
+        return 'ON LEAVE - WAIT FOR REJOIN';
+      }
+
+      // If already matches allowed list, accept (after normalized)
+      if (ALLOWED_STATUSES.includes(u)) return u;
+
+      // Unknown -> safe default (keeps UI consistent to allowed statuses)
+      return 'STANDBYFORSHIP';
+    }
+
+    // ============================================
+    // CORE FUNCTIONS: MULTI-TRIP SUPPORT
+    // ============================================
+
+    /**
+     * ตรวจสอบว่าช่วงเวลา 2 ช่วงทับกันหรือไม่
+     */
+    function isDateOverlap(aStart, aEnd, bStart, bEnd) {
+      const a1 = new Date(aStart).getTime();
+      const a2 = new Date(aEnd).getTime();
+      const b1 = new Date(bStart).getTime();
+      const b2 = new Date(bEnd).getTime();
+
+      if (isNaN(a1) || isNaN(a2) || isNaN(b1) || isNaN(b2)) {
+        return false;
+      }
+
+      if (a2 < a1 || b2 < b1) {
+        return false;
+      }
+
+      return a1 <= b2 && b1 <= a2;
+    }
+
+    /**
+     * คำนวณ trip_seq ถัดไปสำหรับนักศึกษาในปีการศึกษานั้น
+     */
+    function computeNextTripSeq(allReports, studentId, academicYear) {
+      const existingTrips = allReports.filter(r =>
+        r.student_id === studentId &&
+        r.academic_year === academicYear
+      );
+
+      if (existingTrips.length === 0) {
+        return 1;
+      }
+
+      const maxSeq = Math.max(...existingTrips.map(r => r.trip_seq || 0));
+      return maxSeq + 1;
+    }
+
+    /**
+     * สร้าง trip_id ที่ unique
+     */
+    function buildTripId(formData) {
+      const { student_id, academic_year, ship_name, boarding_date } = formData;
+
+      const sanitizedShip = (ship_name || '')
+        .replace(/\s+/g, '-')
+        .replace(/[^a-zA-Z0-9-]/g, '')
+        .toUpperCase();
+
+      return `${student_id}_${academic_year}_${sanitizedShip}_${boarding_date}`;
+    }
+
+    /**
+     * ตรวจสอบรายการซ้ำ exact duplicate
+     */
+    function duplicateCheck(allReports, formData) {
+      const duplicate = allReports.find(r =>
+        r.student_id === formData.student_id &&
+        r.academic_year === formData.academic_year &&
+        r.ship_name === formData.ship_name &&
+        r.boarding_date === formData.boarding_date &&
+        r.return_date === formData.return_date
+      );
+
+      return duplicate || null;
+    }
+
+    /**
+     * ตรวจสอบว่าทริปใหม่ทับกับทริปเดิมของนักศึกษาหรือไม่
+     */
+    function findOverlappingTrips(allReports, formData) {
+      const { student_id, academic_year, boarding_date, return_date } = formData;
+
+      const studentTrips = allReports.filter(r =>
+        r.student_id === student_id &&
+        r.academic_year === academic_year
+      );
+
+      const overlapping = studentTrips.filter(trip =>
+        isDateOverlap(
+          boarding_date,
+          return_date,
+          trip.boarding_date,
+          trip.return_date
+        )
+      );
+
+      return overlapping;
+    }
+
+    /**
+     * ดึงประวัติทริปล่าสุดของนักศึกษา
+     */
+    function getRecentTrips(allReports, studentId, limit = 3) {
+      return allReports
+        .filter(r => r.student_id === studentId)
+        .sort((a, b) => {
+          return new Date(b.boarding_date) - new Date(a.boarding_date);
+        })
+        .slice(0, limit);
+    }
+
+    /**
+     * ตรวจสอบว่าสถานะเป็น On Leave หรือไม่
+     * - ตาม requirement: return true เมื่อ status เริ่มต้นด้วย 'ON LEAVE -'
+     */
+    function isOnLeaveStatus(status) {
+      return normalizeStatus(status).startsWith('ON LEAVE -');
+    }
+
+    // ============================================
+    // DATA HANDLER
+    // ============================================
+    const dataHandler = {
+      onDataChanged(data) {
+        allReports = data || [];
+        updateStats();
+        renderTable();
+      }
+    };
+
+    // ============================================
+    // INIT
+    // ============================================
+    async function initApp() {
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            const titleEl = document.getElementById('dashboard-title');
+            if (titleEl) {
+              titleEl.textContent = config.dashboard_title || defaultConfig.dashboard_title;
+            }
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ["dashboard_title", config.dashboard_title || defaultConfig.dashboard_title]
+          ])
+        });
+      }
+
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init(dataHandler);
+        if (!result.isOk) {
+          showToast('ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
+        }
+      }
+
+      updateStats();
+      renderTable();
+    }
+
+    initApp();
+
+    // ============================================
+    // UPDATE STATS
+    // ============================================
+    function updateStats() {
+      const total = allReports.length;
+      const uniqueStudents = new Set(allReports.map(r => r.student_id)).size;
+
+      const standby = allReports.filter(r => normalizeStatus(r.status) === 'STANDBYFORSHIP').length;
+      const onboard = allReports.filter(r => normalizeStatus(r.status) === 'ON BOARD').length;
+      const onleave = allReports.filter(r => isOnLeaveStatus(r.status)).length;
+
+      const statTotal = document.getElementById('stat-total');
+      const statStudents = document.getElementById('stat-students');
+      const statStandby = document.getElementById('stat-standby');
+      const statOnboard = document.getElementById('stat-onboard');
+      const statOnleave = document.getElementById('stat-onleave');
+
+      if (statTotal) statTotal.textContent = total;
+      if (statStudents) statStudents.textContent = uniqueStudents;
+      if (statStandby) statStandby.textContent = standby;
+      if (statOnboard) statOnboard.textContent = onboard;
+      if (statOnleave) statOnleave.textContent = onleave;
+    }
+
+    // ============================================
+    // RENDER TABLE
+    // ============================================
+    function renderTable() {
+      const tbody = document.getElementById('report-table-body');
+      const emptyState = document.getElementById('empty-state');
+      const filterYear = document.getElementById('filter-year');
+      const searchInput = document.getElementById('search-input');
+      const filterCount = document.getElementById('filter-count');
+
+      if (!tbody) return;
+
+      const yearFilter = filterYear ? filterYear.value : 'all';
+      const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+      let filteredReports = allReports;
+
+      if (yearFilter !== 'all') {
+        filteredReports = filteredReports.filter(r => r.academic_year === yearFilter);
+      }
+
+      if (searchTerm) {
+        filteredReports = filteredReports.filter(r =>
+          (r.student_id || '').toLowerCase().includes(searchTerm) ||
+          (r.student_name || '').toLowerCase().includes(searchTerm) ||
+          (r.ship_name || '').toLowerCase().includes(searchTerm) ||
+          (r.company_name || '').toLowerCase().includes(searchTerm)
+        );
+      }
+
+      filteredReports = filteredReports.sort((a, b) => {
+        if (a.student_id !== b.student_id) {
+          return (a.student_id || '').localeCompare((b.student_id || ''));
+        }
+        if (a.academic_year !== b.academic_year) {
+          return (b.academic_year || '').localeCompare((a.academic_year || ''));
+        }
+        return (b.trip_seq || 0) - (a.trip_seq || 0);
+      });
+
+      if (filterCount) {
+        filterCount.textContent = `แสดง ${filteredReports.length} จาก ${allReports.length} ทริป`;
+      }
+
+      if (filteredReports.length === 0) {
+        tbody.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        return;
+      }
+
+      if (emptyState) emptyState.classList.add('hidden');
+
+      tbody.innerHTML = filteredReports.map(report => {
+        const displayStatus = normalizeStatus(report.status);
+
+        return `
+          <tr class="table-row" data-backend-id="${report.__backendId}">
+            <td class="px-4 py-4 text-sm text-gray-900 font-medium">${escapeHtml(report.student_id || '')}</td>
+            <td class="px-4 py-4 text-sm text-gray-900">${escapeHtml(report.student_name || '')}</td>
+            <td class="px-4 py-4 text-sm">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                Trip #${report.trip_seq || 1}
+              </span>
+            </td>
+            <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.academic_year || '')}</td>
+            <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.department || '')}</td>
+            <td class="px-4 py-4 text-sm text-gray-600">
+              ${formatDateThai(report.boarding_date)} - ${formatDateThai(report.return_date)}
+            </td>
+            <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.ship_name || '')}</td>
+            <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.company_name || '')}</td>
+            <td class="px-4 py-4">
+              <select onchange="updateStatus('${report.__backendId}', this.value)"
+                      class="px-3 py-1.5 rounded-lg text-sm font-medium border-0 cursor-pointer ${getStatusColorClass(displayStatus)}">
+                <option value="STANDBYFORSHIP" ${displayStatus === 'STANDBYFORSHIP' ? 'selected' : ''}>⏳ STANDBYFORSHIP</option>
+                <option value="ON BOARD" ${displayStatus === 'ON BOARD' ? 'selected' : ''}>✅ ON BOARD</option>
+                <option value="ON LEAVE - GRADUATION PROCESS" ${displayStatus === 'ON LEAVE - GRADUATION PROCESS' ? 'selected' : ''}>🎓 ON LEAVE - GRADUATION PROCESS</option>
+                <option value="ON LEAVE - WAIT FOR REJOIN" ${displayStatus === 'ON LEAVE - WAIT FOR REJOIN' ? 'selected' : ''}>⏸️ ON LEAVE - WAIT FOR REJOIN</option>
+                <option value="ON LEAVE - OWN BUSINESS" ${displayStatus === 'ON LEAVE - OWN BUSINESS' ? 'selected' : ''}>💼 ON LEAVE - OWN BUSINESS</option>
+                <option value="GRADUATION" ${displayStatus === 'GRADUATION' ? 'selected' : ''}>🎉 GRADUATION</option>
+              </select>
+            </td>
+            <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.notes || '-')}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ============================================
+    // HIGHLIGHT DUPLICATE
+    // ============================================
+    function highlightDuplicateInTable(backendId) {
+      const row = document.querySelector(`tr[data-backend-id="${backendId}"]`);
+      if (row) {
+        row.classList.add('highlight-duplicate');
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          row.classList.remove('highlight-duplicate');
+        }, 3000);
+      }
+    }
+
+    // ============================================
+    // UPDATE STATUS
+    // ============================================
+    async function updateStatus(backendId, newStatus) {
+      const report = allReports.find(r => r.__backendId === backendId);
+      if (!report) return;
+
+      const updatedReport = { ...report, status: normalizeStatus(newStatus) };
+
+      if (window.dataSdk) {
+        const result = await window.dataSdk.update(updatedReport);
+        if (result.isOk) {
+          showToast('อัปเดตสถานะสำเร็จ', 'success');
+        } else {
+          showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+        }
+      }
+    }
+
+    // ============================================
+    // MODAL FUNCTIONS
+    // ============================================
+    function openAddModal() {
+      const modal = document.getElementById('add-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        resetAddForm();
+      }
+    }
+
+    function closeAddModal() {
+      const modal = document.getElementById('add-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        resetAddForm();
+      }
+      pendingTripData = null;
+      pendingOverlapConfirmed = false;
+    }
+
+    function resetAddForm() {
+      const form = document.getElementById('add-form');
+      if (form) form.reset();
+
+      const studentSelect = document.getElementById('form-student-select');
+      if (studentSelect) {
+        studentSelect.innerHTML = '<option value="">-- เลือกปีการศึกษาก่อน --</option>';
+        studentSelect.disabled = true;
+      }
+
+      const fields = ['form-student-id', 'form-student-name', 'form-department'];
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+
+      const historyDisplay = document.getElementById('trip-history-display');
+      if (historyDisplay) historyDisplay.innerHTML = '';
+    }
+
+    function updateStudentDropdown() {
+      const yearSelect = document.getElementById('form-academic-year');
+      const studentSelect = document.getElementById('form-student-select');
+
+      if (!yearSelect || !studentSelect) return;
+
+      const year = yearSelect.value;
+
+      if (!year) {
+        studentSelect.innerHTML = '<option value="">-- เลือกปีการศึกษาก่อน --</option>';
+        studentSelect.disabled = true;
+        clearStudentInfo();
+        return;
+      }
+
+      let options = '<option value="">-- เลือกนักศึกษา --</option>';
+
+      for (const [dept, years] of Object.entries(studentDatabase)) {
+        if (years[year]) {
+          for (const [name, info] of Object.entries(years[year])) {
+            options += `<option value="${dept}|${info.id}|${info.fullName}">${info.id} - ${info.fullName} (${dept})</option>`;
+          }
+        }
+      }
+
+      studentSelect.innerHTML = options;
+      studentSelect.disabled = false;
+      clearStudentInfo();
+    }
+
+    function fillStudentInfo() {
+      const studentSelect = document.getElementById('form-student-select');
+      if (!studentSelect || !studentSelect.value) {
+        clearStudentInfo();
+        return;
+      }
+
+      const [dept, id, fullName] = studentSelect.value.split('|');
+
+      const idField = document.getElementById('form-student-id');
+      const nameField = document.getElementById('form-student-name');
+      const deptField = document.getElementById('form-department');
+
+      if (idField) idField.value = id;
+      if (nameField) nameField.value = fullName;
+      if (deptField) deptField.value = dept;
+
+      const recentTrips = getRecentTrips(allReports, id, 3);
+      const historyContainer = document.getElementById('trip-history-display');
+
+      if (historyContainer) {
+        if (recentTrips.length === 0) {
+          historyContainer.innerHTML = `
+            <div class="bg-blue-50 rounded-lg p-3 text-sm text-gray-600">
+              ℹ️ นักศึกษายังไม่มีประวัติทริปในระบบ
+            </div>
+          `;
+        } else {
+          historyContainer.innerHTML = `
+            <div class="bg-green-50 rounded-lg p-4 space-y-2">
+              <p class="text-sm font-semibold text-gray-700 mb-2">📋 ประวัติทริปล่าสุด:</p>
+              ${recentTrips.map(trip => {
+                const st = normalizeStatus(trip.status);
+                return `
+                  <div class="text-xs text-gray-600 border-l-2 border-green-400 pl-2">
+                    <strong>Trip #${trip.trip_seq}</strong> |
+                    ${escapeHtml(trip.ship_name)} |
+                    ${formatDateThai(trip.boarding_date)} - ${formatDateThai(trip.return_date)} |
+                    <span class="px-2 py-0.5 rounded text-xs ${getStatusColorClass(st)}">${st}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        }
+      }
+    }
+
+    function clearStudentInfo() {
+      const fields = ['form-student-id', 'form-student-name', 'form-department'];
+      fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+
+      const historyDisplay = document.getElementById('trip-history-display');
+      if (historyDisplay) historyDisplay.innerHTML = '';
+    }
+
+    // ============================================
+    // OVERLAP WARNING MODAL
+    // ============================================
+    function showOverlapWarning(overlappingTrips, newTripData) {
+      const existingModal = document.getElementById('overlap-warning-modal');
+      if (existingModal) existingModal.remove();
+
+      const modal = document.createElement('div');
+      modal.id = 'overlap-warning-modal';
+      modal.className = 'fixed inset-0 z-50 flex items-center justify-center';
+      modal.innerHTML = `
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 m-4">
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+              <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-bold text-gray-900 mb-2">⚠️ ช่วงเวลาทริปทับซ้อน</h3>
+              <p class="text-gray-600 text-sm mb-3">
+                ทริปใหม่ (${formatDateThai(newTripData.boarding_date)} - ${formatDateThai(newTripData.return_date)})
+                มีช่วงเวลาทับกับทริปเดิม:
+              </p>
+              <div class="bg-red-50 rounded-lg p-3 space-y-2 mb-4">
+                ${overlappingTrips.map(trip => `
+                  <div class="text-sm text-red-700">
+                    🚢 Trip #${trip.trip_seq}: ${escapeHtml(trip.ship_name)}<br>
+                    📅 ${formatDateThai(trip.boarding_date)} - ${formatDateThai(trip.return_date)}
+                  </div>
+                `).join('<hr class="border-red-200">')}
+              </div>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button onclick="cancelOverlapSubmit()" class="flex-1 px-4 py-2 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
+              ❌ ยกเลิก / แก้ไขวันที่
+            </button>
+            <button onclick="confirmOverlapSubmit()" class="flex-1 px-4 py-2 rounded-xl btn-warning text-white font-medium">
+              ✅ ยืนยันบันทึกทับซ้อน
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      pendingTripData = newTripData;
+      pendingOverlapConfirmed = false;
+    }
+
+    function cancelOverlapSubmit() {
+      const modal = document.getElementById('overlap-warning-modal');
+      if (modal) modal.remove();
+      pendingTripData = null;
+      pendingOverlapConfirmed = false;
+    }
+
+    function confirmOverlapSubmit() {
+      pendingOverlapConfirmed = true;
+      const modal = document.getElementById('overlap-warning-modal');
+      if (modal) modal.remove();
+
+      if (pendingTripData) {
+        submitTrip(pendingTripData);
+      }
+    }
+
+    // ============================================
+    // FORM SUBMISSION
+    // ============================================
+    document.getElementById('add-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      if (isSubmitting) return;
+
+      const studentId = document.getElementById('form-student-id').value;
+      const studentName = document.getElementById('form-student-name').value;
+      const academicYear = document.getElementById('form-academic-year').value;
+      const department = document.getElementById('form-department').value;
+      const boardingDate = document.getElementById('form-boarding-date').value;
+      const returnDate = document.getElementById('form-return-date').value;
+
+      if (!studentId || !studentName || !academicYear || !department) {
+        showToast('กรุณาเลือกนักศึกษา', 'error');
+        return;
+      }
+
+      if (!boardingDate || !returnDate) {
+        showToast('กรุณากรอกวันที่ลงเรือและวันที่กลับ', 'error');
+        return;
+      }
+
+      if (new Date(returnDate) < new Date(boardingDate)) {
+        showToast('วันที่กลับต้องมากกว่าหรือเท่ากับวันลงเรือ', 'error');
+        return;
+      }
+
+      const formData = {
+        student_id: studentId,
+        student_name: studentName,
+        academic_year: academicYear,
+        department: department,
+        boarding_date: boardingDate,
+        return_date: returnDate,
+        join_date: document.getElementById('form-join-date').value || '',
+        ship_name: document.getElementById('form-ship-name').value || '',
+        company_name: document.getElementById('form-company-name').value || '',
+        leave_date: document.getElementById('form-leave-date').value || '',
+        trip_number: parseInt(document.getElementById('form-trip-number').value) || 1,
+        work_details: document.getElementById('form-work-details').value || '',
+        notes: document.getElementById('form-notes').value || '',
+        status: 'STANDBYFORSHIP',  // ✅ default status (UPPERCASE)
+        submitted_at: new Date().toISOString()
+      };
+
+      const duplicate = duplicateCheck(allReports, formData);
+      if (duplicate) {
+        showToast('มีทริปนี้อยู่แล้วในระบบ กรุณาตรวจสอบ', 'error');
+        highlightDuplicateInTable(duplicate.__backendId);
+        return;
+      }
+
+      const overlapping = findOverlappingTrips(allReports, formData);
+      if (overlapping.length > 0 && !pendingOverlapConfirmed) {
+        showOverlapWarning(overlapping, formData);
+        return;
+      }
+
+      await submitTrip(formData);
+    });
+
+    async function submitTrip(formData) {
+      if (allReports.length >= 999) {
+        showToast('ถึงขีดจำกัด 999 รายการ กรุณาติดต่ออาจารย์', 'error');
+        return;
+      }
+
+      formData.trip_seq = computeNextTripSeq(allReports, formData.student_id, formData.academic_year);
+      formData.trip_id = buildTripId(formData);
+      formData.status = normalizeStatus(formData.status);
+
+      isSubmitting = true;
+      const submitBtn = document.getElementById('submit-btn');
+      const submitText = document.getElementById('submit-text');
+      const submitSpinner = document.getElementById('submit-spinner');
+
+      if (submitBtn) submitBtn.disabled = true;
+      if (submitText) submitText.textContent = 'กำลังบันทึก...';
+      if (submitSpinner) submitSpinner.classList.remove('hidden');
+
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(formData);
+        if (result.isOk) {
+          showToast(`บันทึก Trip #${formData.trip_seq} สำเร็จ`, 'success');
+          closeAddModal();
+        } else {
+          showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง', 'error');
+          console.error('Data SDK Error:', result.error);
+        }
+      }
+
+      isSubmitting = false;
+      if (submitBtn) submitBtn.disabled = false;
+      if (submitText) submitText.textContent = 'บันทึกทริป';
+      if (submitSpinner) submitSpinner.classList.add('hidden');
+
+      pendingTripData = null;
+      pendingOverlapConfirmed = false;
+    }
+
+    // ============================================
+    // SUMMARY MODAL
+    // ============================================
+    function openSummaryModal() {
+      const modal = document.getElementById('summary-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        updateSummary();
+      }
+    }
+
+    function closeSummaryModal() {
+      const modal = document.getElementById('summary-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function safeParseDate(dateStr) {
+      if (!dateStr) return null;
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return null;
+      return d;
+    }
+
+    function countStatuses(reports) {
+      const base = {
+        total: 0,
+        STANDBYFORSHIP: 0,
+        'ON BOARD': 0,
+        'ON LEAVE - GRADUATION PROCESS': 0,
+        'ON LEAVE - WAIT FOR REJOIN': 0,
+        'ON LEAVE - OWN BUSINESS': 0,
+        GRADUATION: 0
+      };
+
+      reports.forEach(r => {
+        base.total++;
+        const s = normalizeStatus(r.status);
+        if (base[s] !== undefined) base[s]++;
+      });
+
+      base.ON_LEAVE_TOTAL =
+        base['ON LEAVE - GRADUATION PROCESS'] +
+        base['ON LEAVE - WAIT FOR REJOIN'] +
+        base['ON LEAVE - OWN BUSINESS'];
+
+      return base;
+    }
+
+    function renderBreakdownTable(groupCounts, groupLabel) {
+      const rows = Object.entries(groupCounts);
+      if (rows.length === 0) {
+        return `<p class="text-gray-500">ยังไม่มีข้อมูล</p>`;
+      }
+
+      // sort desc by total
+      rows.sort((a, b) => (b[1].total || 0) - (a[1].total || 0));
+
+      return `
+        <table class="min-w-[820px] w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 text-gray-700">
+              <th class="text-left px-3 py-2 font-semibold">${escapeHtml(groupLabel)}</th>
+              <th class="text-right px-3 py-2 font-semibold">TOTAL</th>
+              <th class="text-right px-3 py-2 font-semibold">STANDBYFORSHIP</th>
+              <th class="text-right px-3 py-2 font-semibold">ON BOARD</th>
+              <th class="text-right px-3 py-2 font-semibold">ON LEAVE (TOTAL)</th>
+              <th class="text-right px-3 py-2 font-semibold">GRADUATION</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            ${rows.map(([key, c]) => `
+              <tr>
+                <td class="px-3 py-2 text-gray-800 font-medium">${escapeHtml(key)}</td>
+                <td class="px-3 py-2 text-right text-gray-700">${c.total}</td>
+                <td class="px-3 py-2 text-right text-gray-700">${c.STANDBYFORSHIP}</td>
+                <td class="px-3 py-2 text-right text-gray-700">${c['ON BOARD']}</td>
+                <td class="px-3 py-2 text-right text-gray-700">
+                  <div class="font-semibold">${c.ON_LEAVE_TOTAL}</div>
+                  <div class="text-xs text-gray-500 whitespace-nowrap">
+                    GP ${c['ON LEAVE - GRADUATION PROCESS']} /
+                    WR ${c['ON LEAVE - WAIT FOR REJOIN']} /
+                    OB ${c['ON LEAVE - OWN BUSINESS']}
+                  </div>
+                </td>
+                <td class="px-3 py-2 text-right text-gray-700">${c.GRADUATION}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function updateSummary() {
+      const summaryDate = document.getElementById('summary-date');
+      if (summaryDate) {
+        summaryDate.textContent = new Date().toLocaleDateString('th-TH', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      const overallEl = document.getElementById('summary-overall');
+      const topEl = document.getElementById('summary-top-insights');
+      const deptEl = document.getElementById('summary-by-department');
+      const yearEl = document.getElementById('summary-by-year');
+      const warnEl = document.getElementById('summary-warnings');
+
+      // Overall counts
+      const overallCounts = countStatuses(allReports);
+      const uniqueStudents = new Set(allReports.map(r => r.student_id)).size;
+
+      if (overallEl) {
+        overallEl.innerHTML = `
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">📌 Overall Summary</h3>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div class="bg-white/70 rounded-lg p-4 text-center border border-white">
+              <p class="text-3xl font-bold text-indigo-600">${overallCounts.total}</p>
+              <p class="text-xs text-gray-600">TOTAL TRIPS</p>
+            </div>
+            <div class="bg-white/70 rounded-lg p-4 text-center border border-white">
+              <p class="text-3xl font-bold text-teal-600">${uniqueStudents}</p>
+              <p class="text-xs text-gray-600">UNIQUE STUDENTS</p>
+            </div>
+            <div class="bg-white/70 rounded-lg p-4 text-center border border-white">
+              <p class="text-3xl font-bold text-yellow-600">${overallCounts.STANDBYFORSHIP}</p>
+              <p class="text-xs text-gray-600">STANDBYFORSHIP</p>
+            </div>
+            <div class="bg-white/70 rounded-lg p-4 text-center border border-white">
+              <p class="text-3xl font-bold text-green-600">${overallCounts['ON BOARD']}</p>
+              <p class="text-xs text-gray-600">ON BOARD</p>
+            </div>
+          </div>
+
+          <div class="bg-white/70 rounded-lg p-4 border border-white">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-semibold text-gray-800">ON LEAVE (TOTAL)</p>
+                <p class="text-2xl font-bold text-purple-700">${overallCounts.ON_LEAVE_TOTAL}</p>
+              </div>
+              <div class="flex flex-wrap gap-2 text-xs">
+                <span class="px-2 py-1 rounded bg-purple-100 text-purple-800">GRADUATION PROCESS: ${overallCounts['ON LEAVE - GRADUATION PROCESS']}</span>
+                <span class="px-2 py-1 rounded bg-rose-100 text-rose-800">WAIT FOR REJOIN: ${overallCounts['ON LEAVE - WAIT FOR REJOIN']}</span>
+                <span class="px-2 py-1 rounded bg-orange-100 text-orange-800">OWN BUSINESS: ${overallCounts['ON LEAVE - OWN BUSINESS']}</span>
+              </div>
+              <div class="text-right">
+                <p class="text-sm font-semibold text-gray-800">GRADUATION</p>
+                <p class="text-2xl font-bold text-gray-700">${overallCounts.GRADUATION}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Top insights
+      if (topEl) {
+        // Top 5 companies
+        const companyCount = {};
+        allReports.forEach(r => {
+          const name = (r.company_name || '').trim();
+          if (!name) return;
+          companyCount[name] = (companyCount[name] || 0) + 1;
+        });
+        const topCompanies = Object.entries(companyCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+        // Top 5 ships
+        const shipCount = {};
+        allReports.forEach(r => {
+          const name = (r.ship_name || '').trim();
+          if (!name) return;
+          shipCount[name] = (shipCount[name] || 0) + 1;
+        });
+        const topShips = Object.entries(shipCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+        // Multi-trip students (Top 10) + latest status (by latest boarding_date)
+        const studentsMap = {};
+        allReports.forEach(r => {
+          const sid = r.student_id || '';
+          if (!sid) return;
+          if (!studentsMap[sid]) {
+            studentsMap[sid] = { id: sid, name: r.student_name || '', trips: [] };
+          }
+          studentsMap[sid].trips.push(r);
+          // keep latest known name if missing
+          if (!studentsMap[sid].name && r.student_name) studentsMap[sid].name = r.student_name;
+        });
+
+        const multiTripTop = Object.values(studentsMap)
+          .filter(s => s.trips.length > 1)
+          .map(s => {
+            let latest = s.trips[0];
+            s.trips.forEach(t => {
+              const d1 = safeParseDate(latest.boarding_date);
+              const d2 = safeParseDate(t.boarding_date);
+              const t1 = d1 ? d1.getTime() : -Infinity;
+              const t2 = d2 ? d2.getTime() : -Infinity;
+              if (t2 > t1) latest = t;
+            });
+            return {
+              id: s.id,
+              name: s.name || '',
+              count: s.trips.length,
+              latestStatus: normalizeStatus(latest.status),
+              latestBoarding: latest.boarding_date || ''
+            };
+          })
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10);
+
+        topEl.innerHTML = `
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">💡 Top Insight</h3>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <p class="font-semibold text-gray-800 mb-2">🏢 Top 5 บริษัท (ตามจำนวนทริป)</p>
+              ${
+                topCompanies.length === 0
+                  ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>`
+                  : `<ol class="space-y-1 text-sm">
+                      ${topCompanies.map(([name, cnt], idx) => `
+                        <li class="flex justify-between">
+                          <span class="text-gray-700">${idx + 1}. ${escapeHtml(name)}</span>
+                          <span class="font-semibold text-indigo-600">${cnt}</span>
+                        </li>
+                      `).join('')}
+                    </ol>`
+              }
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <p class="font-semibold text-gray-800 mb-2">🚢 Top 5 เรือ (ตามจำนวนทริป)</p>
+              ${
+                topShips.length === 0
+                  ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>`
+                  : `<ol class="space-y-1 text-sm">
+                      ${topShips.map(([name, cnt], idx) => `
+                        <li class="flex justify-between">
+                          <span class="text-gray-700">${idx + 1}. ${escapeHtml(name)}</span>
+                          <span class="font-semibold text-teal-600">${cnt}</span>
+                        </li>
+                      `).join('')}
+                    </ol>`
+              }
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg p-4 border border-gray-200">
+            <p class="font-semibold text-gray-800 mb-2">🔄 นักศึกษาที่มีหลายทริป (Top 10) + สถานะล่าสุด</p>
+            ${
+              multiTripTop.length === 0
+                ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>`
+                : `
+                  <div class="overflow-x-auto">
+                    <table class="min-w-[760px] w-full text-sm">
+                      <thead>
+                        <tr class="bg-gray-50 text-gray-700">
+                          <th class="text-left px-3 py-2 font-semibold">รหัส</th>
+                          <th class="text-left px-3 py-2 font-semibold">ชื่อ</th>
+                          <th class="text-right px-3 py-2 font-semibold">จำนวนทริป</th>
+                          <th class="text-left px-3 py-2 font-semibold">สถานะล่าสุด</th>
+                          <th class="text-left px-3 py-2 font-semibold">Boarding ล่าสุด</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-gray-100">
+                        ${multiTripTop.map(s => `
+                          <tr>
+                            <td class="px-3 py-2 text-gray-800 font-medium">${escapeHtml(s.id)}</td>
+                            <td class="px-3 py-2 text-gray-700">${escapeHtml(s.name)}</td>
+                            <td class="px-3 py-2 text-right font-semibold text-purple-700">${s.count}</td>
+                            <td class="px-3 py-2">
+                              <span class="px-2 py-1 rounded text-xs ${getStatusColorClass(s.latestStatus)}">${s.latestStatus}</span>
+                            </td>
+                            <td class="px-3 py-2 text-gray-600">${formatDateThai(s.latestBoarding)}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                `
+            }
+          </div>
+        `;
+      }
+
+      // Breakdown by department
+      const deptGroups = {};
+      allReports.forEach(r => {
+        const dept = (r.department || '').trim() || 'ไม่ระบุสาขา';
+        if (!deptGroups[dept]) deptGroups[dept] = [];
+        deptGroups[dept].push(r);
+      });
+      const deptCounts = {};
+      Object.entries(deptGroups).forEach(([dept, reps]) => {
+        deptCounts[dept] = countStatuses(reps);
+      });
+      if (deptEl) {
+        deptEl.innerHTML = renderBreakdownTable(deptCounts, 'สาขา');
+      }
+
+      // Breakdown by academic year
+      const yearGroups = {};
+      allReports.forEach(r => {
+        const y = (r.academic_year || '').trim() || 'ไม่ระบุปี';
+        if (!yearGroups[y]) yearGroups[y] = [];
+        yearGroups[y].push(r);
+      });
+      const yearCounts = {};
+      Object.entries(yearGroups).forEach(([y, reps]) => {
+        yearCounts[y] = countStatuses(reps);
+      });
+      if (yearEl) {
+        yearEl.innerHTML = renderBreakdownTable(yearCounts, 'ปีการศึกษา');
+      }
+
+      // Data Quality / Warnings
+      let invalidDateCount = 0;
+      let returnBeforeBoardingCount = 0;
+
+      allReports.forEach(r => {
+        const bd = safeParseDate(r.boarding_date);
+        const rd = safeParseDate(r.return_date);
+
+        if (!bd || !rd) {
+          invalidDateCount++;
+          return;
+        }
+
+        if (rd.getTime() < bd.getTime()) {
+          returnBeforeBoardingCount++;
+        }
+      });
+
+      if (warnEl) {
+        warnEl.innerHTML = `
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">⚠️ Data Quality / Warnings</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="rounded-lg p-4 border ${returnBeforeBoardingCount > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}">
+              <p class="font-semibold text-gray-800 mb-1">รายการที่ return_date &lt; boarding_date</p>
+              <p class="text-3xl font-bold ${returnBeforeBoardingCount > 0 ? 'text-red-600' : 'text-gray-700'}">${returnBeforeBoardingCount}</p>
+              <p class="text-xs text-gray-500 mt-1">ระบบไม่แก้ข้อมูลให้ (แสดงเพื่อเตือนเท่านั้น)</p>
+            </div>
+
+            <div class="rounded-lg p-4 border ${invalidDateCount > 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'}">
+              <p class="font-semibold text-gray-800 mb-1">รายการที่ boarding_date หรือ return_date ว่าง/invalid</p>
+              <p class="text-3xl font-bold ${invalidDateCount > 0 ? 'text-yellow-700' : 'text-gray-700'}">${invalidDateCount}</p>
+              <p class="text-xs text-gray-500 mt-1">ระบบไม่แก้ข้อมูลให้ (แสดงเพื่อเตือนเท่านั้น)</p>
+            </div>
+          </div>
+
+          ${ (returnBeforeBoardingCount === 0 && invalidDateCount === 0)
+            ? `<p class="text-sm text-emerald-700 mt-4">✅ ไม่พบความผิดปกติของวันที่ในข้อมูล</p>`
+            : ''
+          }
+        `;
+      }
+    }
+
+    // ============================================
+    // UTILITIES
+    // ============================================
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatDateThai(dateStr) {
+      if (!dateStr) return '-';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '-';
+      return d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function getStatusColorClass(status) {
+      const s = normalizeStatus(status);
+
+      // ✅ Colors aligned with uppercase statuses
+      if (s === 'STANDBYFORSHIP') return 'bg-yellow-100 text-yellow-800';
+      if (s === 'ON BOARD') return 'bg-green-100 text-green-800';
+
+      if (s === 'ON LEAVE - GRADUATION PROCESS') return 'bg-purple-100 text-purple-800';
+      if (s === 'ON LEAVE - WAIT FOR REJOIN') return 'bg-rose-100 text-rose-800';
+      if (s === 'ON LEAVE - OWN BUSINESS') return 'bg-orange-100 text-orange-800';
+
+      if (s === 'GRADUATION') return 'bg-gray-100 text-gray-800';
+
+      return 'bg-gray-100 text-gray-800';
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = `toast px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 ${
+        type === 'success' ? 'bg-green-500 text-white' :
+        type === 'error' ? 'bg-red-500 text-white' :
+        'bg-blue-500 text-white'
+      }`;
+
+      const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+      toast.innerHTML = `<span>${icon}</span><span>${escapeHtml(message)}</span>`;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+    }
+  </script>
+
+  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c1cd77592ead9ca',t:'MTc2OTA2MTczOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+ </body>
+</html>
