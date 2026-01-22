@@ -452,6 +452,26 @@
   </div>
 
   <script>
+   // ทำให้ onclick ใน HTML เรียกได้
+Object.assign(window, {
+  openAddModal,
+  closeAddModal,
+  openStudentModal,
+  closeStudentModal,
+  openSummaryModal,
+  closeSummaryModal,
+
+  renderTable,
+  updateStatus,
+
+  openEditModal,
+  closeEditModal,
+  deleteReport,
+
+  cancelOverlapSubmit,
+  confirmOverlapSubmit,
+  deleteStudent
+});
     // ============================================
     // STUDENT DATABASE
     // ============================================
@@ -1053,11 +1073,10 @@ startStudentsListener();
 
     document.addEventListener('DOMContentLoaded', () => {
   initApp();
-  startStudentsListener(); // ให้ student modal โหลดรายชื่อจาก firestore
-  bindAddForm();
-  bindEditForm();
-  bindStudentForm();
+  bindAddForm();     // ผูก submit ของ add-form
+  // bindEditForm / bindStudentForm ถ้าคุณทำเป็น IIFE อยู่แล้ว ไม่ต้องเรียกซ้ำ
 });
+
 
     // ============================================
     // UPDATE STATS
@@ -1151,22 +1170,19 @@ startStudentsListener();
             <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.ship_name || '')}</td>
             <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.company_name || '')}</td>
             <td class="px-4 py-4">
-              <select onchange="updateStatus('${report.__backendId}', this.value)"
-  class="px-3 py-1.5 rounded-lg text-sm font-medium border-0 cursor-pointer ${getStatusColorClass(displayStatus)}">
-  
-<select>
-  <option value="NO REQUEST TO JOIN THE SHIP" ${displayStatus === 'NO REQUEST TO JOIN THE SHIP' ? 'selected' : ''}>🚫 NO REQUEST TO JOIN THE SHIP</option>
-<option value="THE VOYAGE PROCESS" ${displayStatus === 'THE VOYAGE PROCESS' ? 'selected' : ''}>🌊 THE VOYAGE PROCESS</option>
-<option value="READY TO JOIN SHIP" ${displayStatus === 'READY TO JOIN SHIP' ? 'selected' : ''}>⏳ READY TO JOIN SHIP</option>
-<option value="ON BOARD" ${displayStatus === 'ON BOARD' ? 'selected' : ''}>✅ ON BOARD</option>
+  <select onchange="updateStatus('${report.__backendId}', this.value)"
+          class="px-3 py-1.5 rounded-lg text-sm font-medium border-0 cursor-pointer ${getStatusColorClass(displayStatus)}">
+    <option value="NO REQUEST TO JOIN THE SHIP" ${displayStatus === 'NO REQUEST TO JOIN THE SHIP' ? 'selected' : ''}>🚫 NO REQUEST TO JOIN THE SHIP</option>
+    <option value="THE VOYAGE PROCESS" ${displayStatus === 'THE VOYAGE PROCESS' ? 'selected' : ''}>🌊 THE VOYAGE PROCESS</option>
+    <option value="READY TO JOIN SHIP" ${displayStatus === 'READY TO JOIN SHIP' ? 'selected' : ''}>⏳ READY TO JOIN SHIP</option>
+    <option value="ON BOARD" ${displayStatus === 'ON BOARD' ? 'selected' : ''}>✅ ON BOARD</option>
+    <option value="ON LEAVE - GRADUATION PROCESS" ${displayStatus === 'ON LEAVE - GRADUATION PROCESS' ? 'selected' : ''}>🎓 ON LEAVE - GRADUATION PROCESS</option>
+    <option value="ON LEAVE - OWN BUSINESS" ${displayStatus === 'ON LEAVE - OWN BUSINESS' ? 'selected' : ''}>💼 ON LEAVE - OWN BUSINESS</option>
+    <option value="ON LEAVE - WAIT FOR REJOIN" ${displayStatus === 'ON LEAVE - WAIT FOR REJOIN' ? 'selected' : ''}>⏸️ ON LEAVE - WAIT FOR REJOIN</option>
+    <option value="GRADUATED" ${displayStatus === 'GRADUATED' ? 'selected' : ''}>🎉 GRADUATED</option>
+  </select>
+</td>
 
-<option value="ON LEAVE - GRADUATION PROCESS" ${displayStatus === 'ON LEAVE - GRADUATION PROCESS' ? 'selected' : ''}>🎓 ON LEAVE - GRADUATION PROCESS</option>
-<option value="ON LEAVE - OWN BUSINESS" ${displayStatus === 'ON LEAVE - OWN BUSINESS' ? 'selected' : ''}>💼 ON LEAVE - OWN BUSINESS</option>
-<option value="ON LEAVE - WAIT FOR REJOIN" ${displayStatus === 'ON LEAVE - WAIT FOR REJOIN' ? 'selected' : ''}>⏸️ ON LEAVE - WAIT FOR REJOIN</option>
-
-<option value="GRADUATED" ${displayStatus === 'GRADUATED' ? 'selected' : ''}>🎉 GRADUATED</option>
-
-</select>
             </td>
             <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.notes || '-')}</td>
             <td class="px-4 py-4 text-sm">
@@ -1320,20 +1336,17 @@ async function deleteReport(backendId) {
 });
 
     async function updateStatus(backendId, newStatus) {
-      const report = allReports.find(r => r.__backendId === backendId);
-      if (!report) return;
+  const report = allReports.find(r => r.__backendId === backendId);
+  if (!report) return;
 
-      const updatedReport = { ...report, status: normalizeStatus(newStatus) };
+  const updatedReport = { ...report, status: normalizeStatus(newStatus) };
 
-      if (window.dataSdk) {
-        const result = await window.dataSdk.update(updatedReport);
-        if (result.isOk) {
-          showToast('อัปเดตสถานะสำเร็จ', 'success');
-        } else {
-          showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
-        }
-      }
-    }
+  if (window.dataSdk) {
+    const result = await window.dataSdk.update(updatedReport);
+    if (result?.isOk) showToast('อัปเดตสถานะสำเร็จ', 'success');
+    else showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+  }
+}
 
     // ============================================
     // MODAL FUNCTIONS
@@ -1392,19 +1405,17 @@ async function deleteReport(backendId) {
       }
 
       let options = '<option value="">-- เลือกนักศึกษา --</option>';
+const list = getStudentsForYear(year);
 
-      for (const [dept, years] of Object.entries(studentDatabase)) {
-        if (years[year]) {
-          for (const [name, info] of Object.entries(years[year])) {
-            options += `<option value="${dept}|${info.id}|${info.fullName}">${info.id} - ${info.fullName} (${dept})</option>`;
-          }
-        }
-      }
+list.forEach(s => {
+  options += `<option value="${s.department}|${s.id}|${s.fullName}">
+    ${s.id} - ${s.fullName} (${s.department})
+  </option>`;
+});
 
-      studentSelect.innerHTML = options;
-      studentSelect.disabled = false;
-      clearStudentInfo();
-    }
+studentSelect.innerHTML = options;
+studentSelect.disabled = false;
+clearStudentInfo();
 
     function fillStudentInfo() {
       const studentSelect = document.getElementById('form-student-select');
