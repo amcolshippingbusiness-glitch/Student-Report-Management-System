@@ -1234,15 +1234,38 @@ function openEditModal(backendId) {
 
   editingBackendId = backendId;
 
-  document.getElementById('edit-boarding-date').value = report.boarding_date || '';
-  document.getElementById('edit-return-date').value = report.return_date || '';
-  document.getElementById('edit-ship-name').value = report.ship_name || '';
-  document.getElementById('edit-company-name').value = report.company_name || '';
-  document.getElementById('edit-trip-number').value = (report.trip_number ?? 1);
+  // ===== Readonly identity (show all) =====
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val ?? '';
+  };
+
+  setVal('edit-student-id', report.student_id || '');
+  setVal('edit-student-name', report.student_name || '');
+  setVal('edit-academic-year', report.academic_year || '');
+  setVal('edit-department', report.department || '');
+  setVal('edit-trip-seq', String(report.trip_seq ?? ''));
+  setVal('edit-trip-id', report.trip_id || '');
+  setVal('edit-submitted-at', report.submitted_at || '');
+
+  // ===== Editable fields =====
+  setVal('edit-boarding-date', report.boarding_date || '');
+  setVal('edit-return-date', report.return_date || '');
+  setVal('edit-join-date', report.join_date || '');
+  setVal('edit-leave-date', report.leave_date || '');
+  setVal('edit-ship-name', report.ship_name || '');
+  setVal('edit-company-name', report.company_name || '');
+  setVal('edit-trip-number', String(report.trip_number ?? 1));
+  setVal('edit-work-details', report.work_details || '');
+  setVal('edit-notes', report.notes || '');
+
+  // status (normalize แล้วเลือกให้ตรง)
+  const st = normalizeStatus(report.status);
+  const statusEl = document.getElementById('edit-status');
+  if (statusEl) statusEl.value = st;
 
   document.getElementById('edit-modal').classList.remove('hidden');
 }
-
 function closeEditModal() {
   editingBackendId = null;
   document.getElementById('edit-modal').classList.add('hidden');
@@ -1285,8 +1308,7 @@ async function deleteReport(backendId) {
   ef.__bound = true;
 
   ef.addEventListener('submit', async function (e) {
-  
-   e.preventDefault();
+  e.preventDefault();
   if (!editingBackendId) return;
 
   const old = allReports.find(r => r.__backendId === editingBackendId);
@@ -1299,11 +1321,26 @@ async function deleteReport(backendId) {
 
   const updated = {
     ...old,
+
+    // วันที่หลัก
     boarding_date: boarding,
     return_date: ret,
+
+    // วันที่เสริม
+    join_date: document.getElementById('edit-join-date').value || '',
+    leave_date: document.getElementById('edit-leave-date').value || '',
+
+    // เรือ/บริษัท/ลงลำที่
     ship_name: document.getElementById('edit-ship-name').value || '',
     company_name: document.getElementById('edit-company-name').value || '',
     trip_number: parseInt(document.getElementById('edit-trip-number').value) || 1,
+
+    // รายละเอียด/หมายเหตุ
+    work_details: document.getElementById('edit-work-details').value || '',
+    notes: document.getElementById('edit-notes').value || '',
+
+    // สถานะ
+    status: normalizeStatus(document.getElementById('edit-status').value || old.status)
   };
 
   // กันซ้ำ (ยกเว้นตัวเอง)
@@ -1321,7 +1358,7 @@ async function deleteReport(backendId) {
     return;
   }
 
-  // (ถ้าต้องการเตือนทับซ้อนตอนแก้ไข)
+  // เตือนทับซ้อน (คงพฤติกรรมเดิม)
   const overlaps = allReports
     .filter(r => r.__backendId !== updated.__backendId)
     .filter(r => r.student_id === updated.student_id && r.academic_year === updated.academic_year)
@@ -2083,13 +2120,14 @@ async function deleteReport(backendId) {
     }
   </script>
 <!-- Edit Report Modal -->
+<!-- Edit Report Modal (SHOW ALL FIELDS) -->
 <div id="edit-modal" class="fixed inset-0 z-50 hidden">
   <div class="modal-overlay absolute inset-0" onclick="closeEditModal()"></div>
   <div class="relative min-h-full flex items-center justify-center p-4">
-    <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto my-4">
+    <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto my-4">
       <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
         <div class="flex items-center justify-between">
-          <h2 class="text-xl font-bold text-white">✏️ แก้ไขรายงาน</h2>
+          <h2 class="text-xl font-bold text-white">✏️ แก้ไขรายงาน (แสดงข้อมูลทั้งหมด)</h2>
           <button onclick="closeEditModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
             ✕
           </button>
@@ -2097,41 +2135,141 @@ async function deleteReport(backendId) {
       </div>
 
       <form id="edit-form" class="p-6 space-y-5">
+
+        <!-- Readonly identity (แสดงทั้งหมด แต่ล็อกไม่ให้แก้) -->
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+          <p class="text-sm font-semibold text-gray-800 mb-3">ข้อมูลนักศึกษา / อ้างอิง (อ่านอย่างเดียว)</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
+              <input type="text" id="edit-student-id" readonly
+                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
+              <input type="text" id="edit-student-name" readonly
+                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา</label>
+              <input type="text" id="edit-academic-year" readonly
+                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
+              <input type="text" id="edit-department" readonly
+                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Trip # (ลำดับในปี)</label>
+              <input type="text" id="edit-trip-seq" readonly
+                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Trip ID (อ้างอิง)</label>
+              <input type="text" id="edit-trip-id" readonly
+                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Submitted At</label>
+              <input type="text" id="edit-submitted-at" readonly
+                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+            </div>
+          </div>
+        </div>
+
+        <!-- Editable fields -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ลงเรือ</label>
-            <input type="date" id="edit-boarding-date" required class="w-full px-4 py-3 rounded-xl border border-gray-300">
+            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ลงเรือ <span class="text-red-500">*</span></label>
+            <input type="date" id="edit-boarding-date" required
+                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่กลับ/ลงจากเรือ</label>
-            <input type="date" id="edit-return-date" required class="w-full px-4 py-3 rounded-xl border border-gray-300">
+            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่กลับ/ลงจากเรือ <span class="text-red-500">*</span></label>
+            <input type="date" id="edit-return-date" required
+                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ JOIN</label>
+            <input type="date" id="edit-join-date"
+                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ LEAVE</label>
+            <input type="date" id="edit-leave-date"
+                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อเรือ</label>
-            <input type="text" id="edit-ship-name" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+            <input type="text" id="edit-ship-name"
+                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">บริษัทเรือ</label>
-            <input type="text" id="edit-company-name" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+            <input type="text" id="edit-company-name"
+                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">ลงลำที่</label>
+            <input type="number" id="edit-trip-number" min="1"
+                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">สถานะ</label>
+            <select id="edit-status" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+              <option value="NO REQUEST TO JOIN THE SHIP">🚫 NO REQUEST TO JOIN THE SHIP</option>
+              <option value="THE VOYAGE PROCESS">🌊 THE VOYAGE PROCESS</option>
+              <option value="READY TO JOIN SHIP">⏳ READY TO JOIN SHIP</option>
+              <option value="ON BOARD">✅ ON BOARD</option>
+              <option value="ON LEAVE - GRADUATION PROCESS">🎓 ON LEAVE - GRADUATION PROCESS</option>
+              <option value="ON LEAVE - OWN BUSINESS">💼 ON LEAVE - OWN BUSINESS</option>
+              <option value="ON LEAVE - WAIT FOR REJOIN">⏸️ ON LEAVE - WAIT FOR REJOIN</option>
+              <option value="GRADUATED">🎉 GRADUATED</option>
+            </select>
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">ลงลำที่</label>
-          <input type="number" id="edit-trip-number" min="1" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+          <label class="block text-sm font-medium text-gray-700 mb-2">รายละเอียดการทำงาน</label>
+          <textarea id="edit-work-details" rows="3"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-300 resize-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
+          <textarea id="edit-notes" rows="2"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-300 resize-none"></textarea>
         </div>
 
         <div class="flex gap-3 pt-4">
-          <button type="button" onclick="closeEditModal()" class="flex-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
+          <button type="button" onclick="closeEditModal()"
+                  class="flex-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
             ยกเลิก
           </button>
-          <button type="submit" class="flex-1 btn-primary text-white px-6 py-3 rounded-xl font-medium">
+          <button type="submit"
+                  class="flex-1 btn-primary text-white px-6 py-3 rounded-xl font-medium">
             บันทึกการแก้ไข
           </button>
         </div>
+
       </form>
     </div>
   </div>
