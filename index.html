@@ -1,26 +1,27 @@
 <!doctype html>
 <html lang="th" class="h-full">
- <head>
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Report Management System</title>
+
   <!-- <script src="/_sdk/data_sdk.js"></script> -->
-<!-- <script src="/_sdk/element_sdk.js"></script> -->
+  <!-- <script src="/_sdk/element_sdk.js"></script> -->
+
   <script src="https://cdn.tailwindcss.com"></script>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+
   <style>
-    body {
-      box-sizing: border-box;
-      font-family: 'Kanit', sans-serif;
-    }
-    * {
-      font-family: 'Kanit', sans-serif;
-    }
+    body { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+    * { font-family: 'Kanit', sans-serif; }
+
     .glass-card {
       background: rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(20px);
@@ -34,13 +35,9 @@
     .gradient-bg {
       background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 25%, #3d7ab5 50%, #5a9fd4 75%, #87ceeb 100%);
     }
-    .stat-card {
-      transition: all 0.3s ease;
-    }
-    .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-    }
+    .stat-card { transition: all 0.3s ease; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+
     .btn-primary {
       background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
       transition: all 0.3s ease;
@@ -63,30 +60,17 @@
       background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
       transition: all 0.3s ease;
     }
-    .btn-warning:hover {
-      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-    }
-    .table-row {
-      transition: all 0.2s ease;
-    }
-    .table-row:hover {
-      background: rgba(59, 130, 246, 0.05);
-    }
-    .modal-overlay {
-      background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
-    }
-    .toast {
-      animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s;
-    }
-    @frames slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    @frames fadeOut {
-      from { opacity: 1; }
-      to { opacity: 0; }
-    }
+    .btn-warning:hover { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); }
+
+    .table-row { transition: all 0.2s ease; }
+    .table-row:hover { background: rgba(59, 130, 246, 0.05); }
+
+    .modal-overlay { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
+
+    .toast { animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
     .spinner {
       border: 2px solid rgba(255, 255, 255, 0.3);
       border-top: 2px solid white;
@@ -95,490 +79,518 @@
       height: 20px;
       animation: spin 0.8s linear infinite;
     }
-    @frames spin {
-      to { transform: rotate(360deg); }
-    }
-    select, input, textarea {
-      font-family: 'Kanit', sans-serif;
-    }
-    .highlight-duplicate {
-      animation: highlightPulse 2s ease;
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    select, input, textarea { font-family: 'Kanit', sans-serif; }
+
+    .highlight-duplicate { animation: highlightPulse 2s ease; }
     @keyframes highlightPulse {
       0%, 100% { background: rgba(239, 68, 68, 0.1); }
       50% { background: rgba(239, 68, 68, 0.3); }
     }
   </style>
   <style>@view-transition { navigation: auto; }</style>
- </head>
- <body class="h-full gradient-bg">
+</head>
+
+<body class="h-full gradient-bg">
   <div id="app" class="h-full overflow-auto">
-   <!-- Toast Container -->
-   <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-   <!-- Main Dashboard -->
-   <div class="min-h-full p-4 md:p-6 lg:p-8">
-    <!-- Header -->
-    <header class="glass-card rounded-2xl p-6 mb-6">
-     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
-       <h1 id="dashboard-title" class="text-2xl md:text-3xl font-bold text-white">🚢 ระบบจัดการรายงานฝึกงาน</h1>
-       <p class="text-blue-100 mt-1">Teacher Dashboard - จัดการข้อมูลการฝึกงานของนักศึกษา</p>
+    <!-- Main Dashboard -->
+    <div class="min-h-full p-4 md:p-6 lg:p-8">
+      <!-- Header -->
+      <header class="glass-card rounded-2xl p-6 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 id="dashboard-title" class="text-2xl md:text-3xl font-bold text-white">🚢 ระบบจัดการรายงานฝึกงาน</h1>
+            <p class="text-blue-100 mt-1">Teacher Dashboard - จัดการข้อมูลการฝึกงานของนักศึกษา</p>
+          </div>
+
+          <div class="flex flex-wrap gap-3">
+            <button onclick="openAddModal()" class="btn-primary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              เพิ่มข้อมูลนักศึกษา
+            </button>
+
+            <button onclick="openStudentModal()" class="btn-secondary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
+              👤 เพิ่ม/ลบนักศึกษา
+            </button>
+
+            <button onclick="openSummaryModal()" class="btn-secondary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              สรุปข้อมูล
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div class="stat-card glass-card rounded-2xl p-5">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-blue-100 text-sm">ยอดนักศึกษา</p>
+              <p id="stat-total" class="text-3xl font-bold text-white">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card glass-card rounded-2xl p-5">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-blue-100 text-sm">นักศึกษา (ไม่ซ้ำ)</p>
+              <p id="stat-students" class="text-3xl font-bold text-white">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card glass-card rounded-2xl p-5">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-blue-100 text-sm">STANDBYFORSHIP</p>
+              <p id="stat-standby" class="text-3xl font-bold text-white">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card glass-card rounded-2xl p-5">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-blue-100 text-sm">ON BOARD</p>
+              <p id="stat-onboard" class="text-3xl font-bold text-white">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card glass-card rounded-2xl p-5">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-blue-100 text-sm">ON LEAVE (TOTAL)</p>
+              <p id="stat-onleave" class="text-3xl font-bold text-white">0</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="flex flex-wrap gap-3">
-       <button onclick="openAddModal()" class="btn-primary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        เพิ่มข้อมูลนักศึกษา
-       </button>
+      <!-- Filter & Table -->
+      <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden">
+        <!-- Filter Bar -->
+        <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div class="flex flex-wrap items-center gap-4">
+            <label class="text-gray-700 font-medium">กรองปีการศึกษา:</label>
+            <select id="filter-year" onchange="renderTable()"
+              class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+              <option value="all">ทั้งหมด</option>
+              <option value="2560">2560</option>
+              <option value="2561">2561</option>
+              <option value="2562">2562</option>
+              <option value="2563">2563</option>
+              <option value="2564">2564</option>
+              <option value="2565">2565</option>
+              <option value="2566">2566</option>
+              <option value="2567">2567</option>
+              <option value="2568">2568</option>
+              <option value="2569">2569</option>
+              <option value="2570">2570</option>
+              <option value="2571">2571</option>
+              <option value="2572">2572</option>
+              <option value="2573">2573</option>
+              <option value="2574">2574</option>
+              <option value="2575">2575</option>
+              <option value="2576">2576</option>
+              <option value="2577">2577</option>
+              <option value="2578">2578</option>
+              <option value="2579">2579</option>
+              <option value="2580">2580</option>
+            </select>
 
-       <button onclick="openStudentModal()" class="btn-secondary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
-  👤 เพิ่ม/ลบนักศึกษา
-</button>
+            <label class="text-gray-700 font-medium ml-4">ค้นหา:</label>
+            <input type="text" id="search-input" onkeyup="renderTable()" placeholder="รหัส, ชื่อ, เรือ..."
+              class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
 
-       <button onclick="openSummaryModal()" class="btn-secondary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        สรุปข้อมูล
-       </button>
+            <span id="filter-count" class="text-gray-500 text-sm ml-auto"></span>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+              <tr>
+                <th class="px-4 py-4 text-left text-sm font-semibold">รหัส</th>
+                <th class="px-4 py-4 text-left text-sm font-semibold">ชื่อ-นามสกุล</th>
+                <th class="px-4 py-4 text-left text-sm font-semibold">Trip #</th>
+                <th class="px-4 py-4 text-left text-sm font-semibold">ลงลำที่</th>
+                <th class="px-4 py-4 text-left text-sm font-semibold">ปีการศึกษา</th>
+                <th class="px-4 py-4 text-left text-sm font-semibold">สาขา</th>
+                <th class="px-4 py-4 text-left text-sm font-semibold">ช่วงเวลา</th>
+                <th class="px-4 py-4 text-left text-sm font-semibold">ชื่อเรือ</th>
+                <th class="px-4 py-4 text-left text-sm font-semibold">บริษัท</th>
+                <th class="px-4 py-4 text-left text-sm font-semibold">สถานะ</th>
+                <th class="px-4 py-4 text-left text-sm font-semibold">หมายเหตุ</th>
+                <th class="px-4 py-4 text-left text-sm font-semibold">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="report-table-body" class="divide-y divide-gray-100">
+              <!-- Data rows will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden p-12 text-center">
+          <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+            <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-700 mb-2">ยังไม่มีรายงาน</h3>
+          <p class="text-gray-500 mb-4">คลิกปุ่ม "เพิ่มข้อมูล" เพื่อเริ่มบันทึกข้อมูลการฝึกงาน</p>
+        </div>
       </div>
-     </div>
-    </header>
-
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-     <div class="stat-card glass-card rounded-2xl p-5">
-      <div class="flex items-center gap-4">
-       <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-       </div>
-       <div>
-        <p class="text-blue-100 text-sm">ยอดนักศึกษา</p>
-        <p id="stat-total" class="text-3xl font-bold text-white">0</p>
-       </div>
-      </div>
-     </div>
-
-     <div class="stat-card glass-card rounded-2xl p-5">
-      <div class="flex items-center gap-4">
-       <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
-        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-       </div>
-       <div>
-        <p class="text-blue-100 text-sm">นักศึกษา (ไม่ซ้ำ)</p>
-        <p id="stat-students" class="text-3xl font-bold text-white">0</p>
-       </div>
-      </div>
-     </div>
-
-     <div class="stat-card glass-card rounded-2xl p-5">
-      <div class="flex items-center gap-4">
-       <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
-        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-       </div>
-       <div>
-        <p class="text-blue-100 text-sm">STANDBYFORSHIP</p>
-        <p id="stat-standby" class="text-3xl font-bold text-white">0</p>
-       </div>
-      </div>
-     </div>
-
-     <div class="stat-card glass-card rounded-2xl p-5">
-      <div class="flex items-center gap-4">
-       <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
-        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-       </div>
-       <div>
-        <p class="text-blue-100 text-sm">ON BOARD</p>
-        <p id="stat-onboard" class="text-3xl font-bold text-white">0</p>
-       </div>
-      </div>
-     </div>
-
-     <div class="stat-card glass-card rounded-2xl p-5">
-      <div class="flex items-center gap-4">
-       <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
-        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-       </div>
-       <div>
-        <p class="text-blue-100 text-sm">ON LEAVE (TOTAL)</p>
-        <p id="stat-onleave" class="text-3xl font-bold text-white">0</p>
-       </div>
-      </div>
-     </div>
     </div>
 
-    <!-- Filter & Table -->
-    <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden">
-     <!-- Filter Bar -->
-     <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-      <div class="flex flex-wrap items-center gap-4">
-       <label class="text-gray-700 font-medium">กรองปีการศึกษา:</label>
-       <select id="filter-year" onchange="renderTable()" class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
-  <option value="all">ทั้งหมด</option>
-  <option value="2560">2560</option>
-  <option value="2561">2561</option>
-  <option value="2562">2562</option>
-  <option value="2563">2563</option>
-  <option value="2564">2564</option>
-  <option value="2565">2565</option>
-  <option value="2566">2566</option>
-  <option value="2567">2567</option>
-  <option value="2568">2568</option>
-  <option value="2569">2569</option>
-  <option value="2570">2570</option>
-  <option value="2571">2571</option>
-  <option value="2572">2572</option>
-  <option value="2573">2573</option>
-  <option value="2574">2574</option>
-  <option value="2575">2575</option>
-  <option value="2576">2576</option>
-  <option value="2577">2577</option>
-  <option value="2578">2578</option>
-  <option value="2579">2579</option>
-  <option value="2580">2580</option>
-</select>
+    <!-- Add Report Modal -->
+    <div id="add-modal" class="fixed inset-0 z-40 hidden">
+      <div class="modal-overlay absolute inset-0" onclick="closeAddModal()"></div>
+      <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto my-4">
+          <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xl font-bold text-white">📝 เพิ่มข้อมูลใหม่</h2>
+              <button onclick="closeAddModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
 
-       <label class="text-gray-700 font-medium ml-4">ค้นหา:</label>
-       <input type="text" id="search-input" onkeyup="renderTable()" placeholder="รหัส, ชื่อ, เรือ..." class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+          <form id="add-form" class="p-6 space-y-5">
+            <!-- Academic Year Selection -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา <span class="text-red-500">*</span></label>
+              <select id="form-academic-year" onchange="updateStudentDropdown()" required
+                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">-- เลือกปีการศึกษา --</option>
+                <option value="2560">2560</option>
+                <option value="2561">2561</option>
+                <option value="2562">2562</option>
+                <option value="2563">2563</option>
+                <option value="2564">2564</option>
+                <option value="2565">2565</option>
+                <option value="2566">2566</option>
+                <option value="2567">2567</option>
+                <option value="2568">2568</option>
+                <option value="2569">2569</option>
+                <option value="2570">2570</option>
+                <option value="2571">2571</option>
+                <option value="2572">2572</option>
+                <option value="2573">2573</option>
+                <option value="2574">2574</option>
+                <option value="2575">2575</option>
+                <option value="2576">2576</option>
+                <option value="2577">2577</option>
+                <option value="2578">2578</option>
+                <option value="2579">2579</option>
+                <option value="2580">2580</option>
+              </select>
+            </div>
 
-       <span id="filter-count" class="text-gray-500 text-sm ml-auto"></span>
+            <!-- Student Selection -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">นักศึกษา <span class="text-red-500">*</span></label>
+              <select id="form-student-select" onchange="fillStudentInfo()" required disabled
+                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100">
+                <option value="">-- เลือกปีการศึกษาก่อน --</option>
+              </select>
+            </div>
+
+            <!-- Trip History Display -->
+            <div id="trip-history-display"></div>
+
+            <!-- Auto-filled Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
+                <input type="text" id="form-student-id" readonly
+                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
+                <input type="text" id="form-department" readonly
+                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
+              <input type="text" id="form-student-name" readonly
+                class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
+            </div>
+
+            <!-- Boarding & Return Dates -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ลงเรือ <span class="text-red-500">*</span></label>
+                <input type="date" id="form-boarding-date" required
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">วันที่กลับ/ลงจากเรือ <span class="text-red-500">*</span></label>
+                <input type="date" id="form-return-date" required
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+            </div>
+
+            <!-- Ship & Company -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อเรือ <span class="text-red-500">*</span></label>
+                <input type="text" id="form-ship-name" required placeholder="เช่น M/V Ocean Star"
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">บริษัท <span class="text-red-500">*</span></label>
+                <input type="text" id="form-company-name" required placeholder="ชื่อบริษัทเดินเรือ"
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+            </div>
+
+            <!-- Optional Dates -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ JOIN</label>
+                <input type="date" id="form-join-date"
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ LEAVE</label>
+                <input type="date" id="form-leave-date"
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">ลงลำที่</label>
+                <input type="number" id="form-trip-number" min="1" placeholder="1"
+                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+            </div>
+
+            <!-- Work Details -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">รายละเอียดการทำงาน</label>
+              <textarea id="form-work-details" rows="3" placeholder="รายละเอียดเกี่ยวกับการฝึกงาน..."
+                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
+            </div>
+
+            <!-- Notes -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
+              <textarea id="form-notes" rows="2" placeholder="หมายเหตุเพิ่มเติม..."
+                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex gap-3 pt-4">
+              <button type="button" onclick="closeAddModal()"
+                class="flex-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+                ยกเลิก
+              </button>
+              <button type="submit" id="submit-btn"
+                class="flex-1 btn-primary text-white px-6 py-3 rounded-xl font-medium flex items-center justify-center gap-2">
+                <span id="submit-text">บันทึกข้อมูล</span>
+                <div id="submit-spinner" class="spinner hidden"></div>
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-     </div>
-
-     <!-- Table -->
-     <div class="overflow-x-auto">
-      <table class="w-full">
-       <thead class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-        <tr>
-         <th class="px-4 py-4 text-left text-sm font-semibold">รหัส</th>
-         <th class="px-4 py-4 text-left text-sm font-semibold">ชื่อ-นามสกุล</th>
-         <th class="px-4 py-4 text-left text-sm font-semibold">Trip #</th>
-         <th class="px-4 py-4 text-left text-sm font-semibold">ลงลำที่</th>
-         <th class="px-4 py-4 text-left text-sm font-semibold">ปีการศึกษา</th>
-         <th class="px-4 py-4 text-left text-sm font-semibold">สาขา</th>
-         <th class="px-4 py-4 text-left text-sm font-semibold">ช่วงเวลา</th>
-         <th class="px-4 py-4 text-left text-sm font-semibold">ชื่อเรือ</th>
-         <th class="px-4 py-4 text-left text-sm font-semibold">บริษัท</th>
-         <th class="px-4 py-4 text-left text-sm font-semibold">สถานะ</th>
-         <th class="px-4 py-4 text-left text-sm font-semibold">หมายเหตุ</th>
-         <th class="px-4 py-4 text-left text-sm font-semibold">จัดการ</th>
-        </tr>
-       </thead>
-       <tbody id="report-table-body" class="divide-y divide-gray-100">
-        <!-- Data rows will be inserted here -->
-       </tbody>
-      </table>
-     </div>
-
-     <!-- Empty State -->
-     <div id="empty-state" class="hidden p-12 text-center">
-      <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-       <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-       </svg>
-      </div>
-      <h3 class="text-xl font-semibold text-gray-700 mb-2">ยังไม่มีรายงาน</h3>
-      <p class="text-gray-500 mb-4">คลิกปุ่ม "เพิ่มข้อมูล" เพื่อเริ่มบันทึกข้อมูลการฝึกงาน</p>
-     </div>
     </div>
-   </div>
 
-   <!-- Add Report Modal -->
-   <div id="add-modal" class="fixed inset-0 z-40 hidden">
-    <div class="modal-overlay absolute inset-0" onclick="closeAddModal()"></div>
-    <div class="relative min-h-full flex items-center justify-center p-4">
-     <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto my-4">
-      <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
-       <div class="flex items-center justify-between">
-        <h2 class="text-xl font-bold text-white">📝 เพิ่มข้อมูลใหม่</h2>
-        <button onclick="closeAddModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
-         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-         </svg>
-        </button>
-       </div>
+    <!-- Summary Modal -->
+    <div id="summary-modal" class="fixed inset-0 z-40 hidden">
+      <div class="modal-overlay absolute inset-0" onclick="closeSummaryModal()"></div>
+      <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90%] overflow-y-auto">
+          <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-t-2xl">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xl font-bold text-white">📊 สรุปข้อมูลรายงานฝึกงาน</h2>
+              <button onclick="closeSummaryModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="p-6 space-y-6">
+            <!-- Summary Date -->
+            <div class="text-right text-gray-500 text-sm">
+              วันที่สรุป: <span id="summary-date"></span>
+            </div>
+
+            <!-- Overall Summary -->
+            <div id="summary-overall" class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5"></div>
+
+            <!-- Top Insights -->
+            <div id="summary-top-insights" class="bg-white rounded-xl border border-gray-200 p-5"></div>
+
+            <!-- Department Breakdown -->
+            <div class="bg-white rounded-xl border border-gray-200 p-5">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">🎓 Breakdown ตามสาขา</h3>
+              <div id="summary-by-department" class="overflow-x-auto"></div>
+            </div>
+
+            <!-- Year Breakdown -->
+            <div class="bg-white rounded-xl border border-gray-200 p-5">
+              <h3 class="text-lg font-semibold text-gray-800 mb-4">📅 Breakdown ตามปีการศึกษา</h3>
+              <div id="summary-by-year" class="overflow-x-auto"></div>
+            </div>
+
+            <!-- Data Quality / Warnings -->
+            <div id="summary-warnings" class="bg-white rounded-xl border border-gray-200 p-5"></div>
+          </div>
+        </div>
       </div>
-
-      <form id="add-form" class="p-6 space-y-5">
-       <!-- Academic Year Selection -->
-       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา <span class="text-red-500">*</span></label>
-        <select id="form-academic-year" onchange="updateStudentDropdown()" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-  <option value="">-- เลือกปีการศึกษา --</option>
-  <option value="2560">2560</option>
-  <option value="2561">2561</option>
-  <option value="2562">2562</option>
-  <option value="2563">2563</option>
-  <option value="2564">2564</option>
-  <option value="2565">2565</option>
-  <option value="2566">2566</option>
-  <option value="2567">2567</option>
-  <option value="2568">2568</option>
-  <option value="2569">2569</option>
-  <option value="2570">2570</option>
-  <option value="2571">2571</option>
-  <option value="2572">2572</option>
-  <option value="2573">2573</option>
-  <option value="2574">2574</option>
-  <option value="2575">2575</option>
-  <option value="2576">2576</option>
-  <option value="2577">2577</option>
-  <option value="2578">2578</option>
-  <option value="2579">2579</option>
-  <option value="2580">2580</option>
-</select>
-       </div>
-
-       <!-- Student Selection -->
-       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">นักศึกษา <span class="text-red-500">*</span></label>
-        <select id="form-student-select" onchange="fillStudentInfo()" required disabled class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100">
-         <option value="">-- เลือกปีการศึกษาก่อน --</option>
-        </select>
-       </div>
-
-       <!-- Trip History Display -->
-       <div id="trip-history-display"></div>
-
-       <!-- Auto-filled Fields -->
-       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-         <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
-         <input type="text" id="form-student-id" readonly class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
-        </div>
-        <div>
-         <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
-         <input type="text" id="form-department" readonly class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
-        </div>
-       </div>
-
-       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
-        <input type="text" id="form-student-name" readonly class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
-       </div>
-
-       <!-- Boarding & Return Dates -->
-       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-         <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ลงเรือ <span class="text-red-500">*</span></label>
-         <input type="date" id="form-boarding-date" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-        <div>
-         <label class="block text-sm font-medium text-gray-700 mb-2">วันที่กลับ/ลงจากเรือ <span class="text-red-500">*</span></label>
-         <input type="date" id="form-return-date" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-       </div>
-
-       <!-- Ship & Company -->
-       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-         <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อเรือ <span class="text-red-500">*</span></label>
-         <input type="text" id="form-ship-name" required placeholder="เช่น M/V Ocean Star" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-        <div>
-         <label class="block text-sm font-medium text-gray-700 mb-2">บริษัท <span class="text-red-500">*</span></label>
-         <input type="text" id="form-company-name" required placeholder="ชื่อบริษัทเดินเรือ" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-       </div>
-
-       <!-- Optional Dates -->
-       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-         <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ JOIN</label>
-         <input type="date" id="form-join-date" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-        <div>
-         <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ LEAVE</label>
-         <input type="date" id="form-leave-date" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-        <div>
-         <label class="block text-sm font-medium text-gray-700 mb-2">ลงลำที่</label>
-         <input type="number" id="form-trip-number" min="1" placeholder="1" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-       </div>
-
-       <!-- Work Details -->
-       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">รายละเอียดการทำงาน</label>
-        <textarea id="form-work-details" rows="3" placeholder="รายละเอียดเกี่ยวกับการฝึกงาน..." class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
-       </div>
-
-       <!-- Notes -->
-       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
-        <textarea id="form-notes" rows="2" placeholder="หมายเหตุเพิ่มเติม..." class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
-       </div>
-
-       <!-- Submit Button -->
-       <div class="flex gap-3 pt-4">
-        <button type="button" onclick="closeAddModal()" class="flex-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors">
-         ยกเลิก
-        </button>
-        <button type="submit" id="submit-btn" class="flex-1 btn-primary text-white px-6 py-3 rounded-xl font-medium flex items-center justify-center gap-2">
-         <span id="submit-text">บันทึกข้อมูล</span>
-         <div id="submit-spinner" class="spinner hidden"></div>
-        </button>
-       </div>
-      </form>
-     </div>
     </div>
-   </div>
-
-   <!-- Summary Modal -->
-   <div id="summary-modal" class="fixed inset-0 z-40 hidden">
-    <div class="modal-overlay absolute inset-0" onclick="closeSummaryModal()"></div>
-    <div class="relative min-h-full flex items-center justify-center p-4">
-     <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90%] overflow-y-auto">
-      <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-t-2xl">
-       <div class="flex items-center justify-between">
-        <h2 class="text-xl font-bold text-white">📊 สรุปข้อมูลรายงานฝึกงาน</h2>
-        <button onclick="closeSummaryModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
-         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-         </svg>
-        </button>
-       </div>
-      </div>
-
-      <div class="p-6 space-y-6">
-       <!-- Summary Date -->
-       <div class="text-right text-gray-500 text-sm">
-        วันที่สรุป: <span id="summary-date"></span>
-       </div>
-
-       <!-- Overall Summary -->
-       <div id="summary-overall" class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5"></div>
-
-       <!-- Top Insights -->
-       <div id="summary-top-insights" class="bg-white rounded-xl border border-gray-200 p-5"></div>
-
-       <!-- Department Breakdown -->
-       <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">🎓 Breakdown ตามสาขา</h3>
-        <div id="summary-by-department" class="overflow-x-auto"></div>
-       </div>
-
-       <!-- Year Breakdown -->
-       <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">📅 Breakdown ตามปีการศึกษา</h3>
-        <div id="summary-by-year" class="overflow-x-auto"></div>
-       </div>
-
-       <!-- Data Quality / Warnings -->
-       <div id="summary-warnings" class="bg-white rounded-xl border border-gray-200 p-5"></div>
-      </div>
-     </div>
-    </div>
-   </div>
   </div>
 
   <script>
-   // ทำให้ onclick ใน HTML เรียกได้
-Object.assign(window, {
-  openAddModal,
-  closeAddModal,
-  openStudentModal,
-  closeStudentModal,
-  openSummaryModal,
-  closeSummaryModal,
+    /** =========================================================
+     *  ✅ Firebase Config (ใช้ร่วมกันทั้ง dataSdk และ students)
+     * ========================================================= */
+    const firebaseConfig = {
+      apiKey: "AIzaSyC-kwdTAPH9Vdqy9PABUAjMv635aZLQh8s",
+      authDomain: "studentreport-management.firebaseapp.com",
+      databaseURL: "https://studentreport-management-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "studentreport-management",
+      storageBucket: "studentreport-management.firebasestorage.app",
+      messagingSenderId: "1016576456872",
+      appId: "1:1016576456872:web:0d82f2a82e99e53a4b6a9d",
+      measurementId: "G-5TK1HK3HBC"
+    };
 
-  updateStudentDropdown,
-  fillStudentInfo,
-  clearStudentInfo,
+    // ทำให้ onclick ใน HTML เรียกได้
+    Object.assign(window, {
+      openAddModal,
+      closeAddModal,
+      openStudentModal,
+      closeStudentModal,
+      openSummaryModal,
+      closeSummaryModal,
+      updateStudentDropdown,
+      fillStudentInfo,
+      clearStudentInfo,
+      renderTable,
+      updateStatus,
+      openEditModal,
+      closeEditModal,
+      deleteReport,
+      cancelOverlapSubmit,
+      confirmOverlapSubmit,
+      deleteStudent
+    });
 
-  renderTable,
-  updateStatus,
-
-  openEditModal,
-  closeEditModal,
-  deleteReport,
-
-  cancelOverlapSubmit,
-  confirmOverlapSubmit,
-  deleteStudent
-});
     // ============================================
     // STUDENT DATABASE
     // ============================================
     const studentDatabase = {
-  "DECK": {
-    "2566": {
-      "1571": { id: "1571", fullName: "นายกิตติศักดิ์ โสนะจิตร" },
-      "1569": { id: "1569", fullName: "นายพงศกร คำภู" },
-      "1568": { id: "1568", fullName: "นายศุภศักดิ์ ประเสริฐจิตต์" },
-      "1573": { id: "1573", fullName: "นายกฤษฎา หอมขจร" },
-      "1580": { id: "1580", fullName: "นายธันว์ พิทักษ์ธรรมณี" },
-      "1566": { id: "1566", fullName: "นายเลิศอนันต์ เตชวัฒน์ธนสิทธิ์" },
-      "1584": { id: "1584", fullName: "นายคุณานนต์ มัญชุสารัตน์" },
-      "1574": { id: "1574", fullName: "นายระพีพัฒน์ จองระหงษ์" },
-      "1570": { id: "1570", fullName: "นายสหัสวรรษ์ คิดมา" },
-      "1715": { id: "1715", fullName: "นายกิตติ ศรีสุข" },
-      "1575": { id: "1575", fullName: "นายศราวุธ หวันละเบ๊ะ" },
-      "1583": { id: "1583", fullName: "นายณัฐพงศ์ ประเสริฐดี" },
-      "1576": { id: "1576", fullName: "นายรชานนท์ สุดพุ่ม" },
-      "1717": { id: "1717", fullName: "นายธนพัฒน์ เชี่ยวชาญ" }
-    },
-    "2567": {
-      "ชนาธิป": { id: "1919", fullName: "นายชนาธิป ทิพย์อุทัย" },
-      "ณัฐพนธ์": { id: "2002", fullName: "นายณัฐพนธ์ แสงประเสริฐ" },
-      "ภานุพงศ์": { id: "2004", fullName: "นายภานุพงศ์ เอี่ยมโอด" },
-      "อุณพัทธ์": { id: "2005", fullName: "นายอุณพัทธ์ วงศ์อำนวยพร" },
-      "นันทวัฒน์": { id: "2007", fullName: "นายนันทวัฒน์ ยาดี" },
-      "ธนพล1": { id: "2008", fullName: "นายธนพล เขียวประชุม" },
-      "สมยศ": { id: "2009", fullName: "นายสมยศ พร้าเพรียง" },
-      "ธัชพล": { id: "2010", fullName: "นายธัชพล นิคม" },
-      "ศิวปรีชา": { id: "2011", fullName: "นายศิวปรีชา กำราบภัย" },
-      "เจษฎา": { id: "2014", fullName: "นายเจษฎา จิณณธนพงษ์" },
-      "อนุตร": { id: "2015", fullName: "นายอนุตร ท้วมสังข์" },
-      "ธนพล2": { id: "2073", fullName: "นายธนพล ปินตาไฝ" }
-    }
-  },
+      "DECK": {
+        "2566": {
+          "1571": { id: "1571", fullName: "นายกิตติศักดิ์ โสนะจิตร" },
+          "1569": { id: "1569", fullName: "นายพงศกร คำภู" },
+          "1568": { id: "1568", fullName: "นายศุภศักดิ์ ประเสริฐจิตต์" },
+          "1573": { id: "1573", fullName: "นายกฤษฎา หอมขจร" },
+          "1580": { id: "1580", fullName: "นายธันว์ พิทักษ์ธรรมณี" },
+          "1566": { id: "1566", fullName: "นายเลิศอนันต์ เตชวัฒน์ธนสิทธิ์" },
+          "1584": { id: "1584", fullName: "นายคุณานนต์ มัญชุสารัตน์" },
+          "1574": { id: "1574", fullName: "นายระพีพัฒน์ จองระหงษ์" },
+          "1570": { id: "1570", fullName: "นายสหัสวรรษ์ คิดมา" },
+          "1715": { id: "1715", fullName: "นายกิตติ ศรีสุข" },
+          "1575": { id: "1575", fullName: "นายศราวุธ หวันละเบ๊ะ" },
+          "1583": { id: "1583", fullName: "นายณัฐพงศ์ ประเสริฐดี" },
+          "1576": { id: "1576", fullName: "นายรชานนท์ สุดพุ่ม" },
+          "1717": { id: "1717", fullName: "นายธนพัฒน์ เชี่ยวชาญ" }
+        },
+        "2567": {
+          "ชนาธิป": { id: "1919", fullName: "นายชนาธิป ทิพย์อุทัย" },
+          "ณัฐพนธ์": { id: "2002", fullName: "นายณัฐพนธ์ แสงประเสริฐ" },
+          "ภานุพงศ์": { id: "2004", fullName: "นายภานุพงศ์ เอี่ยมโอด" },
+          "อุณพัทธ์": { id: "2005", fullName: "นายอุณพัทธ์ วงศ์อำนวยพร" },
+          "นันทวัฒน์": { id: "2007", fullName: "นายนันทวัฒน์ ยาดี" },
+          "ธนพล1": { id: "2008", fullName: "นายธนพล เขียวประชุม" },
+          "สมยศ": { id: "2009", fullName: "นายสมยศ พร้าเพรียง" },
+          "ธัชพล": { id: "2010", fullName: "นายธัชพล นิคม" },
+          "ศิวปรีชา": { id: "2011", fullName: "นายศิวปรีชา กำราบภัย" },
+          "เจษฎา": { id: "2014", fullName: "นายเจษฎา จิณณธนพงษ์" },
+          "อนุตร": { id: "2015", fullName: "นายอนุตร ท้วมสังข์" },
+          "ธนพล2": { id: "2073", fullName: "นายธนพล ปินตาไฝ" }
+        }
+      },
 
-  "PCP": {
-    "2566": {
-      "1417": { id: "1417", fullName: "นายจิรวัฒน์ ศรีจันทร์" },
-      "1421": { id: "1421", fullName: "นายธนวินท์ สุปินบุตร" },
-      "1423": { id: "1423", fullName: "นายบดินทร์ สุขานคร" },
-      "1425": { id: "1425", fullName: "นายวัชระ สุทธิประภา" }
-    },
-    "2567": {
-      "ณัฐพงศ์": { id: "1508", fullName: "นายณัฐพงศ์ หาคำเล" },
-      "สพลดนัย": { id: "1509", fullName: "นายสพลดนัย หาญณรงค์" },
-      "กฤษณ์": { id: "1510", fullName: "นายกฤษณ์ สุทธิวิรัตน์" },
-      "กิตติชัย": { id: "1511", fullName: "นายกิตติชัย มูลเทพพิชัย" },
-      "ปกรณ์": { id: "1513", fullName: "นายปกรณ์ ปิยะนันท์" },
-      "ไกรวิชญ์": { id: "1514", fullName: "นายไกรวิชญ์ บุญประเสริฐ" },
-      "อิศรานุวัฒน์": { id: "1516", fullName: "นายอิศรานุวัฒน์ ชัยภาสชมภู" },
-      "ธัญญสิทธิ์": { id: "1518", fullName: "นายธัญญสิทธิ์ จันทร" },
-      "วรพงศ์": { id: "1519", fullName: "นายวรพงศ์ ท้วมรอด" },
-      "พงศกร": { id: "1520", fullName: "นายพงศกร บุดดี" },
-      "กิตติภพ": { id: "1521", fullName: "นายกิตติภพ ฉัตรแก้ว" }
-    }
-  },
+      "PCP": {
+        "2566": {
+          "1417": { id: "1417", fullName: "นายจิรวัฒน์ ศรีจันทร์" },
+          "1421": { id: "1421", fullName: "นายธนวินท์ สุปินบุตร" },
+          "1423": { id: "1423", fullName: "นายบดินทร์ สุขานคร" },
+          "1425": { id: "1425", fullName: "นายวัชระ สุทธิประภา" }
+        },
+        "2567": {
+          "ณัฐพงศ์": { id: "1508", fullName: "นายณัฐพงศ์ หาคำเล" },
+          "สพลดนัย": { id: "1509", fullName: "นายสพลดนัย หาญณรงค์" },
+          "กฤษณ์": { id: "1510", fullName: "นายกฤษณ์ สุทธิวิรัตน์" },
+          "กิตติชัย": { id: "1511", fullName: "นายกิตติชัย มูลเทพพิชัย" },
+          "ปกรณ์": { id: "1513", fullName: "นายปกรณ์ ปิยะนันท์" },
+          "ไกรวิชญ์": { id: "1514", fullName: "นายไกรวิชญ์ บุญประเสริฐ" },
+          "อิศรานุวัฒน์": { id: "1516", fullName: "นายอิศรานุวัฒน์ ชัยภาสชมภู" },
+          "ธัญญสิทธิ์": { id: "1518", fullName: "นายธัญญสิทธิ์ จันทร" },
+          "วรพงศ์": { id: "1519", fullName: "นายวรพงศ์ ท้วมรอด" },
+          "พงศกร": { id: "1520", fullName: "นายพงศกร บุดดี" },
+          "กิตติภพ": { id: "1521", fullName: "นายกิตติภพ ฉัตรแก้ว" }
+        }
+      },
 
-  "ENGINE": {
-    "2566": {
-      "1563": { id: "1563", fullName: "นายอภิสิทธิ์ วงศ์หนูพะเนา" },
-      "1565": { id: "1565", fullName: "นายอภิสิทธิ์ ราโรจน์" },
-      "1562": { id: "1562", fullName: "นายชยณัฐ บุญครอง" }
-    }
-  }
-};
+      "ENGINE": {
+        "2566": {
+          "1563": { id: "1563", fullName: "นายอภิสิทธิ์ วงศ์หนูพะเนา" },
+          "1565": { id: "1565", fullName: "นายอภิสิทธิ์ ราโรจน์" },
+          "1562": { id: "1562", fullName: "นายชยณัฐ บุญครอง" }
+        }
+      }
+    };
+
     // ============================================
     // DATA STATE
     // ============================================
@@ -590,124 +602,90 @@ Object.assign(window, {
     // ============================================
     // CONFIG
     // ============================================
-    const defaultConfig = {
-      dashboard_title: "🚢 ระบบจัดการรายงานฝึกงาน"
-    };
+    const defaultConfig = { dashboard_title: "🚢 ระบบจัดการรายงานฝึกงาน" };
 
     // ============================================
-    // STATUS NORMALIZATION (Backward Compatibility)
+    // STATUS NORMALIZATION
     // ============================================
     const ALLOWED_STATUSES = [
-  'NO REQUEST TO JOIN THE SHIP',
-  'THE VOYAGE PROCESS',
-  'READY TO JOIN SHIP',
-  'ON BOARD',
-  'ON LEAVE - GRADUATION PROCESS',
-  'ON LEAVE - OWN BUSINESS',
-  'ON LEAVE - WAIT FOR REJOIN',
-  'GRADUATED'
-];
-
+      'NO REQUEST TO JOIN THE SHIP',
+      'THE VOYAGE PROCESS',
+      'READY TO JOIN SHIP',
+      'ON BOARD',
+      'ON LEAVE - GRADUATION PROCESS',
+      'ON LEAVE - OWN BUSINESS',
+      'ON LEAVE - WAIT FOR REJOIN',
+      'GRADUATED'
+    ];
 
     function normalizeStatus(status) {
-  const DEFAULT = 'NO REQUEST TO JOIN THE SHIP';
+      const DEFAULT = 'NO REQUEST TO JOIN THE SHIP';
+      if (status === null || status === undefined) return DEFAULT;
 
-  if (status === null || status === undefined) return DEFAULT;
-  const raw = String(status).trim();
-  if (!raw) return DEFAULT;
+      const raw = String(status).trim();
+      if (!raw) return DEFAULT;
 
-  const u = raw.toUpperCase().replace(/\s+/g, ' ').trim();
+      const u = raw.toUpperCase().replace(/\s+/g, ' ').trim();
 
-  // --------- Backward compatibility ----------
-  if (u === 'PENDING') return 'READY TO JOIN SHIP';
+      // Backward compatibility
+      if (u === 'PENDING') return 'READY TO JOIN SHIP';
+      if (u === 'STANDBYFORSHIP' || u === 'STANDBY FOR SHIP') return 'READY TO JOIN SHIP';
+      if (u === 'ONBOARD' || u === 'ON BOARD') return 'ON BOARD';
+      if (u === 'GRADUATION' || u === 'GRAD' || u === 'GRADUATED') return 'GRADUATED';
 
- if (u === 'STANDBYFORSHIP' || u === 'STANDBY FOR SHIP') return 'READY TO JOIN SHIP';
+      // Flexible inputs
+      if (u.includes('NO REQUEST')) return 'NO REQUEST TO JOIN THE SHIP';
+      if (u.includes('VOYAGE')) return 'THE VOYAGE PROCESS';
+      if (u.includes('READY') && u.includes('JOIN')) return 'READY TO JOIN SHIP';
 
-  if (u === 'ONBOARD' || u === 'ON BOARD') return 'ON BOARD';
+      // ON LEAVE
+      if (u.startsWith('ON LEAVE')) {
+        if (u.includes('GRAD')) return 'ON LEAVE - GRADUATION PROCESS';
+        if (u.includes('OWN') || u.includes('BUSINESS')) return 'ON LEAVE - OWN BUSINESS';
+        if (u.includes('REJOIN') || u.includes('WAIT')) return 'ON LEAVE - WAIT FOR REJOIN';
+        return 'ON LEAVE - WAIT FOR REJOIN';
+      }
 
- if (u === 'GRADUATION' || u === 'GRAD' || u === 'GRADUATED') return 'GRADUATED';
-  // --------- Flexible new inputs ----------
-  if (u.includes('NO REQUEST')) return 'NO REQUEST TO JOIN THE SHIP';
-  if (u.includes('VOYAGE')) return 'THE VOYAGE PROCESS';
-  if (u.includes('READY') && u.includes('JOIN')) return 'READY TO JOIN SHIP';
+      const exact = ALLOWED_STATUSES.find(s => s === u);
+      if (exact) return exact;
 
-  // ON LEAVE variations
-  if (u.startsWith('ON LEAVE')) {
-    if (u.includes('GRAD')) return 'ON LEAVE - GRADUATION PROCESS';
-    if (u.includes('OWN') || u.includes('BUSINESS')) return 'ON LEAVE - OWN BUSINESS';
-    if (u.includes('REJOIN') || u.includes('WAIT')) return 'ON LEAVE - WAIT FOR REJOIN';
-    return 'ON LEAVE - WAIT FOR REJOIN';
-  }
+      return DEFAULT;
+    }
 
-  // exact match
-  const exact = ALLOWED_STATUSES.find(s => s === u);
-  if (exact) return exact;
-
-  return DEFAULT;
-}
-
-function isOnLeaveStatus(status) {
-  return normalizeStatus(status).startsWith('ON LEAVE -');
-}
+    function isOnLeaveStatus(status) {
+      return normalizeStatus(status).startsWith('ON LEAVE -');
+    }
 
     // ============================================
-    // CORE FUNCTIONS: MULTI-TRIP SUPPORT
+    // MULTI-TRIP SUPPORT
     // ============================================
-
-    /**
-     * ตรวจสอบว่าช่วงเวลา 2 ช่วงทับกันหรือไม่
-     */
     function isDateOverlap(aStart, aEnd, bStart, bEnd) {
       const a1 = new Date(aStart).getTime();
       const a2 = new Date(aEnd).getTime();
       const b1 = new Date(bStart).getTime();
       const b2 = new Date(bEnd).getTime();
 
-      if (isNaN(a1) || isNaN(a2) || isNaN(b1) || isNaN(b2)) {
-        return false;
-      }
-
-      if (a2 < a1 || b2 < b1) {
-        return false;
-      }
-
+      if (isNaN(a1) || isNaN(a2) || isNaN(b1) || isNaN(b2)) return false;
+      if (a2 < a1 || b2 < b1) return false;
       return a1 <= b2 && b1 <= a2;
     }
 
-    /**
-     * คำนวณ trip_seq ถัดไปสำหรับนักศึกษาในปีการศึกษานั้น
-     */
     function computeNextTripSeq(allReports, studentId, academicYear) {
-      const existingTrips = allReports.filter(r =>
-        r.student_id === studentId &&
-        r.academic_year === academicYear
-      );
-
-      if (existingTrips.length === 0) {
-        return 1;
-      }
-
+      const existingTrips = allReports.filter(r => r.student_id === studentId && r.academic_year === academicYear);
+      if (existingTrips.length === 0) return 1;
       const maxSeq = Math.max(...existingTrips.map(r => r.trip_seq || 0));
       return maxSeq + 1;
     }
 
-    /**
-     * สร้าง trip_id ที่ unique
-     */
     function buildTripId(formData) {
       const { student_id, academic_year, ship_name, boarding_date } = formData;
-
       const sanitizedShip = (ship_name || '')
         .replace(/\s+/g, '-')
         .replace(/[^a-zA-Z0-9-]/g, '')
         .toUpperCase();
-
       return `${student_id}_${academic_year}_${sanitizedShip}_${boarding_date}`;
     }
 
-    /**
-     * ตรวจสอบรายการซ้ำ exact duplicate
-     */
     function duplicateCheck(allReports, formData) {
       const duplicate = allReports.find(r =>
         r.student_id === formData.student_id &&
@@ -716,51 +694,22 @@ function isOnLeaveStatus(status) {
         r.boarding_date === formData.boarding_date &&
         r.return_date === formData.return_date
       );
-
       return duplicate || null;
     }
 
-    /**
-     * ตรวจสอบว่าทริปใหม่ทับกับทริปเดิมของนักศึกษาหรือไม่
-     */
     function findOverlappingTrips(allReports, formData) {
       const { student_id, academic_year, boarding_date, return_date } = formData;
 
-      const studentTrips = allReports.filter(r =>
-        r.student_id === student_id &&
-        r.academic_year === academic_year
-      );
-
-      const overlapping = studentTrips.filter(trip =>
-        isDateOverlap(
-          boarding_date,
-          return_date,
-          trip.boarding_date,
-          trip.return_date
-        )
-      );
-
+      const studentTrips = allReports.filter(r => r.student_id === student_id && r.academic_year === academic_year);
+      const overlapping = studentTrips.filter(trip => isDateOverlap(boarding_date, return_date, trip.boarding_date, trip.return_date));
       return overlapping;
     }
 
-    /**
-     * ดึงประวัติทริปล่าสุดของนักศึกษา
-     */
     function getRecentTrips(allReports, studentId, limit = 3) {
       return allReports
         .filter(r => r.student_id === studentId)
-        .sort((a, b) => {
-          return new Date(b.boarding_date) - new Date(a.boarding_date);
-        })
+        .sort((a, b) => new Date(b.boarding_date) - new Date(a.boarding_date))
         .slice(0, limit);
-    }
-
-    /**
-     * ตรวจสอบว่าสถานะเป็น On Leave หรือไม่
-     * - ตาม requirement: return true เมื่อ status เริ่มต้นด้วย 'ON LEAVE -'
-     */
-    function isOnLeaveStatus(status) {
-      return normalizeStatus(status).startsWith('ON LEAVE -');
     }
 
     // ============================================
@@ -775,196 +724,203 @@ function isOnLeaveStatus(status) {
     };
 
     // ============================================
-    // INIT
+    // STUDENTS (Firestore)
     // ============================================
-   let allStudents = [];
-let studentsUnsub = null;
+    let allStudents = [];
+    let studentsUnsub = null;
 
-async function ensureAuthGlobal() {
-  if (!firebase?.apps?.length) return false;
-  const auth = firebase.auth();
-  if (auth.currentUser) return true;
-  try {
-    await auth.signInAnonymously();
-    return true;
-  } catch (e) {
-    console.error('Auth failed:', e);
-    return false;
-  }
-}
-
-function openStudentModal() {
-  document.getElementById('student-modal').classList.remove('hidden');
-  renderStudentList();
-}
-
-function closeStudentModal() {
-  document.getElementById('student-modal').classList.add('hidden');
-}
-
-function buildStudentDocId(year, dept, id) {
-  return `${year}_${id}_${dept}`.replace(/\s+/g, '_');
-}
-
-function renderStudentList() {
-  const el = document.getElementById('student-list');
-  if (!el) return;
-
-  const rows = allStudents
-    .slice()
-    .sort((a,b) => (a.academic_year||'').localeCompare(b.academic_year||'') || (a.department||'').localeCompare(b.department||'') || (a.id||'').localeCompare(b.id||''));
-
-  if (rows.length === 0) {
-    el.innerHTML = `<p class="text-gray-500 text-sm">ยังไม่มีนักศึกษาใน Firestore</p>`;
-    return;
-  }
-
-  el.innerHTML = `
-    <table class="min-w-[900px] w-full text-sm">
-      <thead>
-        <tr class="bg-gray-50 text-gray-700">
-          <th class="text-left px-3 py-2 font-semibold">ปี</th>
-          <th class="text-left px-3 py-2 font-semibold">สาขา</th>
-          <th class="text-left px-3 py-2 font-semibold">รหัส</th>
-          <th class="text-left px-3 py-2 font-semibold">ชื่อ</th>
-          <th class="text-left px-3 py-2 font-semibold">จัดการ</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        ${rows.map(s => `
-          <tr>
-            <td class="px-3 py-2">${escapeHtml(s.academic_year || '')}</td>
-            <td class="px-3 py-2">${escapeHtml(s.department || '')}</td>
-            <td class="px-3 py-2 font-medium">${escapeHtml(s.id || '')}</td>
-            <td class="px-3 py-2">${escapeHtml(s.fullName || '')}</td>
-            <td class="px-3 py-2">
-              <button onclick="deleteStudent('${s.__backendId}')"
-                      class="px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium">
-                🗑️ ลบ
-              </button>
-            </td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  `;
-}
-
-async function deleteStudent(docId) {
-  const ok = confirm('ต้องการลบนักศึกษารายการนี้ใช่ไหม?');
-  if (!ok) return;
-
-  const authed = await ensureAuthGlobal();
-  if (!authed) return showToast('Auth ไม่ผ่าน', 'error');
-
-  try {
-    const db = firebase.firestore();
-    await db.collection('students').doc(docId).delete();
-    showToast('ลบนักศึกษาสำเร็จ', 'success');
-  } catch (e) {
-    console.error(e);
-    showToast('ลบไม่สำเร็จ', 'error');
-  }
-}
-
-async function startStudentsListener() {
-  const authed = await ensureAuthGlobal();
-  if (!authed) return;
-
-  const db = firebase.firestore();
-  if (studentsUnsub) studentsUnsub();
-
-  studentsUnsub = db.collection('students').onSnapshot(snap => {
-    allStudents = snap.docs.map(d => ({ ...(d.data()||{}), __backendId: d.id }));
-    renderStudentList();
-  }, e => console.error('students onSnapshot error:', e));
-}
-
-(function bindStudentForm(){
-  const sf = document.getElementById('student-form');
-  if (!sf) {
-    document.addEventListener('DOMContentLoaded', bindStudentForm, { once: true });
-    return;
-  }
-  if (sf.__bound) return;
-  sf.__bound = true;
-
-  sf.addEventListener('submit', async function(e){
-    
-  e.preventDefault();
-
-  const year = document.getElementById('stu-year').value.trim();
-  const dept = document.getElementById('stu-dept').value.trim();
-  const id = document.getElementById('stu-id').value.trim();
-  const name = document.getElementById('stu-name').value.trim();
-
-  if (!year || !dept || !id || !name) return showToast('กรอกข้อมูลให้ครบ', 'error');
-
-  const authed = await ensureAuthGlobal();
-  if (!authed) return showToast('Auth ไม่ผ่าน', 'error');
-
-  try {
-    const db = firebase.firestore();
-    const docId = buildStudentDocId(year, dept, id);
-
-    await db.collection('students').doc(docId).set({
-      academic_year: year,
-      department: dept,
-      id,
-      fullName: name,
-      updated_at: new Date().toISOString()
-    }, { merge: true });
-
-    showToast('บันทึกนักศึกษาสำเร็จ', 'success');
-    document.getElementById('student-form').reset();
-
-    // อัปเดต dropdown ทันที
-    updateStudentDropdown();
-  } catch (e2) {
-    console.error(e2);
-    showToast('บันทึกไม่สำเร็จ', 'error');
-  }
-});
-
-// รวมข้อมูลนักศึกษา (ฐานเดิม + Firestore)
-function getStudentsForYear(year) {
-  const list = [];
-
-  // base (studentDatabase)
-  for (const [dept, years] of Object.entries(studentDatabase)) {
-    if (!years[year]) continue;
-    for (const info of Object.values(years[year])) {
-      list.push({ department: dept, id: info.id, fullName: info.fullName });
+    function initFirebaseIfNeeded() {
+      if (!firebase?.apps?.length) firebase.initializeApp(firebaseConfig);
     }
-  }
 
-  // dynamic (Firestore)
-  allStudents
-    .filter(s => String(s.academic_year || '') === String(year))
-    .forEach(s => list.push({ department: s.department || '', id: s.id || '', fullName: s.fullName || '' }));
+    async function ensureAuthGlobal() {
+      try {
+        initFirebaseIfNeeded();
+        const auth = firebase.auth();
+        if (auth.currentUser) return true;
+        await auth.signInAnonymously();
+        return true;
+      } catch (e) {
+        console.error('Auth failed:', e);
+        return false;
+      }
+    }
 
-  // dedupe dept|id
-  const seen = new Set();
-  return list.filter(s => {
-    const key = `${s.department}|${s.id}`;
-    if (!s.id || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-window.getStudentsForYear = getStudentsForYear;
+    function openStudentModal() {
+      document.getElementById('student-modal').classList.remove('hidden');
+      renderStudentList();
+    }
+    function closeStudentModal() {
+      document.getElementById('student-modal').classList.add('hidden');
+    }
 
-})(); // ✅ FIX: close bindStudentForm IIFE
+    function buildStudentDocId(year, dept, id) {
+      return `${year}_${id}_${dept}`.replace(/\s+/g, '_');
+    }
 
+    function renderStudentList() {
+      const el = document.getElementById('student-list');
+      if (!el) return;
+
+      const rows = allStudents
+        .slice()
+        .sort((a, b) =>
+          (a.academic_year || '').localeCompare(b.academic_year || '') ||
+          (a.department || '').localeCompare(b.department || '') ||
+          (a.id || '').localeCompare(b.id || '')
+        );
+
+      if (rows.length === 0) {
+        el.innerHTML = `<p class="text-gray-500 text-sm">ยังไม่มีนักศึกษาใน Firestore</p>`;
+        return;
+      }
+
+      el.innerHTML = `
+        <table class="min-w-[900px] w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 text-gray-700">
+              <th class="text-left px-3 py-2 font-semibold">ปี</th>
+              <th class="text-left px-3 py-2 font-semibold">สาขา</th>
+              <th class="text-left px-3 py-2 font-semibold">รหัส</th>
+              <th class="text-left px-3 py-2 font-semibold">ชื่อ</th>
+              <th class="text-left px-3 py-2 font-semibold">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            ${rows.map(s => `
+              <tr>
+                <td class="px-3 py-2">${escapeHtml(s.academic_year || '')}</td>
+                <td class="px-3 py-2">${escapeHtml(s.department || '')}</td>
+                <td class="px-3 py-2 font-medium">${escapeHtml(s.id || '')}</td>
+                <td class="px-3 py-2">${escapeHtml(s.fullName || '')}</td>
+                <td class="px-3 py-2">
+                  <button onclick="deleteStudent('${s.__backendId}')"
+                          class="px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium">
+                    🗑️ ลบ
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    async function deleteStudent(docId) {
+      const ok = confirm('ต้องการลบนักศึกษารายการนี้ใช่ไหม?');
+      if (!ok) return;
+
+      const authed = await ensureAuthGlobal();
+      if (!authed) return showToast('Auth ไม่ผ่าน', 'error');
+
+      try {
+        const db = firebase.firestore();
+        await db.collection('students').doc(docId).delete();
+        showToast('ลบนักศึกษาสำเร็จ', 'success');
+      } catch (e) {
+        console.error(e);
+        showToast('ลบไม่สำเร็จ', 'error');
+      }
+    }
+
+    async function startStudentsListener() {
+      const authed = await ensureAuthGlobal();
+      if (!authed) return;
+
+      const db = firebase.firestore();
+      if (studentsUnsub) studentsUnsub();
+
+      studentsUnsub = db.collection('students').onSnapshot(snap => {
+        allStudents = snap.docs.map(d => ({ ...(d.data() || {}), __backendId: d.id }));
+        renderStudentList();
+      }, e => console.error('students onSnapshot error:', e));
+    }
+
+    (function bindStudentForm() {
+      const sf = document.getElementById('student-form');
+      if (!sf) {
+        document.addEventListener('DOMContentLoaded', bindStudentForm, { once: true });
+        return;
+      }
+      if (sf.__bound) return;
+      sf.__bound = true;
+
+      sf.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const year = document.getElementById('stu-year').value.trim();
+        const dept = document.getElementById('stu-dept').value.trim();
+        const id = document.getElementById('stu-id').value.trim();
+        const name = document.getElementById('stu-name').value.trim();
+
+        if (!year || !dept || !id || !name) return showToast('กรอกข้อมูลให้ครบ', 'error');
+
+        const authed = await ensureAuthGlobal();
+        if (!authed) return showToast('Auth ไม่ผ่าน', 'error');
+
+        try {
+          const db = firebase.firestore();
+          const docId = buildStudentDocId(year, dept, id);
+
+          await db.collection('students').doc(docId).set({
+            academic_year: year,
+            department: dept,
+            id,
+            fullName: name,
+            updated_at: new Date().toISOString()
+          }, { merge: true });
+
+          showToast('บันทึกนักศึกษาสำเร็จ', 'success');
+          document.getElementById('student-form').reset();
+
+          // อัปเดต dropdown ทันที
+          updateStudentDropdown();
+        } catch (e2) {
+          console.error(e2);
+          showToast('บันทึกไม่สำเร็จ', 'error');
+        }
+      });
+
+      // รวมข้อมูลนักศึกษา (ฐานเดิม + Firestore)
+      function getStudentsForYear(year) {
+        const list = [];
+
+        // base (studentDatabase)
+        for (const [dept, years] of Object.entries(studentDatabase)) {
+          if (!years[year]) continue;
+          for (const info of Object.values(years[year])) {
+            list.push({ department: dept, id: info.id, fullName: info.fullName });
+          }
+        }
+
+        // dynamic (Firestore)
+        allStudents
+          .filter(s => String(s.academic_year || '') === String(year))
+          .forEach(s => list.push({ department: s.department || '', id: s.id || '', fullName: s.fullName || '' }));
+
+        // dedupe dept|id
+        const seen = new Set();
+        return list.filter(s => {
+          const key = `${s.department}|${s.id}`;
+          if (!s.id || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      }
+      window.getStudentsForYear = getStudentsForYear;
+
+    })();
+
+    // ============================================
+    // INIT APP
+    // ============================================
     async function initApp() {
       if (window.elementSdk) {
         window.elementSdk.init({
           defaultConfig,
           onConfigChange: async (config) => {
             const titleEl = document.getElementById('dashboard-title');
-            if (titleEl) {
-              titleEl.textContent = config.dashboard_title || defaultConfig.dashboard_title;
-            }
+            if (titleEl) titleEl.textContent = config.dashboard_title || defaultConfig.dashboard_title;
           },
           mapToCapabilities: (config) => ({
             recolorables: [],
@@ -980,165 +936,148 @@ window.getStudentsForYear = getStudentsForYear;
 
       if (window.dataSdk) {
         const result = await window.dataSdk.init(dataHandler);
-        if (!result.isOk) {
-          showToast('ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
-        }
+        if (!result.isOk) showToast('ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
       }
-startStudentsListener();
+
+      startStudentsListener();
       updateStats();
       renderTable();
     }
-   /** =========================================================
- *  dataSdk Fallback (Firestore) สำหรับ GitHub Pages
- *  - แชร์ข้อมูลกลาง: ทุกคนเปิดลิงก์เห็นข้อมูลเดียวกัน
- *  - ใช้ collection: reports
- *  - ใช้ Anonymous Auth (ต้องเปิดใน Firebase Console)
- * ========================================================= */
-(function () {
-  if (window.dataSdk) return;
 
-  // ✅ 1) วาง firebaseConfig ของคุณตรงนี้
-  const firebaseConfig = {
-  apiKey: "AIzaSyC-kwdTAPH9Vdqy9PABUAjMv635aZLQh8s",
-  authDomain: "studentreport-management.firebaseapp.com",
-  databaseURL: "https://studentreport-management-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "studentreport-management",
-  storageBucket: "studentreport-management.firebasestorage.app",
-  messagingSenderId: "1016576456872",
-  appId: "1:1016576456872:web:0d82f2a82e99e53a4b6a9d",
-  measurementId: "G-5TK1HK3HBC"
-};
+    /** =========================================================
+     *  dataSdk Fallback (Firestore) สำหรับ GitHub Pages
+     * ========================================================= */
+    (function () {
+      if (window.dataSdk) return;
 
-  const ok = (value) => ({ isOk: true, value });
-  const err = (error) => ({ isOk: false, error });
+      const ok = (value) => ({ isOk: true, value });
+      const err = (error) => ({ isOk: false, error });
 
-  let handlerRef = null;
-  let unsubscribe = null;
+      let handlerRef = null;
+      let unsubscribe = null;
 
-  function initFirebaseOnce() {
-    if (!firebase?.apps?.length) firebase.initializeApp(firebaseConfig);
-  }
-
-  async function ensureAuth() {
-    try {
-      initFirebaseOnce();
-      const auth = firebase.auth();
-      if (!auth.currentUser) await auth.signInAnonymously();
-      return true;
-    } catch (e) {
-      console.error("Anonymous sign-in failed:", e);
-      return false;
-    }
-  }
-
-  function mapDoc(docSnap) {
-    const data = docSnap.data() || {};
-    data.__backendId = docSnap.id;
-    return data;
-  }
-
-  window.dataSdk = {
-    async init(handler) {
-      try {
-        handlerRef = handler;
-
-        const authed = await ensureAuth();
-        if (!authed) return err("Auth failed (check Anonymous sign-in).");
-
-        const db = firebase.firestore();
-
-        if (unsubscribe) unsubscribe();
-        unsubscribe = db.collection("reports").onSnapshot(
-          (snap) => {
-            const list = snap.docs.map(mapDoc);
-            handlerRef?.onDataChanged?.(list);
-          },
-          (e) => console.error("onSnapshot error:", e)
-        );
-
-        return ok(true);
-      } catch (e) {
-        return err(e?.message || "init failed");
+      function initFirebaseOnce() {
+        if (!firebase?.apps?.length) firebase.initializeApp(firebaseConfig);
       }
-    },
 
-    async create(report) {
-      try {
-        const authed = await ensureAuth();
-        if (!authed) return err("Auth failed");
-
-        const db = firebase.firestore();
-        const payload = { ...report };
-        Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
-
-        const ref = await db.collection("reports").add(payload);
-        return ok({ ...payload, __backendId: ref.id });
-      } catch (e) {
-        return err(e?.message || "create failed");
+      async function ensureAuth() {
+        try {
+          initFirebaseOnce();
+          const auth = firebase.auth();
+          if (!auth.currentUser) await auth.signInAnonymously();
+          return true;
+        } catch (e) {
+          console.error("Anonymous sign-in failed:", e);
+          return false;
+        }
       }
-    },
 
-    async update(report) {
-      try {
-        const authed = await ensureAuth();
-        if (!authed) return err("Auth failed");
-        if (!report?.__backendId) return err("missing __backendId");
-
-        const db = firebase.firestore();
-        const id = report.__backendId;
-
-        const payload = { ...report };
-        delete payload.__backendId;
-        Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
-
-        await db.collection("reports").doc(id).update(payload);
-        return ok(true);
-      } catch (e) {
-        return err(e?.message || "update failed");
+      function mapDoc(docSnap) {
+        const data = docSnap.data() || {};
+        data.__backendId = docSnap.id;
+        return data;
       }
-    },
 
-    async delete(id) {
-      try {
-        const authed = await ensureAuth();
-        if (!authed) return err("Auth failed");
-        if (!id) return err("missing id");
+      window.dataSdk = {
+        async init(handler) {
+          try {
+            handlerRef = handler;
 
-        const db = firebase.firestore();
-        await db.collection("reports").doc(id).delete();
-        return ok(true);
-      } catch (e) {
-        return err(e?.message || "delete failed");
-      }
-    }
-  };
-})();
+            const authed = await ensureAuth();
+            if (!authed) return err("Auth failed (check Anonymous sign-in).");
+
+            const db = firebase.firestore();
+
+            if (unsubscribe) unsubscribe();
+            unsubscribe = db.collection("reports").onSnapshot(
+              (snap) => {
+                const list = snap.docs.map(mapDoc);
+                handlerRef?.onDataChanged?.(list);
+              },
+              (e) => console.error("onSnapshot error:", e)
+            );
+
+            return ok(true);
+          } catch (e) {
+            return err(e?.message || "init failed");
+          }
+        },
+
+        async create(report) {
+          try {
+            const authed = await ensureAuth();
+            if (!authed) return err("Auth failed");
+
+            const db = firebase.firestore();
+            const payload = { ...report };
+            Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+            const ref = await db.collection("reports").add(payload);
+            return ok({ ...payload, __backendId: ref.id });
+          } catch (e) {
+            return err(e?.message || "create failed");
+          }
+        },
+
+        async update(report) {
+          try {
+            const authed = await ensureAuth();
+            if (!authed) return err("Auth failed");
+            if (!report?.__backendId) return err("missing __backendId");
+
+            const db = firebase.firestore();
+            const id = report.__backendId;
+
+            const payload = { ...report };
+            delete payload.__backendId;
+            Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+            await db.collection("reports").doc(id).update(payload);
+            return ok(true);
+          } catch (e) {
+            return err(e?.message || "update failed");
+          }
+        },
+
+        async delete(id) {
+          try {
+            const authed = await ensureAuth();
+            if (!authed) return err("Auth failed");
+            if (!id) return err("missing id");
+
+            const db = firebase.firestore();
+            await db.collection("reports").doc(id).delete();
+            return ok(true);
+          } catch (e) {
+            return err(e?.message || "delete failed");
+          }
+        }
+      };
+    })();
 
     document.addEventListener('DOMContentLoaded', () => {
-  initApp();
-  bindAddForm();     // ผูก submit ของ add-form
-  // bindEditForm / bindStudentForm ถ้าคุณทำเป็น IIFE อยู่แล้ว ไม่ต้องเรียกซ้ำ
-});
-
+      initApp();
+      bindAddForm();
+      // bindEditForm / bindStudentForm เป็น IIFE แล้ว
+    });
 
     // ============================================
     // UPDATE STATS
     // ============================================
     function updateStats() {
-  const total = allReports.length;
-  const uniqueStudents = new Set(allReports.map(r => r.student_id)).size;
+      const total = allReports.length;
+      const uniqueStudents = new Set(allReports.map(r => r.student_id)).size;
 
-  const ready = allReports.filter(r => normalizeStatus(r.status) === 'READY TO JOIN SHIP').length;
-  const onboard = allReports.filter(r => normalizeStatus(r.status) === 'ON BOARD').length;
-  const onleave = allReports.filter(r => isOnLeaveStatus(r.status)).length;
+      const ready = allReports.filter(r => normalizeStatus(r.status) === 'READY TO JOIN SHIP').length;
+      const onboard = allReports.filter(r => normalizeStatus(r.status) === 'ON BOARD').length;
+      const onleave = allReports.filter(r => isOnLeaveStatus(r.status)).length;
 
-  if (document.getElementById('stat-total')) document.getElementById('stat-total').textContent = total;
-  if (document.getElementById('stat-students')) document.getElementById('stat-students').textContent = uniqueStudents;
-  if (document.getElementById('stat-standby')) document.getElementById('stat-standby').textContent = ready; // ใช้ช่องเดิม แต่ค่าคือ READY
-  if (document.getElementById('stat-onboard')) document.getElementById('stat-onboard').textContent = onboard;
-  if (document.getElementById('stat-onleave')) document.getElementById('stat-onleave').textContent = onleave;
-}
-
+      if (document.getElementById('stat-total')) document.getElementById('stat-total').textContent = total;
+      if (document.getElementById('stat-students')) document.getElementById('stat-students').textContent = uniqueStudents;
+      if (document.getElementById('stat-standby')) document.getElementById('stat-standby').textContent = ready;
+      if (document.getElementById('stat-onboard')) document.getElementById('stat-onboard').textContent = onboard;
+      if (document.getElementById('stat-onleave')) document.getElementById('stat-onleave').textContent = onleave;
+    }
 
     // ============================================
     // RENDER TABLE
@@ -1171,18 +1110,12 @@ startStudentsListener();
       }
 
       filteredReports = filteredReports.sort((a, b) => {
-        if (a.student_id !== b.student_id) {
-          return (a.student_id || '').localeCompare((b.student_id || ''));
-        }
-        if (a.academic_year !== b.academic_year) {
-          return (b.academic_year || '').localeCompare((a.academic_year || ''));
-        }
+        if (a.student_id !== b.student_id) return (a.student_id || '').localeCompare((b.student_id || ''));
+        if (a.academic_year !== b.academic_year) return (b.academic_year || '').localeCompare((a.academic_year || ''));
         return (b.trip_seq || 0) - (a.trip_seq || 0);
       });
 
-      if (filterCount) {
-        filterCount.textContent = `แสดง ${filteredReports.length} จาก ${allReports.length} ทริป`;
-      }
+      if (filterCount) filterCount.textContent = `แสดง ${filteredReports.length} จาก ${allReports.length} ทริป`;
 
       if (filteredReports.length === 0) {
         tbody.innerHTML = '';
@@ -1213,32 +1146,31 @@ startStudentsListener();
             <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.ship_name || '')}</td>
             <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.company_name || '')}</td>
             <td class="px-4 py-4">
-  <select onchange="updateStatus('${report.__backendId}', this.value)"
-          class="px-3 py-1.5 rounded-lg text-sm font-medium border-0 cursor-pointer ${getStatusColorClass(displayStatus)}">
-    <option value="NO REQUEST TO JOIN THE SHIP" ${displayStatus === 'NO REQUEST TO JOIN THE SHIP' ? 'selected' : ''}>🚫 NO REQUEST TO JOIN THE SHIP</option>
-    <option value="THE VOYAGE PROCESS" ${displayStatus === 'THE VOYAGE PROCESS' ? 'selected' : ''}>🌊 THE VOYAGE PROCESS</option>
-    <option value="READY TO JOIN SHIP" ${displayStatus === 'READY TO JOIN SHIP' ? 'selected' : ''}>⏳ READY TO JOIN SHIP</option>
-    <option value="ON BOARD" ${displayStatus === 'ON BOARD' ? 'selected' : ''}>✅ ON BOARD</option>
-    <option value="ON LEAVE - GRADUATION PROCESS" ${displayStatus === 'ON LEAVE - GRADUATION PROCESS' ? 'selected' : ''}>🎓 ON LEAVE - GRADUATION PROCESS</option>
-    <option value="ON LEAVE - OWN BUSINESS" ${displayStatus === 'ON LEAVE - OWN BUSINESS' ? 'selected' : ''}>💼 ON LEAVE - OWN BUSINESS</option>
-    <option value="ON LEAVE - WAIT FOR REJOIN" ${displayStatus === 'ON LEAVE - WAIT FOR REJOIN' ? 'selected' : ''}>⏸️ ON LEAVE - WAIT FOR REJOIN</option>
-    <option value="GRADUATED" ${displayStatus === 'GRADUATED' ? 'selected' : ''}>🎉 GRADUATED</option>
-  </select>
-</td>
-
+              <select onchange="updateStatus('${report.__backendId}', this.value)"
+                      class="px-3 py-1.5 rounded-lg text-sm font-medium border-0 cursor-pointer ${getStatusColorClass(displayStatus)}">
+                <option value="NO REQUEST TO JOIN THE SHIP" ${displayStatus === 'NO REQUEST TO JOIN THE SHIP' ? 'selected' : ''}>🚫 NO REQUEST TO JOIN THE SHIP</option>
+                <option value="THE VOYAGE PROCESS" ${displayStatus === 'THE VOYAGE PROCESS' ? 'selected' : ''}>🌊 THE VOYAGE PROCESS</option>
+                <option value="READY TO JOIN SHIP" ${displayStatus === 'READY TO JOIN SHIP' ? 'selected' : ''}>⏳ READY TO JOIN SHIP</option>
+                <option value="ON BOARD" ${displayStatus === 'ON BOARD' ? 'selected' : ''}>✅ ON BOARD</option>
+                <option value="ON LEAVE - GRADUATION PROCESS" ${displayStatus === 'ON LEAVE - GRADUATION PROCESS' ? 'selected' : ''}>🎓 ON LEAVE - GRADUATION PROCESS</option>
+                <option value="ON LEAVE - OWN BUSINESS" ${displayStatus === 'ON LEAVE - OWN BUSINESS' ? 'selected' : ''}>💼 ON LEAVE - OWN BUSINESS</option>
+                <option value="ON LEAVE - WAIT FOR REJOIN" ${displayStatus === 'ON LEAVE - WAIT FOR REJOIN' ? 'selected' : ''}>⏸️ ON LEAVE - WAIT FOR REJOIN</option>
+                <option value="GRADUATED" ${displayStatus === 'GRADUATED' ? 'selected' : ''}>🎉 GRADUATED</option>
+              </select>
+            </td>
             <td class="px-4 py-4 text-sm text-gray-600">${escapeHtml(report.notes || '-')}</td>
             <td class="px-4 py-4 text-sm">
-  <div class="flex gap-2">
-    <button onclick="openEditModal('${report.__backendId}')"
-            class="px-3 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 font-medium">
-      ✏️ แก้ไข
-    </button>
-    <button onclick="deleteReport('${report.__backendId}')"
-            class="px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium">
-      🗑️ ลบ
-    </button>
-  </div>
-</td>
+              <div class="flex gap-2">
+                <button onclick="openEditModal('${report.__backendId}')"
+                        class="px-3 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 font-medium">
+                  ✏️ แก้ไข
+                </button>
+                <button onclick="deleteReport('${report.__backendId}')"
+                        class="px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium">
+                  🗑️ ลบ
+                </button>
+              </div>
+            </td>
           </tr>
         `;
       }).join('');
@@ -1252,181 +1184,163 @@ startStudentsListener();
       if (row) {
         row.classList.add('highlight-duplicate');
         row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => {
-          row.classList.remove('highlight-duplicate');
-        }, 3000);
+        setTimeout(() => row.classList.remove('highlight-duplicate'), 3000);
       }
     }
 
     // ============================================
-    // UPDATE STATUS
+    // EDIT / DELETE
     // ============================================
-   let editingBackendId = null;
+    let editingBackendId = null;
 
-function openEditModal(backendId) {
-  const report = allReports.find(r => r.__backendId === backendId);
-  if (!report) return;
+    function openEditModal(backendId) {
+      const report = allReports.find(r => r.__backendId === backendId);
+      if (!report) return;
 
-  editingBackendId = backendId;
+      editingBackendId = backendId;
 
-  // ===== Readonly identity (show all) =====
-  const setVal = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.value = val ?? '';
-  };
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val ?? '';
+      };
 
-  setVal('edit-student-id', report.student_id || '');
-  setVal('edit-student-name', report.student_name || '');
-  setVal('edit-academic-year', report.academic_year || '');
-  setVal('edit-department', report.department || '');
-  setVal('edit-trip-seq', String(report.trip_seq ?? ''));
-  setVal('edit-trip-id', report.trip_id || '');
-  setVal('edit-submitted-at', report.submitted_at || '');
+      setVal('edit-student-id', report.student_id || '');
+      setVal('edit-student-name', report.student_name || '');
+      setVal('edit-academic-year', report.academic_year || '');
+      setVal('edit-department', report.department || '');
+      setVal('edit-trip-seq', String(report.trip_seq ?? ''));
+      setVal('edit-trip-id', report.trip_id || '');
+      setVal('edit-submitted-at', report.submitted_at || '');
 
-  // ===== Editable fields =====
-  setVal('edit-boarding-date', report.boarding_date || '');
-  setVal('edit-return-date', report.return_date || '');
-  setVal('edit-join-date', report.join_date || '');
-  setVal('edit-leave-date', report.leave_date || '');
-  setVal('edit-ship-name', report.ship_name || '');
-  setVal('edit-company-name', report.company_name || '');
-  setVal('edit-trip-number', String(report.trip_number ?? 1));
-  setVal('edit-work-details', report.work_details || '');
-  setVal('edit-notes', report.notes || '');
+      setVal('edit-boarding-date', report.boarding_date || '');
+      setVal('edit-return-date', report.return_date || '');
+      setVal('edit-join-date', report.join_date || '');
+      setVal('edit-leave-date', report.leave_date || '');
+      setVal('edit-ship-name', report.ship_name || '');
+      setVal('edit-company-name', report.company_name || '');
+      setVal('edit-trip-number', String(report.trip_number ?? 1));
+      setVal('edit-work-details', report.work_details || '');
+      setVal('edit-notes', report.notes || '');
 
-  // status (normalize แล้วเลือกให้ตรง)
-  const st = normalizeStatus(report.status);
-  const statusEl = document.getElementById('edit-status');
-  if (statusEl) statusEl.value = st;
+      const st = normalizeStatus(report.status);
+      const statusEl = document.getElementById('edit-status');
+      if (statusEl) statusEl.value = st;
 
-  document.getElementById('edit-modal').classList.remove('hidden');
-}
-function closeEditModal() {
-  editingBackendId = null;
-  document.getElementById('edit-modal').classList.add('hidden');
-}
+      document.getElementById('edit-modal').classList.remove('hidden');
+    }
 
-async function deleteReport(backendId) {
-  const report = allReports.find(r => r.__backendId === backendId);
-  if (!report) return;
+    function closeEditModal() {
+      editingBackendId = null;
+      document.getElementById('edit-modal').classList.add('hidden');
+    }
 
-  const okConfirm = confirm(
-    `ต้องการลบรายการนี้ใช่ไหม?\n` +
-    `${report.student_id || ''} ${report.student_name || ''}\n` +
-    `เรือ: ${report.ship_name || '-'}\n` +
-    `ช่วง: ${report.boarding_date || '-'} ถึง ${report.return_date || '-'}\n\n` +
-    `*ลบแล้วกู้คืนไม่ได้*`
-  );
-  if (!okConfirm) return;
+    async function deleteReport(backendId) {
+      const report = allReports.find(r => r.__backendId === backendId);
+      if (!report) return;
 
-  const delFn = window.dataSdk?.delete;
-  if (!delFn) {
-    showToast('ระบบนี้ยังไม่รองรับการลบ', 'error');
-    return;
-  }
+      const okConfirm = confirm(
+        `ต้องการลบรายการนี้ใช่ไหม?\n` +
+        `${report.student_id || ''} ${report.student_name || ''}\n` +
+        `เรือ: ${report.ship_name || '-'}\n` +
+        `ช่วง: ${report.boarding_date || '-'} ถึง ${report.return_date || '-'}\n\n` +
+        `*ลบแล้วกู้คืนไม่ได้*`
+      );
+      if (!okConfirm) return;
 
-  const result = await delFn.call(window.dataSdk, backendId);
-  if (result?.isOk) showToast('ลบสำเร็จ', 'success');
-  else {
-    showToast('ลบไม่สำเร็จ กรุณาลองใหม่', 'error');
-    console.error('Delete error:', result?.error);
-  }
-}
+      const delFn = window.dataSdk?.delete;
+      if (!delFn) return showToast('ระบบนี้ยังไม่รองรับการลบ', 'error');
 
-(function bindEditForm(){
-  const ef = document.getElementById('edit-form');
-  if (!ef) {
-    document.addEventListener('DOMContentLoaded', bindEditForm, { once: true });
-    return;
-  }
-  if (ef.__bound) return;
-  ef.__bound = true;
+      const result = await delFn.call(window.dataSdk, backendId);
+      if (result?.isOk) showToast('ลบสำเร็จ', 'success');
+      else {
+        showToast('ลบไม่สำเร็จ กรุณาลองใหม่', 'error');
+        console.error('Delete error:', result?.error);
+      }
+    }
 
-  ef.addEventListener('submit', async function (e) {
-  e.preventDefault();
-  if (!editingBackendId) return;
+    (function bindEditForm() {
+      const ef = document.getElementById('edit-form');
+      if (!ef) {
+        document.addEventListener('DOMContentLoaded', bindEditForm, { once: true });
+        return;
+      }
+      if (ef.__bound) return;
+      ef.__bound = true;
 
-  const old = allReports.find(r => r.__backendId === editingBackendId);
-  if (!old) return;
+      ef.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (!editingBackendId) return;
 
-  const boarding = document.getElementById('edit-boarding-date').value;
-  const ret = document.getElementById('edit-return-date').value;
-  if (!boarding || !ret) return showToast('กรุณากรอกวันที่ให้ครบ', 'error');
-  if (new Date(ret) < new Date(boarding)) return showToast('วันที่กลับต้องมากกว่าหรือเท่ากับวันลงเรือ', 'error');
+        const old = allReports.find(r => r.__backendId === editingBackendId);
+        if (!old) return;
 
-  const updated = {
-    ...old,
+        const boarding = document.getElementById('edit-boarding-date').value;
+        const ret = document.getElementById('edit-return-date').value;
 
-    // วันที่หลัก
-    boarding_date: boarding,
-    return_date: ret,
+        if (!boarding || !ret) return showToast('กรุณากรอกวันที่ให้ครบ', 'error');
+        if (new Date(ret) < new Date(boarding)) return showToast('วันที่กลับต้องมากกว่าหรือเท่ากับวันลงเรือ', 'error');
 
-    // วันที่เสริม
-    join_date: document.getElementById('edit-join-date').value || '',
-    leave_date: document.getElementById('edit-leave-date').value || '',
+        const updated = {
+          ...old,
+          boarding_date: boarding,
+          return_date: ret,
+          join_date: document.getElementById('edit-join-date').value || '',
+          leave_date: document.getElementById('edit-leave-date').value || '',
+          ship_name: document.getElementById('edit-ship-name').value || '',
+          company_name: document.getElementById('edit-company-name').value || '',
+          trip_number: parseInt(document.getElementById('edit-trip-number').value) || 1,
+          work_details: document.getElementById('edit-work-details').value || '',
+          notes: document.getElementById('edit-notes').value || '',
+          status: normalizeStatus(document.getElementById('edit-status').value || old.status)
+        };
 
-    // เรือ/บริษัท/ลงลำที่
-    ship_name: document.getElementById('edit-ship-name').value || '',
-    company_name: document.getElementById('edit-company-name').value || '',
-    trip_number: parseInt(document.getElementById('edit-trip-number').value) || 1,
+        const dup = allReports.find(r =>
+          r.__backendId !== updated.__backendId &&
+          r.student_id === updated.student_id &&
+          r.academic_year === updated.academic_year &&
+          r.ship_name === updated.ship_name &&
+          r.boarding_date === updated.boarding_date &&
+          r.return_date === updated.return_date
+        );
+        if (dup) {
+          showToast('ซ้ำกับรายการเดิมในระบบ', 'error');
+          highlightDuplicateInTable(dup.__backendId);
+          return;
+        }
 
-    // รายละเอียด/หมายเหตุ
-    work_details: document.getElementById('edit-work-details').value || '',
-    notes: document.getElementById('edit-notes').value || '',
+        const overlaps = allReports
+          .filter(r => r.__backendId !== updated.__backendId)
+          .filter(r => r.student_id === updated.student_id && r.academic_year === updated.academic_year)
+          .filter(r => isDateOverlap(updated.boarding_date, updated.return_date, r.boarding_date, r.return_date));
 
-    // สถานะ
-    status: normalizeStatus(document.getElementById('edit-status').value || old.status)
-  };
+        if (overlaps.length > 0) {
+          const okOverlap = confirm('ช่วงวันที่แก้ไข "ทับซ้อน" กับทริปเดิมของนักศึกษาในปีเดียวกัน\nต้องการบันทึกต่อไหม?');
+          if (!okOverlap) return;
+        }
 
-  // กันซ้ำ (ยกเว้นตัวเอง)
-  const dup = allReports.find(r =>
-    r.__backendId !== updated.__backendId &&
-    r.student_id === updated.student_id &&
-    r.academic_year === updated.academic_year &&
-    r.ship_name === updated.ship_name &&
-    r.boarding_date === updated.boarding_date &&
-    r.return_date === updated.return_date
-  );
-  if (dup) {
-    showToast('ซ้ำกับรายการเดิมในระบบ', 'error');
-    highlightDuplicateInTable(dup.__backendId);
-    return;
-  }
-
-  // เตือนทับซ้อน (คงพฤติกรรมเดิม)
-  const overlaps = allReports
-    .filter(r => r.__backendId !== updated.__backendId)
-    .filter(r => r.student_id === updated.student_id && r.academic_year === updated.academic_year)
-    .filter(r => isDateOverlap(updated.boarding_date, updated.return_date, r.boarding_date, r.return_date));
-
-  if (overlaps.length > 0) {
-    const okOverlap = confirm('ช่วงวันที่แก้ไข "ทับซ้อน" กับทริปเดิมของนักศึกษาในปีเดียวกัน\nต้องการบันทึกต่อไหม?');
-    if (!okOverlap) return;
-  }
-
-  const result = await window.dataSdk.update(updated);
-  if (result?.isOk) {
-    showToast('แก้ไขสำเร็จ', 'success');
-    closeEditModal();
-  } else {
-    showToast('แก้ไขไม่สำเร็จ', 'error');
-    console.error('Edit error:', result?.error);
-  }
-});
-})(); // ✅ FIX: close bindEditForm IIFE
+        const result = await window.dataSdk.update(updated);
+        if (result?.isOk) {
+          showToast('แก้ไขสำเร็จ', 'success');
+          closeEditModal();
+        } else {
+          showToast('แก้ไขไม่สำเร็จ', 'error');
+          console.error('Edit error:', result?.error);
+        }
+      });
+    })();
 
     async function updateStatus(backendId, newStatus) {
-  const report = allReports.find(r => r.__backendId === backendId);
-  if (!report) return;
+      const report = allReports.find(r => r.__backendId === backendId);
+      if (!report) return;
 
-  const updatedReport = { ...report, status: normalizeStatus(newStatus) };
+      const updatedReport = { ...report, status: normalizeStatus(newStatus) };
 
-  if (window.dataSdk) {
-    const result = await window.dataSdk.update(updatedReport);
-    if (result?.isOk) showToast('อัปเดตสถานะสำเร็จ', 'success');
-    else showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
-  }
-}
+      if (window.dataSdk) {
+        const result = await window.dataSdk.update(updatedReport);
+        if (result?.isOk) showToast('อัปเดตสถานะสำเร็จ', 'success');
+        else showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+      }
+    }
 
     // ============================================
     // MODAL FUNCTIONS
@@ -1459,8 +1373,7 @@ async function deleteReport(backendId) {
         studentSelect.disabled = true;
       }
 
-      const fields = ['form-student-id', 'form-student-name', 'form-department'];
-      fields.forEach(id => {
+      ['form-student-id', 'form-student-name', 'form-department'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
@@ -1547,8 +1460,7 @@ async function deleteReport(backendId) {
     }
 
     function clearStudentInfo() {
-      const fields = ['form-student-id', 'form-student-name', 'form-department'];
-      fields.forEach(id => {
+      ['form-student-id', 'form-student-name', 'form-department'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
@@ -1573,7 +1485,8 @@ async function deleteReport(backendId) {
           <div class="flex items-start gap-4 mb-4">
             <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
               <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
               </svg>
             </div>
             <div class="flex-1">
@@ -1594,10 +1507,12 @@ async function deleteReport(backendId) {
           </div>
 
           <div class="flex gap-3">
-            <button onclick="cancelOverlapSubmit()" class="flex-1 px-4 py-2 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
+            <button onclick="cancelOverlapSubmit()"
+              class="flex-1 px-4 py-2 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
               ❌ ยกเลิก / แก้ไขวันที่
             </button>
-            <button onclick="confirmOverlapSubmit()" class="flex-1 px-4 py-2 rounded-xl btn-warning text-white font-medium">
+            <button onclick="confirmOverlapSubmit()"
+              class="flex-1 px-4 py-2 rounded-xl btn-warning text-white font-medium">
               ✅ ยืนยันบันทึกทับซ้อน
             </button>
           </div>
@@ -1620,81 +1535,77 @@ async function deleteReport(backendId) {
       pendingOverlapConfirmed = true;
       const modal = document.getElementById('overlap-warning-modal');
       if (modal) modal.remove();
-
-      if (pendingTripData) {
-        submitTrip(pendingTripData);
-      }
+      if (pendingTripData) submitTrip(pendingTripData);
     }
 
     // ============================================
     // FORM SUBMISSION
     // ============================================
     function bindAddForm() {
-  const f = document.getElementById('add-form');
-  if (!f || f.__bound) return;
-  f.__bound = true;
+      const f = document.getElementById('add-form');
+      if (!f || f.__bound) return;
+      f.__bound = true;
 
-  f.addEventListener('submit', async function(e) {
-      e.preventDefault();
+      f.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (isSubmitting) return;
 
-      if (isSubmitting) return;
+        const studentId = document.getElementById('form-student-id').value;
+        const studentName = document.getElementById('form-student-name').value;
+        const academicYear = document.getElementById('form-academic-year').value;
+        const department = document.getElementById('form-department').value;
+        const boardingDate = document.getElementById('form-boarding-date').value;
+        const returnDate = document.getElementById('form-return-date').value;
 
-      const studentId = document.getElementById('form-student-id').value;
-      const studentName = document.getElementById('form-student-name').value;
-      const academicYear = document.getElementById('form-academic-year').value;
-      const department = document.getElementById('form-department').value;
-      const boardingDate = document.getElementById('form-boarding-date').value;
-      const returnDate = document.getElementById('form-return-date').value;
+        if (!studentId || !studentName || !academicYear || !department) {
+          showToast('กรุณาเลือกนักศึกษา', 'error');
+          return;
+        }
 
-      if (!studentId || !studentName || !academicYear || !department) {
-        showToast('กรุณาเลือกนักศึกษา', 'error');
-        return;
-      }
+        if (!boardingDate || !returnDate) {
+          showToast('กรุณากรอกวันที่ลงเรือและวันที่กลับ', 'error');
+          return;
+        }
 
-      if (!boardingDate || !returnDate) {
-        showToast('กรุณากรอกวันที่ลงเรือและวันที่กลับ', 'error');
-        return;
-      }
+        if (new Date(returnDate) < new Date(boardingDate)) {
+          showToast('วันที่กลับต้องมากกว่าหรือเท่ากับวันลงเรือ', 'error');
+          return;
+        }
 
-      if (new Date(returnDate) < new Date(boardingDate)) {
-        showToast('วันที่กลับต้องมากกว่าหรือเท่ากับวันลงเรือ', 'error');
-        return;
-      }
+        const formData = {
+          student_id: studentId,
+          student_name: studentName,
+          academic_year: academicYear,
+          department: department,
+          boarding_date: boardingDate,
+          return_date: returnDate,
+          join_date: document.getElementById('form-join-date').value || '',
+          ship_name: document.getElementById('form-ship-name').value || '',
+          company_name: document.getElementById('form-company-name').value || '',
+          leave_date: document.getElementById('form-leave-date').value || '',
+          trip_number: parseInt(document.getElementById('form-trip-number').value) || 1,
+          work_details: document.getElementById('form-work-details').value || '',
+          notes: document.getElementById('form-notes').value || '',
+          status: 'READY TO JOIN SHIP',
+          submitted_at: new Date().toISOString()
+        };
 
-      const formData = {
-        student_id: studentId,
-        student_name: studentName,
-        academic_year: academicYear,
-        department: department,
-        boarding_date: boardingDate,
-        return_date: returnDate,
-        join_date: document.getElementById('form-join-date').value || '',
-        ship_name: document.getElementById('form-ship-name').value || '',
-        company_name: document.getElementById('form-company-name').value || '',
-        leave_date: document.getElementById('form-leave-date').value || '',
-        trip_number: parseInt(document.getElementById('form-trip-number').value) || 1,
-        work_details: document.getElementById('form-work-details').value || '',
-        notes: document.getElementById('form-notes').value || '',
-        status: 'READY TO JOIN SHIP',  // ✅ default status (UPPERCASE)
-        submitted_at: new Date().toISOString()
-      };
+        const duplicate = duplicateCheck(allReports, formData);
+        if (duplicate) {
+          showToast('มีทริปนี้อยู่แล้วในระบบ กรุณาตรวจสอบ', 'error');
+          highlightDuplicateInTable(duplicate.__backendId);
+          return;
+        }
 
-      const duplicate = duplicateCheck(allReports, formData);
-      if (duplicate) {
-        showToast('มีทริปนี้อยู่แล้วในระบบ กรุณาตรวจสอบ', 'error');
-        highlightDuplicateInTable(duplicate.__backendId);
-        return;
-      }
+        const overlapping = findOverlappingTrips(allReports, formData);
+        if (overlapping.length > 0 && !pendingOverlapConfirmed) {
+          showOverlapWarning(overlapping, formData);
+          return;
+        }
 
-      const overlapping = findOverlappingTrips(allReports, formData);
-      if (overlapping.length > 0 && !pendingOverlapConfirmed) {
-        showOverlapWarning(overlapping, formData);
-        return;
-      }
-
-      await submitTrip(formData);
-    });
-}
+        await submitTrip(formData);
+      });
+    }
 
     async function submitTrip(formData) {
       if (allReports.length >= 999) {
@@ -1728,7 +1639,7 @@ async function deleteReport(backendId) {
 
       isSubmitting = false;
       if (submitBtn) submitBtn.disabled = false;
-      if (submitText) submitText.textContent = 'บันทึกทริป';
+      if (submitText) submitText.textContent = 'บันทึกข้อมูล';
       if (submitSpinner) submitSpinner.classList.add('hidden');
 
       pendingTripData = null;
@@ -1759,43 +1670,39 @@ async function deleteReport(backendId) {
     }
 
     function countStatuses(reports) {
-  const base = {
-    total: 0,
-    STANDBYFORSHIP: 0,
-    'READY TO JOIN SHIP': 0,
-    'ON BOARD': 0,
-    'ON LEAVE - GRADUATION PROCESS': 0,
-    'ON LEAVE - WAIT FOR REJOIN': 0,
-    'ON LEAVE - OWN BUSINESS': 0,
-    GRADUATED: 0,
-    GRADUATION: 0
-  };
+      const base = {
+        total: 0,
+        STANDBYFORSHIP: 0,
+        'READY TO JOIN SHIP': 0,
+        'ON BOARD': 0,
+        'ON LEAVE - GRADUATION PROCESS': 0,
+        'ON LEAVE - WAIT FOR REJOIN': 0,
+        'ON LEAVE - OWN BUSINESS': 0,
+        GRADUATED: 0,
+        GRADUATION: 0
+      };
 
-  reports.forEach(r => {
-    base.total++;
-    const s = normalizeStatus(r.status);
-    if (base[s] !== undefined) base[s]++;
+      reports.forEach(r => {
+        base.total++;
+        const s = normalizeStatus(r.status);
+        if (base[s] !== undefined) base[s]++;
 
-    // alias fields for UI labels
-    if (s === 'READY TO JOIN SHIP') base.STANDBYFORSHIP++;
-    if (s === 'GRADUATED') base.GRADUATION++;
-  });
+        if (s === 'READY TO JOIN SHIP') base.STANDBYFORSHIP++;
+        if (s === 'GRADUATED') base.GRADUATION++;
+      });
 
-  base.ON_LEAVE_TOTAL =
-    base['ON LEAVE - GRADUATION PROCESS'] +
-    base['ON LEAVE - WAIT FOR REJOIN'] +
-    base['ON LEAVE - OWN BUSINESS'];
+      base.ON_LEAVE_TOTAL =
+        base['ON LEAVE - GRADUATION PROCESS'] +
+        base['ON LEAVE - WAIT FOR REJOIN'] +
+        base['ON LEAVE - OWN BUSINESS'];
 
-  return base;
-}
+      return base;
+    }
 
     function renderBreakdownTable(groupCounts, groupLabel) {
       const rows = Object.entries(groupCounts);
-      if (rows.length === 0) {
-        return `<p class="text-gray-500">ยังไม่มีข้อมูล</p>`;
-      }
+      if (rows.length === 0) return `<p class="text-gray-500">ยังไม่มีข้อมูล</p>`;
 
-      // sort desc by total
       rows.sort((a, b) => (b[1].total || 0) - (a[1].total || 0));
 
       return `
@@ -1837,11 +1744,7 @@ async function deleteReport(backendId) {
       const summaryDate = document.getElementById('summary-date');
       if (summaryDate) {
         summaryDate.textContent = new Date().toLocaleDateString('th-TH', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
+          year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
       }
 
@@ -1851,7 +1754,6 @@ async function deleteReport(backendId) {
       const yearEl = document.getElementById('summary-by-year');
       const warnEl = document.getElementById('summary-warnings');
 
-      // Overall counts
       const overallCounts = countStatuses(allReports);
       const uniqueStudents = new Set(allReports.map(r => r.student_id)).size;
 
@@ -1898,9 +1800,7 @@ async function deleteReport(backendId) {
         `;
       }
 
-      // Top insights
       if (topEl) {
-        // Top 5 companies
         const companyCount = {};
         allReports.forEach(r => {
           const name = (r.company_name || '').trim();
@@ -1909,7 +1809,6 @@ async function deleteReport(backendId) {
         });
         const topCompanies = Object.entries(companyCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-        // Top 5 ships
         const shipCount = {};
         allReports.forEach(r => {
           const name = (r.ship_name || '').trim();
@@ -1918,16 +1817,12 @@ async function deleteReport(backendId) {
         });
         const topShips = Object.entries(shipCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-        // Multi-trip students (Top 10) + latest status (by latest boarding_date)
         const studentsMap = {};
         allReports.forEach(r => {
           const sid = r.student_id || '';
           if (!sid) return;
-          if (!studentsMap[sid]) {
-            studentsMap[sid] = { id: sid, name: r.student_name || '', trips: [] };
-          }
+          if (!studentsMap[sid]) studentsMap[sid] = { id: sid, name: r.student_name || '', trips: [] };
           studentsMap[sid].trips.push(r);
-          // keep latest known name if missing
           if (!studentsMap[sid].name && r.student_name) studentsMap[sid].name = r.student_name;
         });
 
@@ -1959,76 +1854,69 @@ async function deleteReport(backendId) {
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <p class="font-semibold text-gray-800 mb-2">🏢 Top 5 บริษัท (ตามจำนวนทริป)</p>
-              ${
-                topCompanies.length === 0
-                  ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>`
-                  : `<ol class="space-y-1 text-sm">
-                      ${topCompanies.map(([name, cnt], idx) => `
-                        <li class="flex justify-between">
-                          <span class="text-gray-700">${idx + 1}. ${escapeHtml(name)}</span>
-                          <span class="font-semibold text-indigo-600">${cnt}</span>
-                        </li>
-                      `).join('')}
-                    </ol>`
+              ${topCompanies.length === 0
+                ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>`
+                : `<ol class="space-y-1 text-sm">
+                    ${topCompanies.map(([name, cnt], idx) => `
+                      <li class="flex justify-between">
+                        <span class="text-gray-700">${idx + 1}. ${escapeHtml(name)}</span>
+                        <span class="font-semibold text-indigo-600">${cnt}</span>
+                      </li>
+                    `).join('')}
+                  </ol>`
               }
             </div>
 
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <p class="font-semibold text-gray-800 mb-2">🚢 Top 5 เรือ (ตามจำนวนทริป)</p>
-              ${
-                topShips.length === 0
-                  ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>`
-                  : `<ol class="space-y-1 text-sm">
-                      ${topShips.map(([name, cnt], idx) => `
-                        <li class="flex justify-between">
-                          <span class="text-gray-700">${idx + 1}. ${escapeHtml(name)}</span>
-                          <span class="font-semibold text-teal-600">${cnt}</span>
-                        </li>
-                      `).join('')}
-                    </ol>`
+              ${topShips.length === 0
+                ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>`
+                : `<ol class="space-y-1 text-sm">
+                    ${topShips.map(([name, cnt], idx) => `
+                      <li class="flex justify-between">
+                        <span class="text-gray-700">${idx + 1}. ${escapeHtml(name)}</span>
+                        <span class="font-semibold text-teal-600">${cnt}</span>
+                      </li>
+                    `).join('')}
+                  </ol>`
               }
             </div>
           </div>
 
           <div class="bg-white rounded-lg p-4 border border-gray-200">
             <p class="font-semibold text-gray-800 mb-2">🔄 นักศึกษาที่มีหลายทริป (Top 10) + สถานะล่าสุด</p>
-            ${
-              multiTripTop.length === 0
-                ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>`
-                : `
-                  <div class="overflow-x-auto">
-                    <table class="min-w-[760px] w-full text-sm">
-                      <thead>
-                        <tr class="bg-gray-50 text-gray-700">
-                          <th class="text-left px-3 py-2 font-semibold">รหัส</th>
-                          <th class="text-left px-3 py-2 font-semibold">ชื่อ</th>
-                          <th class="text-right px-3 py-2 font-semibold">จำนวนทริป</th>
-                          <th class="text-left px-3 py-2 font-semibold">สถานะล่าสุด</th>
-                          <th class="text-left px-3 py-2 font-semibold">Boarding ล่าสุด</th>
-                        </tr>
-                      </thead>
-                      <tbody class="divide-y divide-gray-100">
-                        ${multiTripTop.map(s => `
-                          <tr>
-                            <td class="px-3 py-2 text-gray-800 font-medium">${escapeHtml(s.id)}</td>
-                            <td class="px-3 py-2 text-gray-700">${escapeHtml(s.name)}</td>
-                            <td class="px-3 py-2 text-right font-semibold text-purple-700">${s.count}</td>
-                            <td class="px-3 py-2">
-                              <span class="px-2 py-1 rounded text-xs ${getStatusColorClass(s.latestStatus)}">${s.latestStatus}</span>
-                            </td>
-                            <td class="px-3 py-2 text-gray-600">${formatDateThai(s.latestBoarding)}</td>
-                          </tr>
-                        `).join('')}
-                      </tbody>
-                    </table>
-                  </div>
-                `
-            }
+            ${multiTripTop.length === 0 ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>` : `
+              <div class="overflow-x-auto">
+                <table class="min-w-[760px] w-full text-sm">
+                  <thead>
+                    <tr class="bg-gray-50 text-gray-700">
+                      <th class="text-left px-3 py-2 font-semibold">รหัส</th>
+                      <th class="text-left px-3 py-2 font-semibold">ชื่อ</th>
+                      <th class="text-right px-3 py-2 font-semibold">จำนวนทริป</th>
+                      <th class="text-left px-3 py-2 font-semibold">สถานะล่าสุด</th>
+                      <th class="text-left px-3 py-2 font-semibold">Boarding ล่าสุด</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    ${multiTripTop.map(s => `
+                      <tr>
+                        <td class="px-3 py-2 text-gray-800 font-medium">${escapeHtml(s.id)}</td>
+                        <td class="px-3 py-2 text-gray-700">${escapeHtml(s.name)}</td>
+                        <td class="px-3 py-2 text-right font-semibold text-purple-700">${s.count}</td>
+                        <td class="px-3 py-2">
+                          <span class="px-2 py-1 rounded text-xs ${getStatusColorClass(s.latestStatus)}">${s.latestStatus}</span>
+                        </td>
+                        <td class="px-3 py-2 text-gray-600">${formatDateThai(s.latestBoarding)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `}
           </div>
         `;
       }
 
-      // Breakdown by department
       const deptGroups = {};
       allReports.forEach(r => {
         const dept = (r.department || '').trim() || 'ไม่ระบุสาขา';
@@ -2036,14 +1924,9 @@ async function deleteReport(backendId) {
         deptGroups[dept].push(r);
       });
       const deptCounts = {};
-      Object.entries(deptGroups).forEach(([dept, reps]) => {
-        deptCounts[dept] = countStatuses(reps);
-      });
-      if (deptEl) {
-        deptEl.innerHTML = renderBreakdownTable(deptCounts, 'สาขา');
-      }
+      Object.entries(deptGroups).forEach(([dept, reps]) => { deptCounts[dept] = countStatuses(reps); });
+      if (deptEl) deptEl.innerHTML = renderBreakdownTable(deptCounts, 'สาขา');
 
-      // Breakdown by academic year
       const yearGroups = {};
       allReports.forEach(r => {
         const y = (r.academic_year || '').trim() || 'ไม่ระบุปี';
@@ -2051,29 +1934,17 @@ async function deleteReport(backendId) {
         yearGroups[y].push(r);
       });
       const yearCounts = {};
-      Object.entries(yearGroups).forEach(([y, reps]) => {
-        yearCounts[y] = countStatuses(reps);
-      });
-      if (yearEl) {
-        yearEl.innerHTML = renderBreakdownTable(yearCounts, 'ปีการศึกษา');
-      }
+      Object.entries(yearGroups).forEach(([y, reps]) => { yearCounts[y] = countStatuses(reps); });
+      if (yearEl) yearEl.innerHTML = renderBreakdownTable(yearCounts, 'ปีการศึกษา');
 
-      // Data Quality / Warnings
       let invalidDateCount = 0;
       let returnBeforeBoardingCount = 0;
 
       allReports.forEach(r => {
         const bd = safeParseDate(r.boarding_date);
         const rd = safeParseDate(r.return_date);
-
-        if (!bd || !rd) {
-          invalidDateCount++;
-          return;
-        }
-
-        if (rd.getTime() < bd.getTime()) {
-          returnBeforeBoardingCount++;
-        }
+        if (!bd || !rd) { invalidDateCount++; return; }
+        if (rd.getTime() < bd.getTime()) returnBeforeBoardingCount++;
       });
 
       if (warnEl) {
@@ -2093,7 +1964,7 @@ async function deleteReport(backendId) {
             </div>
           </div>
 
-          ${ (returnBeforeBoardingCount === 0 && invalidDateCount === 0)
+          ${(returnBeforeBoardingCount === 0 && invalidDateCount === 0)
             ? `<p class="text-sm text-emerald-700 mt-4">✅ ไม่พบความผิดปกติของวันที่ในข้อมูล</p>`
             : ''
           }
@@ -2118,20 +1989,20 @@ async function deleteReport(backendId) {
     }
 
     function getStatusColorClass(status) {
-  const s = normalizeStatus(status);
+      const s = normalizeStatus(status);
 
-  if (s === 'READY TO JOIN SHIP') return 'bg-yellow-100 text-yellow-800';
-  if (s === 'ON BOARD') return 'bg-green-100 text-green-800';
+      if (s === 'READY TO JOIN SHIP') return 'bg-yellow-100 text-yellow-800';
+      if (s === 'ON BOARD') return 'bg-green-100 text-green-800';
 
-  if (s === 'ON LEAVE - GRADUATION PROCESS') return 'bg-purple-100 text-purple-800';
-  if (s === 'ON LEAVE - WAIT FOR REJOIN') return 'bg-rose-100 text-rose-800';
-  if (s === 'ON LEAVE - OWN BUSINESS') return 'bg-orange-100 text-orange-800';
+      if (s === 'ON LEAVE - GRADUATION PROCESS') return 'bg-purple-100 text-purple-800';
+      if (s === 'ON LEAVE - WAIT FOR REJOIN') return 'bg-rose-100 text-rose-800';
+      if (s === 'ON LEAVE - OWN BUSINESS') return 'bg-orange-100 text-orange-800';
 
-  if (s === 'THE VOYAGE PROCESS') return 'bg-blue-100 text-blue-800';
-  if (s === 'GRADUATED') return 'bg-emerald-100 text-emerald-800';
+      if (s === 'THE VOYAGE PROCESS') return 'bg-blue-100 text-blue-800';
+      if (s === 'GRADUATED') return 'bg-emerald-100 text-emerald-800';
 
-  return 'bg-gray-100 text-gray-800';
-}
+      return 'bg-gray-100 text-gray-800';
+    }
 
     function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
@@ -2148,219 +2019,211 @@ async function deleteReport(backendId) {
       toast.innerHTML = `<span>${icon}</span><span>${escapeHtml(message)}</span>`;
 
       container.appendChild(toast);
-
-      setTimeout(() => {
-        toast.remove();
-      }, 3000);
+      setTimeout(() => toast.remove(), 3000);
     }
   </script>
-<!-- Edit Report Modal -->
-<!-- Edit Report Modal (SHOW ALL FIELDS) -->
-<div id="edit-modal" class="fixed inset-0 z-50 hidden">
-  <div class="modal-overlay absolute inset-0" onclick="closeEditModal()"></div>
-  <div class="relative min-h-full flex items-center justify-center p-4">
-    <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto my-4">
-      <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-bold text-white">✏️ แก้ไขรายงาน (แสดงข้อมูลทั้งหมด)</h2>
-          <button onclick="closeEditModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
-            ✕
-          </button>
+
+  <!-- Edit Report Modal (SHOW ALL FIELDS) -->
+  <div id="edit-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeEditModal()"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+      <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto my-4">
+        <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-white">✏️ แก้ไขรายงาน (แสดงข้อมูลทั้งหมด)</h2>
+            <button onclick="closeEditModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">✕</button>
+          </div>
         </div>
-      </div>
 
-      <form id="edit-form" class="p-6 space-y-5">
+        <form id="edit-form" class="p-6 space-y-5">
+          <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+            <p class="text-sm font-semibold text-gray-800 mb-3">ข้อมูลนักศึกษา / อ้างอิง (อ่านอย่างเดียว)</p>
 
-        <!-- Readonly identity (แสดงทั้งหมด แต่ล็อกไม่ให้แก้) -->
-        <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
-          <p class="text-sm font-semibold text-gray-800 mb-3">ข้อมูลนักศึกษา / อ้างอิง (อ่านอย่างเดียว)</p>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
-              <input type="text" id="edit-student-id" readonly
-                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
+                <input type="text" id="edit-student-id" readonly
+                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
+                <input type="text" id="edit-student-name" readonly
+                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+              </div>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
-              <input type="text" id="edit-student-name" readonly
-                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา</label>
+                <input type="text" id="edit-academic-year" readonly
+                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
+                <input type="text" id="edit-department" readonly
+                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Trip # (ลำดับในปี)</label>
+                <input type="text" id="edit-trip-seq" readonly
+                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+              </div>
             </div>
-          </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา</label>
-              <input type="text" id="edit-academic-year" readonly
-                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
-              <input type="text" id="edit-department" readonly
-                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Trip # (ลำดับในปี)</label>
-              <input type="text" id="edit-trip-seq" readonly
-                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Trip ID (อ้างอิง)</label>
-              <input type="text" id="edit-trip-id" readonly
-                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Submitted At</label>
-              <input type="text" id="edit-submitted-at" readonly
-                     class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
-            </div>
-          </div>
-        </div>
-
-        <!-- Editable fields -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ลงเรือ <span class="text-red-500">*</span></label>
-            <input type="date" id="edit-boarding-date" required
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่กลับ/ลงจากเรือ <span class="text-red-500">*</span></label>
-            <input type="date" id="edit-return-date" required
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ JOIN</label>
-            <input type="date" id="edit-join-date"
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ LEAVE</label>
-            <input type="date" id="edit-leave-date"
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อเรือ</label>
-            <input type="text" id="edit-ship-name"
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">บริษัทเรือ</label>
-            <input type="text" id="edit-company-name"
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">ลงลำที่</label>
-            <input type="number" id="edit-trip-number" min="1"
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300">
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">สถานะ</label>
-            <select id="edit-status" class="w-full px-4 py-3 rounded-xl border border-gray-300">
-              <option value="NO REQUEST TO JOIN THE SHIP">🚫 NO REQUEST TO JOIN THE SHIP</option>
-              <option value="THE VOYAGE PROCESS">🌊 THE VOYAGE PROCESS</option>
-              <option value="READY TO JOIN SHIP">⏳ READY TO JOIN SHIP</option>
-              <option value="ON BOARD">✅ ON BOARD</option>
-              <option value="ON LEAVE - GRADUATION PROCESS">🎓 ON LEAVE - GRADUATION PROCESS</option>
-              <option value="ON LEAVE - OWN BUSINESS">💼 ON LEAVE - OWN BUSINESS</option>
-              <option value="ON LEAVE - WAIT FOR REJOIN">⏸️ ON LEAVE - WAIT FOR REJOIN</option>
-              <option value="GRADUATED">🎉 GRADUATED</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">รายละเอียดการทำงาน</label>
-          <textarea id="edit-work-details" rows="3"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-300 resize-none"></textarea>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
-          <textarea id="edit-notes" rows="2"
-                    class="w-full px-4 py-3 rounded-xl border border-gray-300 resize-none"></textarea>
-        </div>
-
-        <div class="flex gap-3 pt-4">
-          <button type="button" onclick="closeEditModal()"
-                  class="flex-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
-            ยกเลิก
-          </button>
-          <button type="submit"
-                  class="flex-1 btn-primary text-white px-6 py-3 rounded-xl font-medium">
-            บันทึกการแก้ไข
-          </button>
-        </div>
-
-      </form>
-    </div>
-  </div>
-</div>
- <!-- Student Modal -->
-<div id="student-modal" class="fixed inset-0 z-50 hidden">
-  <div class="modal-overlay absolute inset-0" onclick="closeStudentModal()"></div>
-  <div class="relative min-h-full flex items-center justify-center p-4">
-    <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto my-4">
-      <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-t-2xl">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-bold text-white">👤 จัดการนักศึกษา (เพิ่ม/ลบ)</h2>
-          <button onclick="closeStudentModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">✕</button>
-        </div>
-      </div>
-
-      <div class="p-6 space-y-6">
-        <form id="student-form" class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา</label>
-              <input id="stu-year" placeholder="เช่น 2568" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
-              <input id="stu-dept" placeholder="เช่น DECK" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Trip ID (อ้างอิง)</label>
+                <input type="text" id="edit-trip-id" readonly
+                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Submitted At</label>
+                <input type="text" id="edit-submitted-at" readonly
+                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+              </div>
             </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
-              <input id="stu-id" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
+              <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ลงเรือ <span class="text-red-500">*</span></label>
+              <input type="date" id="edit-boarding-date" required
+                class="w-full px-4 py-3 rounded-xl border border-gray-300">
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
-              <input id="stu-name" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
+              <label class="block text-sm font-medium text-gray-700 mb-2">วันที่กลับ/ลงจากเรือ <span class="text-red-500">*</span></label>
+              <input type="date" id="edit-return-date" required
+                class="w-full px-4 py-3 rounded-xl border border-gray-300">
             </div>
           </div>
 
-          <div class="flex gap-3">
-            <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl font-medium">➕ เพิ่ม/อัปเดต</button>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ JOIN</label>
+              <input type="date" id="edit-join-date"
+                class="w-full px-4 py-3 rounded-xl border border-gray-300">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ LEAVE</label>
+              <input type="date" id="edit-leave-date"
+                class="w-full px-4 py-3 rounded-xl border border-gray-300">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อเรือ</label>
+              <input type="text" id="edit-ship-name"
+                class="w-full px-4 py-3 rounded-xl border border-gray-300">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">บริษัทเรือ</label>
+              <input type="text" id="edit-company-name"
+                class="w-full px-4 py-3 rounded-xl border border-gray-300">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">ลงลำที่</label>
+              <input type="number" id="edit-trip-number" min="1"
+                class="w-full px-4 py-3 rounded-xl border border-gray-300">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">สถานะ</label>
+              <select id="edit-status" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+                <option value="NO REQUEST TO JOIN THE SHIP">🚫 NO REQUEST TO JOIN THE SHIP</option>
+                <option value="THE VOYAGE PROCESS">🌊 THE VOYAGE PROCESS</option>
+                <option value="READY TO JOIN SHIP">⏳ READY TO JOIN SHIP</option>
+                <option value="ON BOARD">✅ ON BOARD</option>
+                <option value="ON LEAVE - GRADUATION PROCESS">🎓 ON LEAVE - GRADUATION PROCESS</option>
+                <option value="ON LEAVE - OWN BUSINESS">💼 ON LEAVE - OWN BUSINESS</option>
+                <option value="ON LEAVE - WAIT FOR REJOIN">⏸️ ON LEAVE - WAIT FOR REJOIN</option>
+                <option value="GRADUATED">🎉 GRADUATED</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">รายละเอียดการทำงาน</label>
+            <textarea id="edit-work-details" rows="3"
+              class="w-full px-4 py-3 rounded-xl border border-gray-300 resize-none"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
+            <textarea id="edit-notes" rows="2"
+              class="w-full px-4 py-3 rounded-xl border border-gray-300 resize-none"></textarea>
+          </div>
+
+          <div class="flex gap-3 pt-4">
+            <button type="button" onclick="closeEditModal()"
+              class="flex-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
+              ยกเลิก
+            </button>
+            <button type="submit"
+              class="flex-1 btn-primary text-white px-6 py-3 rounded-xl font-medium">
+              บันทึกการแก้ไข
+            </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
 
-        <div class="border-t pt-4">
-          <div class="flex items-center gap-3 mb-3">
-            <span class="font-semibold text-gray-800">รายการนักศึกษาใน Firestore</span>
-            <span class="text-xs text-gray-500">(ลบได้เมื่อกรอกผิด)</span>
+  <!-- Student Modal -->
+  <div id="student-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeStudentModal()"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+      <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto my-4">
+        <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-t-2xl">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-white">👤 จัดการนักศึกษา (เพิ่ม/ลบ)</h2>
+            <button onclick="closeStudentModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">✕</button>
           </div>
-          <div id="student-list" class="overflow-x-auto"></div>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <form id="student-form" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา</label>
+                <input id="stu-year" placeholder="เช่น 2568" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
+                <input id="stu-dept" placeholder="เช่น DECK" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
+                <input id="stu-id" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
+                <input id="stu-name" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
+              </div>
+            </div>
+
+            <div class="flex gap-3">
+              <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl font-medium">➕ เพิ่ม/อัปเดต</button>
+            </div>
+          </form>
+
+          <div class="border-t pt-4">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="font-semibold text-gray-800">รายการนักศึกษาใน Firestore</span>
+              <span class="text-xs text-gray-500">(ลบได้เมื่อกรอกผิด)</span>
+            </div>
+            <div id="student-list" class="overflow-x-auto"></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
- </body>
+</body>
 </html>
