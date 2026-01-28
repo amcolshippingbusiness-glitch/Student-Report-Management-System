@@ -520,10 +520,7 @@
       deleteReport,
       cancelOverlapSubmit,
       confirmOverlapSubmit,
-      deleteStudent,
-      seedStudents2564,
-      editStudent,
-      clearStudentForm
+      deleteStudent
     });
 
     // ============================================
@@ -760,139 +757,6 @@
     function buildStudentDocId(year, dept, id) {
       return `${year}_${id}_${dept}`.replace(/\s+/g, '_');
     }
-    // ----------------------------
-    // ✅ helper: hash + docId by name (ใช้ตอน id ว่าง)
-    // ----------------------------
-    function hashStringFNV1a(str) {
-      let h = 2166136261;
-      for (let i = 0; i < str.length; i++) {
-        h ^= str.charCodeAt(i);
-        h = Math.imul(h, 16777619);
-      }
-      return (h >>> 0).toString(36);
-    }
-
-    function buildStudentDocIdByName(year, dept, fullName) {
-      const y = String(year || '').trim();
-      const d = String(dept || '').trim().toUpperCase().replace(/\s+/g, '_');
-      const n = String(fullName || '').trim();
-      return `${y}_NAME_${d}_${hashStringFNV1a(n)}`;
-    }
-
-    // ----------------------------
-    // ✅ รายชื่อนักศึกษา ปี 2564 (ตามที่ให้มา) — id เว้นว่าง
-    // ----------------------------
-    const SEED_STUDENTS_2564 = [
-      // DECK
-      { department: 'DECK', fullName: 'นาย กฤษกร นามประเสริฐกุล' },
-      { department: 'DECK', fullName: 'นาย เกียรติศักดิ์ เพิ่มสุข' },
-      { department: 'DECK', fullName: 'นาย จิรวัฒน์ สัมมาสาโก' },
-      { department: 'DECK', fullName: 'นาย จิฬาพงศ์ สินสุพรรณ' },
-      { department: 'DECK', fullName: 'นาย ชนวรรธน์ เข็มนาค' },
-      { department: 'DECK', fullName: 'นาย ชรัฐ วงษ์คำนา' },
-      { department: 'DECK', fullName: 'นาย ชาญณรงค์ นามวงค์' },
-      { department: 'DECK', fullName: 'นาย ชานน เศรษฐีธร' },
-      { department: 'DECK', fullName: 'นาย ธนกฤต เมธาวรากุล' },
-      { department: 'DECK', fullName: 'นาย ธนชัย ส่องแสง' },
-      { department: 'DECK', fullName: 'นาย ธนดล สมบูรณ์' },
-      { department: 'DECK', fullName: 'นาย ธนธรณ์ คูกิติรัตน์' },
-      { department: 'DECK', fullName: 'นาย ธนธรณ์ แจ่มแจ้ง' },
-      { department: 'DECK', fullName: 'นาย ธนบดี มานะพันธ์' },
-      { department: 'DECK', fullName: 'นาย ธนพล บุญพวง' },
-      { department: 'DECK', fullName: 'นาย ธนวัฒน์ รามภักดี' },
-      { department: 'DECK', fullName: 'นาย ธนวิชญ์ อัตถวรานนท์' },
-      { department: 'DECK', fullName: 'นาย ธีระพงศ์ เสนหอม' },
-      { department: 'DECK', fullName: 'นาย นวพล นาคสีเหลือง' },
-      { department: 'DECK', fullName: 'นาย ปริณทร เรือนวงศ์' },
-      { department: 'DECK', fullName: 'นาย พชรพล สนิมเปรม' },
-      { department: 'DECK', fullName: 'นาย พิชญาณัฐ เสืองามเอี่ยม' },
-      { department: 'DECK', fullName: 'นาย พีท คิม' },
-      { department: 'DECK', fullName: 'นาย ภูผาเมฆ แพงค่าอโศก' },
-      { department: 'DECK', fullName: 'นาย รัชชานนท์ วงษ์แหยม' },
-      { department: 'DECK', fullName: 'นาย วรวิทย์ บัวเผื่อน' },
-      { department: 'DECK', fullName: 'นาย สิทธิศักดิ์ สิงห์เมือง' },
-      { department: 'DECK', fullName: 'นาย เดชาธร สดชื่น' },
-      { department: 'DECK', fullName: 'นาย สุพศิน ผลไพบูลย์' },
-      { department: 'DECK', fullName: 'นาย บุญฤทธิ์ บุญเพิ่ม' },
-
-      // ENGINE
-      { department: 'ENGINE', fullName: 'นาย กัณทเรศ อุดมศิลป์' },
-      { department: 'ENGINE', fullName: 'นาย จตุพร สุโนภักดิ์' },
-      { department: 'ENGINE', fullName: 'นาย ชนะวรรณ กุญชรจันทร์' },
-      { department: 'ENGINE', fullName: 'นาย ณัฐดนัย เขื่อนแก้ว' },
-      { department: 'ENGINE', fullName: 'นาย พงศกร เดชดี' },
-      { department: 'ENGINE', fullName: 'นาย พิศรุต ประสานเกษม' },
-      { department: 'ENGINE', fullName: 'นาย ธีรภัทร ศรีเอียด' },
-      { department: 'ENGINE', fullName: 'นาย ปกร์ พันธ์มณี' }
-    ];
-
-    // ----------------------------
-    // ✅ ปุ่มนำเข้า: เพิ่มรายชื่อ 2564 ลง Firestore (id ว่าง)
-    // ----------------------------
-    async function seedStudents2564() {
-      const ok = confirm('นำเข้ารายชื่อนักศึกษา ปี 2564 (DECK/ENGINE) ลง Firestore ใช่ไหม?\n*รหัสจะเว้นว่างไว้ก่อน*');
-      if (!ok) return;
-
-      const authed = await ensureAuthGlobal();
-      if (!authed) return showToast('Auth ไม่ผ่าน', 'error');
-
-      try {
-        const db = firebase.firestore();
-        const batch = db.batch();
-        const year = '2564';
-        const now = new Date().toISOString();
-
-        SEED_STUDENTS_2564.forEach(s => {
-          const dept = String(s.department || '').trim().toUpperCase();
-          const name = String(s.fullName || '').trim();
-          const docId = buildStudentDocIdByName(year, dept, name);
-
-          const ref = db.collection('students').doc(docId);
-          batch.set(ref, {
-            academic_year: year,
-            department: dept,
-            id: '',              // ✅ เว้นไว้ก่อน
-            fullName: name,
-            updated_at: now
-          }, { merge: true });
-        });
-
-        await batch.commit();
-        showToast(`นำเข้ารายชื่อปี 2564 สำเร็จ (${SEED_STUDENTS_2564.length} รายชื่อ)`, 'success');
-      } catch (e) {
-        console.error(e);
-        showToast('นำเข้าไม่สำเร็จ', 'error');
-      }
-    }
-
-    // ----------------------------
-    // ✅ แก้ไขจากรายการ (เติมค่ากลับเข้าฟอร์ม)
-    // ----------------------------
-    function editStudent(docId) {
-      const s = allStudents.find(x => x.__backendId === docId);
-      if (!s) return;
-
-      const set = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.value = val ?? '';
-      };
-
-      set('stu-docid', s.__backendId);
-      set('stu-year', s.academic_year || '');
-      set('stu-dept', s.department || '');
-      set('stu-id', s.id || '');
-      set('stu-name', s.fullName || '');
-
-      showToast('โหมดแก้ไข: ใส่รหัสแล้วกด “เพิ่ม/อัปเดต”', 'info');
-    }
-
-    function clearStudentForm() {
-      const f = document.getElementById('student-form');
-      if (f) f.reset();
-      const hid = document.getElementById('stu-docid');
-      if (hid) hid.value = '';
-      showToast('ล้างฟอร์มแล้ว', 'info');
-    }
 
     function renderStudentList() {
       const el = document.getElementById('student-list');
@@ -930,17 +794,11 @@
                 <td class="px-3 py-2 font-medium">${escapeHtml(s.id || '')}</td>
                 <td class="px-3 py-2">${escapeHtml(s.fullName || '')}</td>
                 <td class="px-3 py-2">
-  <div class="flex gap-2">
-    <button onclick="editStudent('${s.__backendId}')"
-            class="px-3 py-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-medium">
-      ✏️ แก้ไข
-    </button>
-    <button onclick="deleteStudent('${s.__backendId}')"
-            class="px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium">
-      🗑️ ลบ
-    </button>
-  </div>
-</td>
+                  <button onclick="deleteStudent('${s.__backendId}')"
+                          class="px-3 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium">
+                    🗑️ ลบ
+                  </button>
+                </td>
               </tr>
             `).join('')}
           </tbody>
@@ -995,62 +853,22 @@
         const id = document.getElementById('stu-id').value.trim();
         const name = document.getElementById('stu-name').value.trim();
 
-        const backendId = (document.getElementById('stu-docid')?.value || '').trim();
+        if (!year || !dept || !id || !name) return showToast('กรอกข้อมูลให้ครบ', 'error');
 
-if (!year || !dept || !name) return showToast('กรอกข้อมูลให้ครบ (ปี/สาขา/ชื่อ)', 'error');
+        const authed = await ensureAuthGlobal();
+        if (!authed) return showToast('Auth ไม่ผ่าน', 'error');
 
-const authed = await ensureAuthGlobal();
-if (!authed) return showToast('Auth ไม่ผ่าน', 'error');
+        try {
+          const db = firebase.firestore();
+          const docId = buildStudentDocId(year, dept, id);
 
-try {
-  const db = firebase.firestore();
-
-  const y = String(year).trim();
-  const d = String(dept).trim().toUpperCase();
-  const nm = String(name).trim();
-  const sid = String(id || '').trim();
-
-  // ถ้าไม่ได้อยู่โหมดแก้ไข: พยายามหา record เดิมก่อน
-  let docId = backendId;
-
-  if (!docId) {
-    const existingById = sid
-      ? allStudents.find(s => String(s.academic_year || '') === y && String(s.department || '').toUpperCase() === d && String(s.id || '') === sid)
-      : null;
-
-    // ถ้ามี “ชื่อเดิม” ในปี/สาขาเดียวกัน และยังไม่มี id -> ให้อัปเดตตัวเดิม (กันซ้ำ)
-    const existingByNameNoId = allStudents.find(s =>
-      String(s.academic_year || '') === y &&
-      String(s.department || '').toUpperCase() === d &&
-      String((s.fullName || '')).trim() === nm &&
-      !String(s.id || '').trim()
-    );
-
-    docId =
-      existingById?.__backendId ||
-      existingByNameNoId?.__backendId ||
-      (sid ? buildStudentDocId(y, d, sid) : buildStudentDocIdByName(y, d, nm));
-  }
-
-  await db.collection('students').doc(docId).set({
-    academic_year: y,
-    department: d,
-    id: sid,          // ✅ ว่างได้
-    fullName: nm,
-    updated_at: new Date().toISOString()
-  }, { merge: true });
-
-  showToast(sid ? 'บันทึก/อัปเดตนักศึกษาสำเร็จ' : 'บันทึกรายชื่อสำเร็จ (ยังไม่ใส่รหัส)', 'success');
-
-  document.getElementById('student-form').reset();
-  const hid = document.getElementById('stu-docid');
-  if (hid) hid.value = '';
-
-  updateStudentDropdown();
-} catch (e2) {
-  console.error(e2);
-  showToast('บันทึกไม่สำเร็จ', 'error');
-}
+          await db.collection('students').doc(docId).set({
+            academic_year: year,
+            department: dept,
+            id,
+            fullName: name,
+            updated_at: new Date().toISOString()
+          }, { merge: true });
 
           showToast('บันทึกนักศึกษาสำเร็จ', 'success');
           document.getElementById('student-form').reset();
@@ -2368,7 +2186,6 @@ try {
 
         <div class="p-6 space-y-6">
           <form id="student-form" class="space-y-4">
-            <input type="hidden" id="stu-docid" value="">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา</label>
@@ -2383,7 +2200,7 @@ try {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
-                <input id="stu-id" class="w-full px-4 py-3 rounded-xl border border-gray-300" placeholder="(เว้นได้ก่อน) เช่น 1234">
+                <input id="stu-id" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
@@ -2391,19 +2208,9 @@ try {
               </div>
             </div>
 
-            <div class="flex flex-wrap gap-3">
-  <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl font-medium">➕ เพิ่ม/อัปเดต</button>
-
-  <button type="button" onclick="clearStudentForm()"
-    class="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
-    🧹 ล้างฟอร์ม
-  </button>
-
-  <button type="button" onclick="seedStudents2564()"
-    class="btn-secondary text-white px-6 py-3 rounded-xl font-medium">
-    📥 นำเข้ารายชื่อปี 2564 (DECK/ENGINE)
-  </button>
-</div>
+            <div class="flex gap-3">
+              <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl font-medium">➕ เพิ่ม/อัปเดต</button>
+            </div>
           </form>
 
           <div class="border-t pt-4">
