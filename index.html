@@ -440,10 +440,10 @@
     </div>
 
     <!-- Summary Modal -->
-    <div id="summary-modal" class="fixed inset-0 z-40 hidden">
-      <div class="modal-overlay absolute inset-0" onclick="closeSummaryModal()"></div>
-      <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90%] overflow-y-auto">
+    <div id="summary-modal" class="fixed inset-0 z-40 hidden overflow-y-auto">
+      <div class="modal-overlay absolute inset-0 z-0" onclick="closeSummaryModal()"></div>
+      <div class="relative z-10 min-h-full flex items-start justify-center p-4 py-6">
+        <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto my-4">
           <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-t-2xl">
             <div class="flex items-center justify-between">
               <h2 class="text-xl font-bold text-white">📊 สรุปข้อมูลรายงานฝึกงาน</h2>
@@ -1669,102 +1669,73 @@
       return d;
     }
 
-    // ✅ ปรับใหม่: นับครบทุก status + มี UNKNOWN
     function countStatuses(reports) {
       const base = {
         total: 0,
-        STANDBYFORSHIP: 0,   // alias ของ READY TO JOIN SHIP
-        ON_LEAVE_TOTAL: 0,   // ผลรวม 3 leave
-        GRADUATION: 0,       // alias ของ GRADUATED
+        STANDBYFORSHIP: 0,
+        ON_LEAVE_TOTAL: 0,
+        GRADUATION: 0,
         UNKNOWN: 0
       };
 
-      (ALLOWED_STATUSES || []).forEach(s => base[s] = 0);
+      // ensure all statuses exist
+      (ALLOWED_STATUSES || []).forEach(s => { base[s] = 0; });
 
-      (reports || []).forEach(r => {
+      reports.forEach(r => {
         base.total++;
-        const s = normalizeStatus(r?.status);
+        const s = normalizeStatus(r.status);
         if (base[s] !== undefined) base[s]++;
         else base.UNKNOWN++;
       });
 
       base.STANDBYFORSHIP = base['READY TO JOIN SHIP'] || 0;
+
       base.ON_LEAVE_TOTAL =
         (base['ON LEAVE - GRADUATION PROCESS'] || 0) +
-        (base['ON LEAVE - OWN BUSINESS'] || 0) +
-        (base['ON LEAVE - WAIT FOR REJOIN'] || 0);
+        (base['ON LEAVE - WAIT FOR REJOIN'] || 0) +
+        (base['ON LEAVE - OWN BUSINESS'] || 0);
 
       base.GRADUATION = base['GRADUATED'] || 0;
 
       return base;
     }
 
-    // ✅ ปรับใหม่: Breakdown table มีทุก status (คอลัมน์ครบ)
     function renderBreakdownTable(groupCounts, groupLabel) {
-      const rows = Object.entries(groupCounts || {});
+      const rows = Object.entries(groupCounts);
       if (rows.length === 0) return `<p class="text-gray-500">ยังไม่มีข้อมูล</p>`;
 
-      rows.sort((a, b) => (b[1]?.total || 0) - (a[1]?.total || 0));
-
-      const shortLabel = (s) => {
-        const map = {
-          'NO REQUEST TO JOIN THE SHIP': 'NO REQUEST',
-          'THE VOYAGE PROCESS': 'VOYAGE',
-          'READY TO JOIN SHIP': 'READY',
-          'ON BOARD': 'ON BOARD',
-          'ON LEAVE - GRADUATION PROCESS': 'LEAVE-GP',
-          'ON LEAVE - OWN BUSINESS': 'LEAVE-OB',
-          'ON LEAVE - WAIT FOR REJOIN': 'LEAVE-WR',
-          'GRADUATED': 'GRADUATED',
-          'UNKNOWN': 'UNKNOWN',
-          'ON LEAVE (TOTAL)': 'LEAVE (TOTAL)'
-        };
-        return map[s] || s;
-      };
-
-      const statusCols = (ALLOWED_STATUSES || []).slice(); // 8 statuses
+      rows.sort((a, b) => (b[1].total || 0) - (a[1].total || 0));
 
       return `
-        <table class="min-w-[1100px] w-full text-sm">
+        <table class="min-w-[820px] w-full text-sm">
           <thead>
             <tr class="bg-gray-50 text-gray-700">
               <th class="text-left px-3 py-2 font-semibold">${escapeHtml(groupLabel)}</th>
               <th class="text-right px-3 py-2 font-semibold">TOTAL</th>
-
-              ${statusCols.map(s => `
-                <th class="text-right px-3 py-2 font-semibold whitespace-nowrap" title="${escapeHtml(s)}">
-                  ${escapeHtml(shortLabel(s))}
-                </th>
-              `).join('')}
-
-              <th class="text-right px-3 py-2 font-semibold whitespace-nowrap" title="ON LEAVE (TOTAL)">
-                ${escapeHtml(shortLabel('ON LEAVE (TOTAL)'))}
-              </th>
-              <th class="text-right px-3 py-2 font-semibold whitespace-nowrap" title="UNKNOWN">
-                ${escapeHtml(shortLabel('UNKNOWN'))}
-              </th>
+              <th class="text-right px-3 py-2 font-semibold">STANDBYFORSHIP</th>
+              <th class="text-right px-3 py-2 font-semibold">ON BOARD</th>
+              <th class="text-right px-3 py-2 font-semibold">ON LEAVE (TOTAL)</th>
+              <th class="text-right px-3 py-2 font-semibold">GRADUATION</th>
             </tr>
           </thead>
-
           <tbody class="divide-y divide-gray-100">
-            ${rows.map(([key, c]) => {
-              const cc = c || {};
-              return `
-                <tr>
-                  <td class="px-3 py-2 text-gray-800 font-medium">${escapeHtml(key)}</td>
-                  <td class="px-3 py-2 text-right text-gray-700">${cc.total || 0}</td>
-
-                  ${statusCols.map(s => `
-                    <td class="px-3 py-2 text-right text-gray-700">${cc[s] || 0}</td>
-                  `).join('')}
-
-                  <td class="px-3 py-2 text-right font-semibold text-purple-700">${cc.ON_LEAVE_TOTAL || 0}</td>
-                  <td class="px-3 py-2 text-right ${(cc.UNKNOWN || 0) > 0 ? 'font-semibold text-red-700' : 'text-gray-700'}">
-                    ${cc.UNKNOWN || 0}
-                  </td>
-                </tr>
-              `;
-            }).join('')}
+            ${rows.map(([key, c]) => `
+              <tr>
+                <td class="px-3 py-2 text-gray-800 font-medium">${escapeHtml(key)}</td>
+                <td class="px-3 py-2 text-right text-gray-700">${c.total}</td>
+                <td class="px-3 py-2 text-right text-gray-700">${c.STANDBYFORSHIP}</td>
+                <td class="px-3 py-2 text-right text-gray-700">${c['ON BOARD']}</td>
+                <td class="px-3 py-2 text-right text-gray-700">
+                  <div class="font-semibold">${c.ON_LEAVE_TOTAL}</div>
+                  <div class="text-xs text-gray-500 whitespace-nowrap">
+                    GP ${c['ON LEAVE - GRADUATION PROCESS']} /
+                    WR ${c['ON LEAVE - WAIT FOR REJOIN']} /
+                    OB ${c['ON LEAVE - OWN BUSINESS']}
+                  </div>
+                </td>
+                <td class="px-3 py-2 text-right text-gray-700">${c.GRADUATION}</td>
+              </tr>
+            `).join('')}
           </tbody>
         </table>
       `;
@@ -1787,26 +1758,7 @@
       const overallCounts = countStatuses(allReports);
       const uniqueStudents = new Set(allReports.map(r => r.student_id)).size;
 
-      // ✅ ปรับใหม่: Overall Summary แสดงครบทุก Status
       if (overallEl) {
-        const statusBreakdownCards = (ALLOWED_STATUSES || []).map(s => {
-          const cnt = overallCounts[s] || 0;
-          const cls = getStatusColorClass(s);
-          return `
-            <div class="bg-white/70 rounded-lg p-3 border border-white flex items-center justify-between gap-3">
-              <span class="px-2 py-1 rounded text-xs font-semibold ${cls}">${escapeHtml(s)}</span>
-              <span class="text-lg font-bold text-gray-800">${cnt}</span>
-            </div>
-          `;
-        }).join('');
-
-        const unknownCard = (overallCounts.UNKNOWN || 0) > 0 ? `
-          <div class="bg-red-50 rounded-lg p-3 border border-red-200 flex items-center justify-between gap-3">
-            <span class="px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800">UNKNOWN</span>
-            <span class="text-lg font-bold text-red-700">${overallCounts.UNKNOWN}</span>
-          </div>
-        ` : '';
-
         overallEl.innerHTML = `
           <h3 class="text-lg font-semibold text-gray-800 mb-4">📌 Overall Summary</h3>
 
@@ -1829,29 +1781,21 @@
             </div>
           </div>
 
-          <div class="bg-white/70 rounded-lg p-4 border border-white mb-5">
+          <div class="bg-white/70 rounded-lg p-4 border border-white">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p class="text-sm font-semibold text-gray-800">ON LEAVE (TOTAL)</p>
                 <p class="text-2xl font-bold text-purple-700">${overallCounts.ON_LEAVE_TOTAL}</p>
               </div>
               <div class="flex flex-wrap gap-2 text-xs">
-                <span class="px-2 py-1 rounded bg-purple-100 text-purple-800">GRADUATION PROCESS: ${overallCounts['ON LEAVE - GRADUATION PROCESS'] || 0}</span>
-                <span class="px-2 py-1 rounded bg-rose-100 text-rose-800">WAIT FOR REJOIN: ${overallCounts['ON LEAVE - WAIT FOR REJOIN'] || 0}</span>
-                <span class="px-2 py-1 rounded bg-orange-100 text-orange-800">OWN BUSINESS: ${overallCounts['ON LEAVE - OWN BUSINESS'] || 0}</span>
+                <span class="px-2 py-1 rounded bg-purple-100 text-purple-800">GRADUATION PROCESS: ${overallCounts['ON LEAVE - GRADUATION PROCESS']}</span>
+                <span class="px-2 py-1 rounded bg-rose-100 text-rose-800">WAIT FOR REJOIN: ${overallCounts['ON LEAVE - WAIT FOR REJOIN']}</span>
+                <span class="px-2 py-1 rounded bg-orange-100 text-orange-800">OWN BUSINESS: ${overallCounts['ON LEAVE - OWN BUSINESS']}</span>
               </div>
               <div class="text-right">
                 <p class="text-sm font-semibold text-gray-800">GRADUATION</p>
                 <p class="text-2xl font-bold text-gray-700">${overallCounts.GRADUATION}</p>
               </div>
-            </div>
-          </div>
-
-          <div class="bg-white/60 rounded-xl p-4 border border-white">
-            <p class="text-sm font-semibold text-gray-800 mb-3">📍 Status Breakdown (ทุกสถานะ)</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              ${statusBreakdownCards}
-              ${unknownCard}
             </div>
           </div>
         `;
@@ -1905,8 +1849,39 @@
           .sort((a, b) => b.count - a.count)
           .slice(0, 10);
 
+        const totalTripsForPct = overallCounts.total || 0;
+        const pctItems = [...(ALLOWED_STATUSES || []), 'UNKNOWN']
+          .map(s => {
+            const cnt = (s === 'UNKNOWN') ? (overallCounts.UNKNOWN || 0) : (overallCounts[s] || 0);
+            const pct = totalTripsForPct ? (cnt / totalTripsForPct * 100) : 0;
+            return { status: s, cnt, pct };
+          })
+          .sort((a, b) => b.pct - a.pct);
+
         topEl.innerHTML = `
           <h3 class="text-lg font-semibold text-gray-800 mb-4">💡 Top Insight</h3>
+
+          <div class="bg-white rounded-lg p-4 border border-gray-200 mb-4">
+            <p class="font-semibold text-gray-800 mb-2">📈 สัดส่วนแต่ละสถานะ (%)</p>
+
+            ${totalTripsForPct === 0 ? `
+              <p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>
+            ` : `
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                ${pctItems.map(it => `
+                  <div class="flex items-center justify-between gap-3 bg-gray-50 rounded-lg p-2">
+                    <span class="px-2 py-1 rounded text-xs font-semibold ${getStatusColorClass(it.status)}">
+                      ${escapeHtml(it.status)}
+                    </span>
+                    <span class="text-sm font-bold text-gray-800">
+                      ${it.pct.toFixed(1)}%
+                      <span class="text-xs text-gray-500">(${it.cnt})</span>
+                    </span>
+                  </div>
+                `).join('')}
+              </div>
+            `}
+          </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
