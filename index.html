@@ -98,7 +98,7 @@
     <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
     <!-- Main Dashboard -->
-    <div class="min-h-full p-4 md:p-6 lg:p-8">
+    <div id="dashboard-page" class="min-h-full p-4 md:p-6 lg:p-8">
       <!-- Header -->
       <header class="glass-card rounded-2xl p-6 mb-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -123,7 +123,12 @@
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              สรุปข้อมูล
+              สรุปข้อมูล (Modal)
+            </button>
+
+            <!-- ✅ NEW: Summary Page Button -->
+            <button onclick="openSummaryPage()" class="btn-secondary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
+              📄 หน้าสรุปข้อมูล
             </button>
           </div>
         </div>
@@ -278,6 +283,46 @@
           </div>
           <h3 class="text-xl font-semibold text-gray-700 mb-2">ยังไม่มีรายงาน</h3>
           <p class="text-gray-500 mb-4">คลิกปุ่ม "เพิ่มข้อมูล" เพื่อเริ่มบันทึกข้อมูลการฝึกงาน</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ NEW: Summary Page (ไม่กระทบ Summary Modal เดิม) -->
+    <div id="summary-page" class="hidden min-h-full p-4 md:p-6 lg:p-8">
+      <header class="glass-card rounded-2xl p-6 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold text-white">📄 หน้าสรุปข้อมูลรายงานฝึกงาน</h1>
+            <p class="text-blue-100 mt-1">สรุปภาพรวม + Breakdown + Data Quality</p>
+          </div>
+          <div class="flex gap-3">
+            <button onclick="closeSummaryPage()" class="btn-primary text-white px-6 py-3 rounded-xl font-medium shadow-lg">
+              ← กลับหน้า Dashboard
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden">
+        <div class="p-6 space-y-6">
+          <div class="text-right text-gray-500 text-sm">
+            วันที่สรุป: <span id="summary-date-page"></span>
+          </div>
+
+          <div id="summary-overall-page" class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5"></div>
+          <div id="summary-top-insights-page" class="bg-white rounded-xl border border-gray-200 p-5"></div>
+
+          <div class="bg-white rounded-xl border border-gray-200 p-5">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">🎓 Breakdown ตามสาขา</h3>
+            <div id="summary-by-department-page" class="overflow-x-auto"></div>
+          </div>
+
+          <div class="bg-white rounded-xl border border-gray-200 p-5">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">📅 Breakdown ตามปีการศึกษา</h3>
+            <div id="summary-by-year-page" class="overflow-x-auto"></div>
+          </div>
+
+          <div id="summary-warnings-page" class="bg-white rounded-xl border border-gray-200 p-5"></div>
         </div>
       </div>
     </div>
@@ -510,6 +555,8 @@
       closeStudentModal,
       openSummaryModal,
       closeSummaryModal,
+      openSummaryPage,     // ✅ NEW
+      closeSummaryPage,    // ✅ NEW
       updateStudentDropdown,
       fillStudentInfo,
       clearStudentInfo,
@@ -607,12 +654,15 @@
     // ============================================
     // STATUS NORMALIZATION
     // ============================================
+    // ✅ เพิ่ม: APPLICATION, ON LEAVE - WAIT FOR GRADUATION PROCESS
     const ALLOWED_STATUSES = [
       'NO REQUEST TO JOIN THE SHIP',
+      'APPLICATION',
       'THE VOYAGE PROCESS',
       'READY TO JOIN SHIP',
       'ON BOARD',
       'ON LEAVE - GRADUATION PROCESS',
+      'ON LEAVE - WAIT FOR GRADUATION PROCESS',
       'ON LEAVE - OWN BUSINESS',
       'ON LEAVE - WAIT FOR REJOIN',
       'GRADUATED'
@@ -627,6 +677,9 @@
 
       const u = raw.toUpperCase().replace(/\s+/g, ' ').trim();
 
+      // ✅ NEW: APPLICATION
+      if (u === 'APPLICATION' || u.includes('APPLICATION') || u.includes('APPLY')) return 'APPLICATION';
+
       // Backward compatibility
       if (u === 'PENDING') return 'READY TO JOIN SHIP';
       if (u === 'STANDBYFORSHIP' || u === 'STANDBY FOR SHIP') return 'READY TO JOIN SHIP';
@@ -640,6 +693,9 @@
 
       // ON LEAVE
       if (u.startsWith('ON LEAVE')) {
+        // ✅ NEW: WAIT FOR GRADUATION PROCESS
+        if (u.includes('WAIT') && u.includes('GRAD')) return 'ON LEAVE - WAIT FOR GRADUATION PROCESS';
+
         if (u.includes('GRAD')) return 'ON LEAVE - GRADUATION PROCESS';
         if (u.includes('OWN') || u.includes('BUSINESS')) return 'ON LEAVE - OWN BUSINESS';
         if (u.includes('REJOIN') || u.includes('WAIT')) return 'ON LEAVE - WAIT FOR REJOIN';
@@ -720,6 +776,11 @@
         allReports = data || [];
         updateStats();
         renderTable();
+        // ✅ ถ้าอยู่หน้า Summary Page ให้รีเฟรชทันที
+        const page = document.getElementById('summary-page');
+        if (page && !page.classList.contains('hidden')) {
+          updateSummaryPage();
+        }
       }
     };
 
@@ -1149,10 +1210,12 @@
               <select onchange="updateStatus('${report.__backendId}', this.value)"
                       class="px-3 py-1.5 rounded-lg text-sm font-medium border-0 cursor-pointer ${getStatusColorClass(displayStatus)}">
                 <option value="NO REQUEST TO JOIN THE SHIP" ${displayStatus === 'NO REQUEST TO JOIN THE SHIP' ? 'selected' : ''}>🚫 NO REQUEST TO JOIN THE SHIP</option>
+                <option value="APPLICATION" ${displayStatus === 'APPLICATION' ? 'selected' : ''}>📝 APPLICATION</option>
                 <option value="THE VOYAGE PROCESS" ${displayStatus === 'THE VOYAGE PROCESS' ? 'selected' : ''}>🌊 THE VOYAGE PROCESS</option>
                 <option value="READY TO JOIN SHIP" ${displayStatus === 'READY TO JOIN SHIP' ? 'selected' : ''}>⏳ READY TO JOIN SHIP</option>
                 <option value="ON BOARD" ${displayStatus === 'ON BOARD' ? 'selected' : ''}>✅ ON BOARD</option>
                 <option value="ON LEAVE - GRADUATION PROCESS" ${displayStatus === 'ON LEAVE - GRADUATION PROCESS' ? 'selected' : ''}>🎓 ON LEAVE - GRADUATION PROCESS</option>
+                <option value="ON LEAVE - WAIT FOR GRADUATION PROCESS" ${displayStatus === 'ON LEAVE - WAIT FOR GRADUATION PROCESS' ? 'selected' : ''}>⏳🎓 ON LEAVE - WAIT FOR GRADUATION PROCESS</option>
                 <option value="ON LEAVE - OWN BUSINESS" ${displayStatus === 'ON LEAVE - OWN BUSINESS' ? 'selected' : ''}>💼 ON LEAVE - OWN BUSINESS</option>
                 <option value="ON LEAVE - WAIT FOR REJOIN" ${displayStatus === 'ON LEAVE - WAIT FOR REJOIN' ? 'selected' : ''}>⏸️ ON LEAVE - WAIT FOR REJOIN</option>
                 <option value="GRADUATED" ${displayStatus === 'GRADUATED' ? 'selected' : ''}>🎉 GRADUATED</option>
@@ -1285,9 +1348,9 @@
           boarding_date: boarding,
           return_date: ret,
 
-          // ✅ เพิ่มบรรทัดนี้
-  department: (document.getElementById('edit-department').value || old.department || '').trim(),
-          
+          // ✅ แก้สาขาได้
+          department: (document.getElementById('edit-department').value || old.department || '').trim(),
+
           join_date: document.getElementById('edit-join-date').value || '',
           leave_date: document.getElementById('edit-leave-date').value || '',
           ship_name: document.getElementById('edit-ship-name').value || '',
@@ -1651,7 +1714,7 @@
     }
 
     // ============================================
-    // SUMMARY MODAL
+    // SUMMARY MODAL / SUMMARY PAGE
     // ============================================
     function openSummaryModal() {
       const modal = document.getElementById('summary-modal');
@@ -1664,6 +1727,24 @@
     function closeSummaryModal() {
       const modal = document.getElementById('summary-modal');
       if (modal) modal.classList.add('hidden');
+    }
+
+    // ✅ NEW: Summary Page Open/Close (ไม่กระทบส่วนอื่น)
+    function openSummaryPage() {
+      const dash = document.getElementById('dashboard-page');
+      const page = document.getElementById('summary-page');
+      if (dash) dash.classList.add('hidden');
+      if (page) page.classList.remove('hidden');
+      updateSummaryPage();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function closeSummaryPage() {
+      const dash = document.getElementById('dashboard-page');
+      const page = document.getElementById('summary-page');
+      if (page) page.classList.add('hidden');
+      if (dash) dash.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function safeParseDate(dateStr) {
@@ -1694,8 +1775,10 @@
 
       base.STANDBYFORSHIP = base['READY TO JOIN SHIP'] || 0;
 
+      // ✅ รวมสถานะใหม่เข้า ON_LEAVE_TOTAL
       base.ON_LEAVE_TOTAL =
         (base['ON LEAVE - GRADUATION PROCESS'] || 0) +
+        (base['ON LEAVE - WAIT FOR GRADUATION PROCESS'] || 0) +
         (base['ON LEAVE - WAIT FOR REJOIN'] || 0) +
         (base['ON LEAVE - OWN BUSINESS'] || 0);
 
@@ -1711,7 +1794,7 @@
       rows.sort((a, b) => (b[1].total || 0) - (a[1].total || 0));
 
       return `
-        <table class="min-w-[820px] w-full text-sm">
+        <table class="min-w-[860px] w-full text-sm">
           <thead>
             <tr class="bg-gray-50 text-gray-700">
               <th class="text-left px-3 py-2 font-semibold">${escapeHtml(groupLabel)}</th>
@@ -1732,9 +1815,10 @@
                 <td class="px-3 py-2 text-right text-gray-700">
                   <div class="font-semibold">${c.ON_LEAVE_TOTAL}</div>
                   <div class="text-xs text-gray-500 whitespace-nowrap">
-                    GP ${c['ON LEAVE - GRADUATION PROCESS']} /
-                    WR ${c['ON LEAVE - WAIT FOR REJOIN']} /
-                    OB ${c['ON LEAVE - OWN BUSINESS']}
+                    GP ${c['ON LEAVE - GRADUATION PROCESS'] || 0} /
+                    WG ${c['ON LEAVE - WAIT FOR GRADUATION PROCESS'] || 0} /
+                    WR ${c['ON LEAVE - WAIT FOR REJOIN'] || 0} /
+                    OB ${c['ON LEAVE - OWN BUSINESS'] || 0}
                   </div>
                 </td>
                 <td class="px-3 py-2 text-right text-gray-700">${c.GRADUATION}</td>
@@ -1745,6 +1829,7 @@
       `;
     }
 
+    // ✅ เดิม: Summary Modal
     function updateSummary() {
       const summaryDate = document.getElementById('summary-date');
       if (summaryDate) {
@@ -1759,6 +1844,29 @@
       const yearEl = document.getElementById('summary-by-year');
       const warnEl = document.getElementById('summary-warnings');
 
+      renderSummaryToTargets({ overallEl, topEl, deptEl, yearEl, warnEl });
+    }
+
+    // ✅ NEW: Summary Page (คนละ id ไม่ชนของเดิม)
+    function updateSummaryPage() {
+      const summaryDate = document.getElementById('summary-date-page');
+      if (summaryDate) {
+        summaryDate.textContent = new Date().toLocaleDateString('th-TH', {
+          year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+      }
+
+      const overallEl = document.getElementById('summary-overall-page');
+      const topEl = document.getElementById('summary-top-insights-page');
+      const deptEl = document.getElementById('summary-by-department-page');
+      const yearEl = document.getElementById('summary-by-year-page');
+      const warnEl = document.getElementById('summary-warnings-page');
+
+      renderSummaryToTargets({ overallEl, topEl, deptEl, yearEl, warnEl });
+    }
+
+    // ✅ helper เดียว ใช้ได้ทั้ง Modal และ Page (ไม่กระทบส่วนอื่น)
+    function renderSummaryToTargets({ overallEl, topEl, deptEl, yearEl, warnEl }) {
       const overallCounts = countStatuses(allReports);
       const uniqueStudents = new Set(allReports.map(r => r.student_id)).size;
 
@@ -1792,9 +1900,10 @@
                 <p class="text-2xl font-bold text-purple-700">${overallCounts.ON_LEAVE_TOTAL}</p>
               </div>
               <div class="flex flex-wrap gap-2 text-xs">
-                <span class="px-2 py-1 rounded bg-purple-100 text-purple-800">GRADUATION PROCESS: ${overallCounts['ON LEAVE - GRADUATION PROCESS']}</span>
-                <span class="px-2 py-1 rounded bg-rose-100 text-rose-800">WAIT FOR REJOIN: ${overallCounts['ON LEAVE - WAIT FOR REJOIN']}</span>
-                <span class="px-2 py-1 rounded bg-orange-100 text-orange-800">OWN BUSINESS: ${overallCounts['ON LEAVE - OWN BUSINESS']}</span>
+                <span class="px-2 py-1 rounded bg-purple-100 text-purple-800">GRADUATION PROCESS: ${overallCounts['ON LEAVE - GRADUATION PROCESS'] || 0}</span>
+                <span class="px-2 py-1 rounded bg-fuchsia-100 text-fuchsia-800">WAIT GRAD PROCESS: ${overallCounts['ON LEAVE - WAIT FOR GRADUATION PROCESS'] || 0}</span>
+                <span class="px-2 py-1 rounded bg-rose-100 text-rose-800">WAIT FOR REJOIN: ${overallCounts['ON LEAVE - WAIT FOR REJOIN'] || 0}</span>
+                <span class="px-2 py-1 rounded bg-orange-100 text-orange-800">OWN BUSINESS: ${overallCounts['ON LEAVE - OWN BUSINESS'] || 0}</span>
               </div>
               <div class="text-right">
                 <p class="text-sm font-semibold text-gray-800">GRADUATION</p>
@@ -2027,6 +2136,10 @@
     function getStatusColorClass(status) {
       const s = normalizeStatus(status);
 
+      // ✅ NEW colors
+      if (s === 'APPLICATION') return 'bg-indigo-100 text-indigo-800';
+      if (s === 'ON LEAVE - WAIT FOR GRADUATION PROCESS') return 'bg-fuchsia-100 text-fuchsia-800';
+
       if (s === 'READY TO JOIN SHIP') return 'bg-yellow-100 text-yellow-800';
       if (s === 'ON BOARD') return 'bg-green-100 text-green-800';
 
@@ -2170,10 +2283,12 @@
               <label class="block text-sm font-medium text-gray-700 mb-2">สถานะ</label>
               <select id="edit-status" class="w-full px-4 py-3 rounded-xl border border-gray-300">
                 <option value="NO REQUEST TO JOIN THE SHIP">🚫 NO REQUEST TO JOIN THE SHIP</option>
+                <option value="APPLICATION">📝 APPLICATION</option>
                 <option value="THE VOYAGE PROCESS">🌊 THE VOYAGE PROCESS</option>
                 <option value="READY TO JOIN SHIP">⏳ READY TO JOIN SHIP</option>
                 <option value="ON BOARD">✅ ON BOARD</option>
                 <option value="ON LEAVE - GRADUATION PROCESS">🎓 ON LEAVE - GRADUATION PROCESS</option>
+                <option value="ON LEAVE - WAIT FOR GRADUATION PROCESS">⏳🎓 ON LEAVE - WAIT FOR GRADUATION PROCESS</option>
                 <option value="ON LEAVE - OWN BUSINESS">💼 ON LEAVE - OWN BUSINESS</option>
                 <option value="ON LEAVE - WAIT FOR REJOIN">⏸️ ON LEAVE - WAIT FOR REJOIN</option>
                 <option value="GRADUATED">🎉 GRADUATED</option>
