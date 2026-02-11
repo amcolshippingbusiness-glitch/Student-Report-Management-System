@@ -14,6 +14,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 
+  <!-- ✅ NEW: XLSX Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
@@ -126,7 +129,10 @@
               สรุปข้อมูล
             </button>
 
-            
+            <!-- ✅ NEW: Export -->
+            <button onclick="openExportModal()" class="btn-warning text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
+              ⬇️ Export (CSV/Excel)
+            </button>
           </div>
         </div>
       </header>
@@ -205,6 +211,35 @@
         </div>
       </div>
 
+      <!-- ✅ NEW: Dashboard Insights -->
+      <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden mb-6">
+        <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50 flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-lg font-semibold text-gray-800">📈 Dashboard Insights</h2>
+          <div class="text-xs text-gray-500">
+            อัปเดตล่าสุด: <span id="insights-updated">-</span>
+            <span class="text-gray-300 mx-2">|</span>
+            ตามตัวกรอง/ค้นหาในตาราง
+          </div>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="bg-white rounded-xl border border-gray-200 p-4">
+            <h3 class="text-sm font-semibold text-gray-800 mb-3">สถานะ (สัดส่วน %)</h3>
+            <div id="insights-status" class="space-y-2"></div>
+          </div>
+
+          <div class="bg-white rounded-xl border border-gray-200 p-4">
+            <h3 class="text-sm font-semibold text-gray-800 mb-3">ปีการศึกษา (จำนวนทริป)</h3>
+            <div id="insights-year" class="space-y-2"></div>
+          </div>
+
+          <div class="bg-white rounded-xl border border-gray-200 p-4">
+            <h3 class="text-sm font-semibold text-gray-800 mb-3">Top บริษัท (จำนวนทริป)</h3>
+            <div id="insights-company" class="space-y-2"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Filter & Table -->
       <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden">
         <!-- Filter Bar -->
@@ -268,6 +303,38 @@
               <!-- Data rows will be inserted here -->
             </tbody>
           </table>
+        </div>
+
+        <!-- ✅ NEW: Pagination Bar -->
+        <div id="pagination-bar" class="hidden p-4 border-t border-gray-200 bg-gray-50 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <button id="pg-prev" onclick="setPage(pagination.page - 1)"
+              class="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-sm font-medium">
+              ◀ ก่อนหน้า
+            </button>
+
+            <div class="text-sm text-gray-700">
+              หน้า <span id="pg-page">1</span> / <span id="pg-total">1</span>
+              <span class="text-gray-400 mx-1">|</span>
+              แสดง <span id="pg-range">0-0</span>
+            </div>
+
+            <button id="pg-next" onclick="setPage(pagination.page + 1)"
+              class="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-sm font-medium">
+              ถัดไป ▶
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-gray-700">ต่อหน้า</span>
+            <select id="pg-size" onchange="setPageSize(this.value)"
+              class="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm">
+              <option value="25">25</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+            </select>
+          </div>
         </div>
 
         <!-- Empty State -->
@@ -554,6 +621,14 @@
       closeSummaryModal,
       openSummaryPage,     // ✅ NEW
       closeSummaryPage,    // ✅ NEW
+      openExportModal,     // ✅ NEW
+      closeExportModal,    // ✅ NEW
+      exportReportsCSV,    // ✅ NEW
+      exportReportsXLSX,   // ✅ NEW
+      exportStudentsCSV,   // ✅ NEW
+      exportStudentsXLSX,  // ✅ NEW
+      setPage,             // ✅ NEW
+      setPageSize,         // ✅ NEW
       updateStudentDropdown,
       fillStudentInfo,
       clearStudentInfo,
@@ -642,6 +717,55 @@
     let isSubmitting = false;
     let pendingTripData = null;
     let pendingOverlapConfirmed = false;
+
+    // ============================================
+    // ✅ NEW: PAGINATION STATE
+    // ============================================
+    const pagination = {
+      page: 1,
+      pageSize: 50,
+      lastKey: ''
+    };
+
+    function setPage(p) {
+      pagination.page = Math.max(1, parseInt(p, 10) || 1);
+      renderTable();
+    }
+
+    function setPageSize(size) {
+      pagination.pageSize = Math.max(1, parseInt(size, 10) || 50);
+      pagination.page = 1;
+      renderTable();
+    }
+
+    function updatePaginationBar(total, totalPages, startIdx, endIdx) {
+      const bar = document.getElementById('pagination-bar');
+      if (!bar) return;
+
+      if (total <= 0) {
+        bar.classList.add('hidden');
+        return;
+      }
+      bar.classList.remove('hidden');
+
+      const pgPage = document.getElementById('pg-page');
+      const pgTotal = document.getElementById('pg-total');
+      const pgRange = document.getElementById('pg-range');
+      const btnPrev = document.getElementById('pg-prev');
+      const btnNext = document.getElementById('pg-next');
+      const selSize = document.getElementById('pg-size');
+
+      if (pgPage) pgPage.textContent = String(pagination.page);
+      if (pgTotal) pgTotal.textContent = String(totalPages);
+      if (pgRange) pgRange.textContent = `${startIdx}-${endIdx} จาก ${total}`;
+
+      if (btnPrev) btnPrev.disabled = (pagination.page <= 1);
+      if (btnNext) btnNext.disabled = (pagination.page >= totalPages);
+
+      if (selSize && String(selSize.value) !== String(pagination.pageSize)) {
+        selSize.value = String(pagination.pageSize);
+      }
+    }
 
     // ============================================
     // CONFIG
@@ -753,7 +877,7 @@
     function findOverlappingTrips(allReports, formData) {
       const { student_id, academic_year, boarding_date, return_date } = formData;
 
-      const studentTrips = allReports.filter(r => r.student_id === student_id && r.academic_year === academic_year);
+      const studentTrips = allReports.filter(r => r.student_id === student_id && r.academic_year === academicYear);
       const overlapping = studentTrips.filter(trip => isDateOverlap(boarding_date, return_date, trip.boarding_date, trip.return_date));
       return overlapping;
     }
@@ -773,6 +897,9 @@
         allReports = data || [];
         updateStats();
         renderTable();
+        // ✅ NEW: refresh insights whenever data changes
+        renderDashboardInsights();
+
         // ✅ ถ้าอยู่หน้า Summary Page ให้รีเฟรชทันที
         const page = document.getElementById('summary-page');
         if (page && !page.classList.contains('hidden')) {
@@ -1000,6 +1127,7 @@
       startStudentsListener();
       updateStats();
       renderTable();
+      renderDashboardInsights(); // ✅ NEW
     }
 
     /** =========================================================
@@ -1138,21 +1266,16 @@
     }
 
     // ============================================
-    // RENDER TABLE
+    // ✅ NEW: FILTER SNAPSHOT (ใช้ทั้งตาราง+export+insights)
     // ============================================
-    function renderTable() {
-      const tbody = document.getElementById('report-table-body');
-      const emptyState = document.getElementById('empty-state');
+    function getFilteredReportsSnapshot() {
       const filterYear = document.getElementById('filter-year');
       const searchInput = document.getElementById('search-input');
-      const filterCount = document.getElementById('filter-count');
-
-      if (!tbody) return;
 
       const yearFilter = filterYear ? filterYear.value : 'all';
-      const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+      const searchTerm = searchInput ? (searchInput.value || '').toLowerCase() : '';
 
-      let filteredReports = allReports;
+      let filteredReports = allReports.slice();
 
       if (yearFilter !== 'all') {
         filteredReports = filteredReports.filter(r => r.academic_year === yearFilter);
@@ -1173,17 +1296,308 @@
         return (b.trip_seq || 0) - (a.trip_seq || 0);
       });
 
-      if (filterCount) filterCount.textContent = `แสดง ${filteredReports.length} จาก ${allReports.length} ทริป`;
+      return { yearFilter, searchTerm, filteredReports };
+    }
 
-      if (filteredReports.length === 0) {
-        tbody.innerHTML = '';
-        if (emptyState) emptyState.classList.remove('hidden');
+    // ============================================
+    // ✅ NEW: EXPORT MODAL + EXPORTERS
+    // ============================================
+    function openExportModal() {
+      document.getElementById('export-modal')?.classList.remove('hidden');
+    }
+    function closeExportModal() {
+      document.getElementById('export-modal')?.classList.add('hidden');
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function toCSV(rows, headers) {
+      const esc = (v) => {
+        const s = (v ?? '').toString().replace(/\r?\n/g, ' ').trim().replace(/"/g, '""');
+        return `"${s}"`;
+      };
+      return [
+        headers.join(','),
+        ...rows.map(r => headers.map(h => esc(r[h])).join(','))
+      ].join('\n');
+    }
+
+    function exportReportsCSV() {
+      const snap = getFilteredReportsSnapshot();
+      const rows = snap.filteredReports;
+      if (!rows.length) return showToast('ไม่มีรายงานให้ Export', 'error');
+
+      const headers = [
+        'student_id','student_name','academic_year','department','trip_seq','trip_number',
+        'boarding_date','return_date','join_date','leave_date',
+        'ship_name','company_name','status','notes','work_details',
+        'trip_id','submitted_at','__backendId'
+      ];
+
+      const csv = toCSV(rows, headers);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      downloadBlob(blob, `reports_${new Date().toISOString().slice(0,10)}.csv`);
+      showToast('Export รายงาน (CSV) สำเร็จ', 'success');
+    }
+
+    function exportReportsXLSX() {
+      const snap = getFilteredReportsSnapshot();
+      const rows = snap.filteredReports;
+      if (!rows.length) return showToast('ไม่มีรายงานให้ Export', 'error');
+
+      if (typeof XLSX === 'undefined') {
+        showToast('ไม่พบ XLSX library → Export เป็น CSV แทน', 'error');
+        return exportReportsCSV();
+      }
+
+      const data = rows.map(r => ({
+        student_id: r.student_id || '',
+        student_name: r.student_name || '',
+        academic_year: r.academic_year || '',
+        department: r.department || '',
+        trip_seq: r.trip_seq || 1,
+        trip_number: r.trip_number ?? '',
+        boarding_date: r.boarding_date || '',
+        return_date: r.return_date || '',
+        join_date: r.join_date || '',
+        leave_date: r.leave_date || '',
+        ship_name: r.ship_name || '',
+        company_name: r.company_name || '',
+        status: normalizeStatus(r.status),
+        notes: r.notes || '',
+        work_details: r.work_details || '',
+        trip_id: r.trip_id || '',
+        submitted_at: r.submitted_at || '',
+        backend_id: r.__backendId || ''
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Reports');
+      const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+
+      downloadBlob(
+        new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+        `reports_${new Date().toISOString().slice(0,10)}.xlsx`
+      );
+      showToast('Export รายงาน (Excel) สำเร็จ', 'success');
+    }
+
+    function getAllStudentsMergedForExport() {
+      const list = [];
+
+      // base studentDatabase
+      for (const [dept, years] of Object.entries(studentDatabase || {})) {
+        for (const [year, map] of Object.entries(years || {})) {
+          for (const info of Object.values(map || {})) {
+            list.push({
+              academic_year: String(year),
+              department: String(dept),
+              id: String(info.id || ''),
+              fullName: String(info.fullName || '')
+            });
+          }
+        }
+      }
+
+      // Firestore students
+      (allStudents || []).forEach(s => {
+        list.push({
+          academic_year: String(s.academic_year || ''),
+          department: String(s.department || ''),
+          id: String(s.id || ''),
+          fullName: String(s.fullName || '')
+        });
+      });
+
+      // dedupe year|dept|id
+      const seen = new Set();
+      const merged = list.filter(s => {
+        const key = `${s.academic_year}|${s.department}|${s.id}`;
+        if (!s.academic_year || !s.department || !s.id) return false;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      merged.sort((a, b) =>
+        a.academic_year.localeCompare(b.academic_year) ||
+        a.department.localeCompare(b.department) ||
+        a.id.localeCompare(b.id)
+      );
+
+      return merged;
+    }
+
+    function exportStudentsCSV() {
+      const rows = getAllStudentsMergedForExport();
+      if (!rows.length) return showToast('ไม่มีนักศึกษาให้ Export', 'error');
+
+      const headers = ['academic_year','department','id','fullName'];
+      const csv = toCSV(rows, headers);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      downloadBlob(blob, `students_${new Date().toISOString().slice(0,10)}.csv`);
+      showToast('Export นักศึกษา (CSV) สำเร็จ', 'success');
+    }
+
+    function exportStudentsXLSX() {
+      const rows = getAllStudentsMergedForExport();
+      if (!rows.length) return showToast('ไม่มีนักศึกษาให้ Export', 'error');
+
+      if (typeof XLSX === 'undefined') {
+        showToast('ไม่พบ XLSX library → Export เป็น CSV แทน', 'error');
+        return exportStudentsCSV();
+      }
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Students');
+      const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+
+      downloadBlob(
+        new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+        `students_${new Date().toISOString().slice(0,10)}.xlsx`
+      );
+      showToast('Export นักศึกษา (Excel) สำเร็จ', 'success');
+    }
+
+    // ============================================
+    // ✅ NEW: DASHBOARD INSIGHTS (กราฟแท่งด้วย div)
+    // ============================================
+    function renderInsightsBars(targetId, items, total, mode = 'percent') {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+
+      if (!items.length || total <= 0) {
+        el.innerHTML = `<div class="text-sm text-gray-500">ยังไม่มีข้อมูล</div>`;
         return;
       }
 
-      if (emptyState) emptyState.classList.add('hidden');
+      el.innerHTML = items.map(it => {
+        const value = it.value || 0;
+        const pct = total ? (value / total * 100) : 0;
+        const w = Math.max(0, Math.min(100, pct));
+        const rightText = (mode === 'count') ? `${value}` : `${pct.toFixed(1)}% (${value})`;
 
-      tbody.innerHTML = filteredReports.map(report => {
+        return `
+          <div class="space-y-1">
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-xs font-semibold text-gray-700 truncate">${escapeHtml(it.label)}</div>
+              <div class="text-xs font-bold text-gray-800 whitespace-nowrap">${rightText}</div>
+            </div>
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div class="h-2 bg-indigo-500 rounded-full" style="width:${w}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderDashboardInsights() {
+      const updated = document.getElementById('insights-updated');
+      if (updated) {
+        updated.textContent = new Date().toLocaleString('th-TH', { hour: '2-digit', minute: '2-digit' });
+      }
+
+      const snap = getFilteredReportsSnapshot();
+      const reps = snap.filteredReports || [];
+      const totalTrips = reps.length;
+
+      // Status distribution
+      const statusCount = {};
+      reps.forEach(r => {
+        const s = normalizeStatus(r.status);
+        statusCount[s] = (statusCount[s] || 0) + 1;
+      });
+
+      const statusItems = Object.entries(statusCount)
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value);
+
+      renderInsightsBars('insights-status', statusItems, totalTrips, 'percent');
+
+      // Academic year distribution
+      const yearCount = {};
+      reps.forEach(r => {
+        const y = (r.academic_year || 'ไม่ระบุปี').trim() || 'ไม่ระบุปี';
+        yearCount[y] = (yearCount[y] || 0) + 1;
+      });
+
+      const yearItems = Object.entries(yearCount)
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => (a.label || '').localeCompare(b.label || ''));
+
+      renderInsightsBars('insights-year', yearItems, totalTrips, 'count');
+
+      // Top companies (within filtered)
+      const companyCount = {};
+      reps.forEach(r => {
+        const c = (r.company_name || '').trim();
+        if (!c) return;
+        companyCount[c] = (companyCount[c] || 0) + 1;
+      });
+
+      const companyItems = Object.entries(companyCount)
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10);
+
+      const companyTotal = companyItems.reduce((s, x) => s + x.value, 0) || 0;
+      renderInsightsBars('insights-company', companyItems, companyTotal, 'count');
+    }
+
+    // ============================================
+    // RENDER TABLE (✅ PAGINATION)
+    // ============================================
+    function renderTable() {
+      const tbody = document.getElementById('report-table-body');
+      const emptyState = document.getElementById('empty-state');
+      const filterCount = document.getElementById('filter-count');
+      if (!tbody) return;
+
+      const snap = getFilteredReportsSnapshot();
+      let filteredReports = snap.filteredReports;
+
+      // ✅ reset page ถ้าตัวกรอง/ค้นหาเปลี่ยน
+      const key = `${snap.yearFilter}|${snap.searchTerm}|${pagination.pageSize}`;
+      if (pagination.lastKey !== key) {
+        pagination.lastKey = key;
+        pagination.page = 1;
+      }
+
+      const total = filteredReports.length;
+      const totalPages = Math.max(1, Math.ceil(total / pagination.pageSize));
+      pagination.page = Math.max(1, Math.min(pagination.page, totalPages));
+
+      const startIndex0 = (pagination.page - 1) * pagination.pageSize;
+      const endIndex0 = Math.min(startIndex0 + pagination.pageSize, total);
+      const pageReports = filteredReports.slice(startIndex0, endIndex0);
+
+      if (filterCount) {
+        if (total === 0) filterCount.textContent = `แสดง 0 จาก ${allReports.length} ทริป`;
+        else filterCount.textContent = `แสดง ${startIndex0 + 1}-${endIndex0} จาก ${total} ทริป (ทั้งหมด ${allReports.length})`;
+      }
+
+      if (total === 0) {
+        tbody.innerHTML = '';
+        if (emptyState) emptyState.classList.remove('hidden');
+        updatePaginationBar(0, 1, 0, 0);
+        renderDashboardInsights();
+        return;
+      } else {
+        if (emptyState) emptyState.classList.add('hidden');
+      }
+
+      tbody.innerHTML = pageReports.map(report => {
         const displayStatus = normalizeStatus(report.status);
 
         return `
@@ -1234,6 +1648,9 @@
           </tr>
         `;
       }).join('');
+
+      updatePaginationBar(total, totalPages, startIndex0 + 1, endIndex0);
+      renderDashboardInsights(); // ✅ NEW: insights follow filters/search
     }
 
     // ============================================
@@ -1760,7 +2177,6 @@
         UNKNOWN: 0
       };
 
-      // ensure all statuses exist
       (ALLOWED_STATUSES || []).forEach(s => { base[s] = 0; });
 
       reports.forEach(r => {
@@ -1772,7 +2188,6 @@
 
       base.STANDBYFORSHIP = base['READY TO JOIN SHIP'] || 0;
 
-      // ✅ รวมสถานะใหม่เข้า ON_LEAVE_TOTAL
       base.ON_LEAVE_TOTAL =
         (base['ON LEAVE - GRADUATION PROCESS'] || 0) +
         (base['ON LEAVE - WAIT FOR GRADUATION PROCESS'] || 0) +
@@ -1826,7 +2241,6 @@
       `;
     }
 
-    // ✅ เดิม: Summary Modal
     function updateSummary() {
       const summaryDate = document.getElementById('summary-date');
       if (summaryDate) {
@@ -1844,7 +2258,6 @@
       renderSummaryToTargets({ overallEl, topEl, deptEl, yearEl, warnEl });
     }
 
-    // ✅ NEW: Summary Page (คนละ id ไม่ชนของเดิม)
     function updateSummaryPage() {
       const summaryDate = document.getElementById('summary-date-page');
       if (summaryDate) {
@@ -1862,7 +2275,6 @@
       renderSummaryToTargets({ overallEl, topEl, deptEl, yearEl, warnEl });
     }
 
-    // ✅ helper เดียว ใช้ได้ทั้ง Modal และ Page (ไม่กระทบส่วนอื่น)
     function renderSummaryToTargets({ overallEl, topEl, deptEl, yearEl, warnEl }) {
       const overallCounts = countStatuses(allReports);
       const uniqueStudents = new Set(allReports.map(r => r.student_id)).size;
@@ -1891,45 +2303,42 @@
           </div>
 
           <div class="bg-white/70 rounded-lg p-4 border border-white">
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start lg:items-center">
-    <!-- LEFT: ON LEAVE TOTAL -->
-    <div class="lg:col-span-3">
-      <p class="text-sm font-semibold text-gray-800">ON LEAVE (TOTAL)</p>
-      <p class="text-2xl font-bold text-purple-700">${overallCounts.ON_LEAVE_TOTAL}</p>
-    </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start lg:items-center">
+              <div class="lg:col-span-3">
+                <p class="text-sm font-semibold text-gray-800">ON LEAVE (TOTAL)</p>
+                <p class="text-2xl font-bold text-purple-700">${overallCounts.ON_LEAVE_TOTAL}</p>
+              </div>
 
-    <!-- MIDDLE: CHIPS GRID -->
-    <div class="lg:col-span-6">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-        <div class="bg-purple-100 text-purple-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-          <span class="min-w-0 truncate font-semibold">GRAD PROCESS</span>
-          <span class="font-bold">${overallCounts['ON LEAVE - GRADUATION PROCESS'] || 0}</span>
-        </div>
+              <div class="lg:col-span-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                  <div class="bg-purple-100 text-purple-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+                    <span class="min-w-0 truncate font-semibold">GRAD PROCESS</span>
+                    <span class="font-bold">${overallCounts['ON LEAVE - GRADUATION PROCESS'] || 0}</span>
+                  </div>
 
-        <div class="bg-violet-100 text-violet-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-          <span class="min-w-0 truncate font-semibold">WAIT GRAD</span>
-          <span class="font-bold">${overallCounts['ON LEAVE - WAIT FOR GRADUATION PROCESS'] || 0}</span>
-        </div>
+                  <div class="bg-violet-100 text-violet-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+                    <span class="min-w-0 truncate font-semibold">WAIT GRAD</span>
+                    <span class="font-bold">${overallCounts['ON LEAVE - WAIT FOR GRADUATION PROCESS'] || 0}</span>
+                  </div>
 
-        <div class="bg-rose-100 text-rose-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-          <span class="min-w-0 truncate font-semibold">WAIT REJOIN</span>
-          <span class="font-bold">${overallCounts['ON LEAVE - WAIT FOR REJOIN'] || 0}</span>
-        </div>
+                  <div class="bg-rose-100 text-rose-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+                    <span class="min-w-0 truncate font-semibold">WAIT REJOIN</span>
+                    <span class="font-bold">${overallCounts['ON LEAVE - WAIT FOR REJOIN'] || 0}</span>
+                  </div>
 
-        <div class="bg-orange-100 text-orange-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-          <span class="min-w-0 truncate font-semibold">OWN BUSINESS</span>
-          <span class="font-bold">${overallCounts['ON LEAVE - OWN BUSINESS'] || 0}</span>
-        </div>
-      </div>
-    </div>
+                  <div class="bg-orange-100 text-orange-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+                    <span class="min-w-0 truncate font-semibold">OWN BUSINESS</span>
+                    <span class="font-bold">${overallCounts['ON LEAVE - OWN BUSINESS'] || 0}</span>
+                  </div>
+                </div>
+              </div>
 
-    <!-- RIGHT: GRADUATION -->
-    <div class="lg:col-span-3 lg:text-right">
-      <p class="text-sm font-semibold text-gray-800">GRADUATION</p>
-      <p class="text-2xl font-bold text-gray-700">${overallCounts.GRADUATION}</p>
-    </div>
-  </div>
-</div>
+              <div class="lg:col-span-3 lg:text-right">
+                <p class="text-sm font-semibold text-gray-800">GRADUATION</p>
+                <p class="text-2xl font-bold text-gray-700">${overallCounts.GRADUATION}</p>
+              </div>
+            </div>
+          </div>
         `;
       }
 
@@ -2155,7 +2564,6 @@
     function getStatusColorClass(status) {
       const s = normalizeStatus(status);
 
-      // ✅ NEW colors
       if (s === 'APPLIED') return 'bg-indigo-100 text-indigo-800';
       if (s === 'ON LEAVE - WAIT FOR GRADUATION PROCESS') return 'bg-fuchsia-100 text-fuchsia-800';
 
@@ -2229,7 +2637,7 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
                 <input type="text" id="edit-department"
-  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Trip # (ลำดับในปี)</label>
@@ -2389,6 +2797,41 @@
               <span class="text-xs text-gray-500">(ลบได้เมื่อกรอกผิด)</span>
             </div>
             <div id="student-list" class="overflow-x-auto"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ NEW: Export Modal -->
+  <div id="export-modal" class="fixed inset-0 z-50 hidden">
+    <div class="modal-overlay absolute inset-0" onclick="closeExportModal()"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+      <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <div class="p-5 border-b border-gray-200 bg-gradient-to-r from-amber-500 to-orange-500">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-white">⬇️ Export</h2>
+            <button onclick="closeExportModal()" class="text-white hover:bg-white/20 rounded-lg px-3 py-1">✕</button>
+          </div>
+        </div>
+
+        <div class="p-5 space-y-3">
+          <div class="text-sm text-gray-600">
+            รายงานจะ Export “ตามตัวกรอง/ค้นหา ณ ตอนนี้”
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <button onclick="exportReportsCSV()" class="btn-primary text-white px-4 py-3 rounded-xl font-medium">รายงาน (CSV)</button>
+            <button onclick="exportReportsXLSX()" class="btn-secondary text-white px-4 py-3 rounded-xl font-medium">รายงาน (Excel)</button>
+
+            <button onclick="exportStudentsCSV()" class="btn-primary text-white px-4 py-3 rounded-xl font-medium">นักศึกษา (CSV)</button>
+            <button onclick="exportStudentsXLSX()" class="btn-secondary text-white px-4 py-3 rounded-xl font-medium">นักศึกษา (Excel)</button>
+          </div>
+
+          <div class="pt-2">
+            <button onclick="closeExportModal()" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
+              ปิด
+            </button>
           </div>
         </div>
       </div>
