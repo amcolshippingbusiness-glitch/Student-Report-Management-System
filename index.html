@@ -778,11 +778,10 @@
     // ✅ เพิ่ม: APPLIED, ON LEAVE - WAIT FOR GRADUATION PROCESS
     const ALLOWED_STATUSES = [
       'NO REQUEST TO JOIN THE SHIP',
-      'APPLIED',
       'THE VOYAGE PROCESS',
       'READY TO JOIN SHIP',
       'ON BOARD',
-      'ON LEAVE - GRADUATION PROCESS',
+      'ON LEAVE - APPLY FOR GRADUATION',
       'ON LEAVE - WAIT FOR GRADUATION PROCESS',
       'ON LEAVE - OWN BUSINESS',
       'ON LEAVE - WAIT FOR REJOIN',
@@ -798,8 +797,6 @@
 
       const u = raw.toUpperCase().replace(/\s+/g, ' ').trim();
 
-      // ✅ NEW: APPLIED
-      if (u === 'APPLIED' || u.includes('APPLIED') || u.includes('APPLY')) return 'APPLIED';
 
       // Backward compatibility
       if (u === 'PENDING') return 'READY TO JOIN SHIP';
@@ -817,7 +814,7 @@
         // ✅ NEW: WAIT FOR GRADUATION PROCESS
         if (u.includes('WAIT') && u.includes('GRAD')) return 'ON LEAVE - WAIT FOR GRADUATION PROCESS';
 
-        if (u.includes('GRAD')) return 'ON LEAVE - GRADUATION PROCESS';
+        if (u.includes('GRAD')) return 'ON LEAVE - APPLY FOR GRADUATION';
         if (u.includes('OWN') || u.includes('BUSINESS')) return 'ON LEAVE - OWN BUSINESS';
         if (u.includes('REJOIN') || u.includes('WAIT')) return 'ON LEAVE - WAIT FOR REJOIN';
         return 'ON LEAVE - WAIT FOR REJOIN';
@@ -1625,7 +1622,7 @@
                 <option value="THE VOYAGE PROCESS" ${displayStatus === 'THE VOYAGE PROCESS' ? 'selected' : ''}>🌊 THE VOYAGE PROCESS</option>
                 <option value="READY TO JOIN SHIP" ${displayStatus === 'READY TO JOIN SHIP' ? 'selected' : ''}>⏳ READY TO JOIN SHIP</option>
                 <option value="ON BOARD" ${displayStatus === 'ON BOARD' ? 'selected' : ''}>✅ ON BOARD</option>
-                <option value="ON LEAVE - GRADUATION PROCESS" ${displayStatus === 'ON LEAVE - GRADUATION PROCESS' ? 'selected' : ''}>🎓 ON LEAVE - GRADUATION PROCESS</option>
+                <option value="ON LEAVE - APPLY FOR GRADUATION" ${displayStatus === 'ON LEAVE - APPLY FOR GRADUATION' ? 'selected' : ''}>🎓 ON LEAVE - APPLY FOR GRADUATION</option>
                 <option value="ON LEAVE - WAIT FOR GRADUATION PROCESS" ${displayStatus === 'ON LEAVE - WAIT FOR GRADUATION PROCESS' ? 'selected' : ''}>⏳🎓 ON LEAVE - WAIT FOR GRADUATION PROCESS</option>
                 <option value="ON LEAVE - OWN BUSINESS" ${displayStatus === 'ON LEAVE - OWN BUSINESS' ? 'selected' : ''}>💼 ON LEAVE - OWN BUSINESS</option>
                 <option value="ON LEAVE - WAIT FOR REJOIN" ${displayStatus === 'ON LEAVE - WAIT FOR REJOIN' ? 'selected' : ''}>⏸️ ON LEAVE - WAIT FOR REJOIN</option>
@@ -2189,7 +2186,7 @@
       base.STANDBYFORSHIP = base['READY TO JOIN SHIP'] || 0;
 
       base.ON_LEAVE_TOTAL =
-        (base['ON LEAVE - GRADUATION PROCESS'] || 0) +
+        (base['ON LEAVE - APPLY FOR GRADUATION'] || 0) +
         (base['ON LEAVE - WAIT FOR GRADUATION PROCESS'] || 0) +
         (base['ON LEAVE - WAIT FOR REJOIN'] || 0) +
         (base['ON LEAVE - OWN BUSINESS'] || 0);
@@ -2227,7 +2224,7 @@
                 <td class="px-3 py-2 text-right text-gray-700">
                   <div class="font-semibold">${c.ON_LEAVE_TOTAL}</div>
                   <div class="text-xs text-gray-500 whitespace-nowrap">
-                    GP ${c['ON LEAVE - GRADUATION PROCESS'] || 0} /
+                    GP ${c['ON LEAVE - APPLY FOR GRADUATION'] || 0} /
                     WG ${c['ON LEAVE - WAIT FOR GRADUATION PROCESS'] || 0} /
                     WR ${c['ON LEAVE - WAIT FOR REJOIN'] || 0} /
                     OB ${c['ON LEAVE - OWN BUSINESS'] || 0}
@@ -2313,7 +2310,7 @@
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                   <div class="bg-purple-100 text-purple-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
                     <span class="min-w-0 truncate font-semibold">GRAD PROCESS</span>
-                    <span class="font-bold">${overallCounts['ON LEAVE - GRADUATION PROCESS'] || 0}</span>
+                    <span class="font-bold">${overallCounts['ON LEAVE - APPLY FOR GRADUATION'] || 0}</span>
                   </div>
 
                   <div class="bg-violet-100 text-violet-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
@@ -2570,7 +2567,7 @@
       if (s === 'READY TO JOIN SHIP') return 'bg-yellow-100 text-yellow-800';
       if (s === 'ON BOARD') return 'bg-green-100 text-green-800';
 
-      if (s === 'ON LEAVE - GRADUATION PROCESS') return 'bg-purple-100 text-purple-800';
+      if (s === 'ON LEAVE - APPLY FOR GRADUATION') return 'bg-purple-100 text-purple-800';
       if (s === 'ON LEAVE - WAIT FOR REJOIN') return 'bg-rose-100 text-rose-800';
       if (s === 'ON LEAVE - OWN BUSINESS') return 'bg-orange-100 text-orange-800';
 
@@ -2714,7 +2711,7 @@
                 <option value="THE VOYAGE PROCESS">🌊 THE VOYAGE PROCESS</option>
                 <option value="READY TO JOIN SHIP">⏳ READY TO JOIN SHIP</option>
                 <option value="ON BOARD">✅ ON BOARD</option>
-                <option value="ON LEAVE - GRADUATION PROCESS">🎓 ON LEAVE - GRADUATION PROCESS</option>
+                <option value="ON LEAVE - APPLY FOR GRADUATION">🎓 ON LEAVE - APPLY FOR GRADUATION</option>
                 <option value="ON LEAVE - WAIT FOR GRADUATION PROCESS">⏳🎓 ON LEAVE - WAIT FOR GRADUATION PROCESS</option>
                 <option value="ON LEAVE - OWN BUSINESS">💼 ON LEAVE - OWN BUSINESS</option>
                 <option value="ON LEAVE - WAIT FOR REJOIN">⏸️ ON LEAVE - WAIT FOR REJOIN</option>
