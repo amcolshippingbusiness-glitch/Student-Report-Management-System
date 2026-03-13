@@ -1,4 +1,5 @@
 <!doctype html>
+
 <html lang="th" class="h-full">
 <head>
   <meta charset="UTF-8">
@@ -6,20 +7,24 @@
   <title>Student Report Management System</title>
 
   <!-- <script src="/_sdk/data_sdk.js"></script> -->
+
   <!-- <script src="/_sdk/element_sdk.js"></script> -->
 
   <script src="https://cdn.tailwindcss.com"></script>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 
-  <!-- ✅ NEW: XLSX Export -->
+  <!-- ✅ XLSX Export -->
+
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     body { box-sizing: border-box; font-family: 'Kanit', sans-serif; }
@@ -40,6 +45,20 @@
     }
     .stat-card { transition: all 0.3s ease; }
     .stat-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+
+    /* ✅ NEW: Status clickable card */
+    .stat-card-clickable {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .stat-card-clickable:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 24px 48px rgba(0,0,0,0.25);
+      background: rgba(255,255,255,0.25) !important;
+    }
+    .stat-card-clickable:active {
+      transform: translateY(-2px);
+    }
 
     .btn-primary {
       background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
@@ -91,8 +110,21 @@
       0%, 100% { background: rgba(239, 68, 68, 0.1); }
       50% { background: rgba(239, 68, 68, 0.3); }
     }
+
+    /* ✅ NEW: Status detail page animations */
+    .status-group-card {
+      transition: all 0.2s ease;
+    }
+    .status-group-card:hover {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    .status-detail-row:hover {
+      background: rgba(99, 102, 241, 0.04);
+    }
   </style>
+
   <style>@view-transition { navigation: auto; }</style>
+
 </head>
 
 <body class="h-full gradient-bg">
@@ -100,505 +132,521 @@
     <!-- Toast Container -->
     <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-    <!-- Main Dashboard -->
-    <div id="dashboard-page" class="min-h-full p-4 md:p-6 lg:p-8">
-      <!-- Header -->
-      <header class="glass-card rounded-2xl p-6 mb-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 id="dashboard-title" class="text-2xl md:text-3xl font-bold text-white">🚢 ระบบจัดการรายงานฝึกงาน</h1>
-            <p class="text-blue-100 mt-1">Teacher Dashboard - จัดการข้อมูลการฝึกงานของนักศึกษา</p>
-          </div>
-
-          <div class="flex flex-wrap gap-3">
-            <button onclick="openAddModal()" class="btn-primary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-              เพิ่มข้อมูลนักศึกษา
-            </button>
-
-            <button onclick="openStudentModal()" class="btn-secondary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
-              👤 เพิ่ม/ลบนักศึกษา
-            </button>
-
-            <button onclick="openSummaryModal()" class="btn-secondary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              สรุปข้อมูล
-            </button>
-
-            <!-- ✅ NEW: Export -->
-            <button onclick="openExportModal()" class="btn-warning text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
-              ⬇️ Export (CSV/Excel)
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <div class="stat-card glass-card rounded-2xl p-5">
-          <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-blue-100 text-sm">ยอดนักศึกษา</p>
-              <p id="stat-total" class="text-3xl font-bold text-white">0</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card glass-card rounded-2xl p-5">
-          <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
-              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-blue-100 text-sm">นักศึกษา (ไม่ซ้ำ)</p>
-              <p id="stat-students" class="text-3xl font-bold text-white">0</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card glass-card rounded-2xl p-5">
-          <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
-              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-blue-100 text-sm">STANDBYFORSHIP</p>
-              <p id="stat-standby" class="text-3xl font-bold text-white">0</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card glass-card rounded-2xl p-5">
-          <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
-              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-blue-100 text-sm">ON BOARD</p>
-              <p id="stat-onboard" class="text-3xl font-bold text-white">0</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card glass-card rounded-2xl p-5">
-          <div class="flex items-center gap-4">
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
-              <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-blue-100 text-sm">ON LEAVE (TOTAL)</p>
-              <p id="stat-onleave" class="text-3xl font-bold text-white">0</p>
-            </div>
-          </div>
-        </div>
+```
+<!-- ============================================================ -->
+<!-- MAIN DASHBOARD PAGE                                          -->
+<!-- ============================================================ -->
+<div id="dashboard-page" class="min-h-full p-4 md:p-6 lg:p-8">
+  <!-- Header -->
+  <header class="glass-card rounded-2xl p-6 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 id="dashboard-title" class="text-2xl md:text-3xl font-bold text-white">🚢 ระบบจัดการรายงานฝึกงาน</h1>
+        <p class="text-blue-100 mt-1">Teacher Dashboard - จัดการข้อมูลการฝึกงานของนักศึกษา</p>
       </div>
 
-      <!-- ✅ NEW: Dashboard Insights -->
-      <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden mb-6">
-        <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50 flex flex-wrap items-center justify-between gap-2">
-          <h2 class="text-lg font-semibold text-gray-800">📈 Dashboard Insights</h2>
-          <div class="text-xs text-gray-500">
-            อัปเดตล่าสุด: <span id="insights-updated">-</span>
-            <span class="text-gray-300 mx-2">|</span>
-            ตามตัวกรอง/ค้นหาในตาราง
-          </div>
-        </div>
+      <div class="flex flex-wrap gap-3">
+        <button onclick="openAddModal()" class="btn-primary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          เพิ่มข้อมูลนักศึกษา
+        </button>
 
-        <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div class="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 class="text-sm font-semibold text-gray-800 mb-3">สถานะ (สัดส่วน %)</h3>
-            <div id="insights-status" class="space-y-2"></div>
-          </div>
+        <button onclick="openStudentModal()" class="btn-secondary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
+          👤 เพิ่ม/ลบนักศึกษา
+        </button>
 
-          <div class="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 class="text-sm font-semibold text-gray-800 mb-3">ปีการศึกษา (จำนวนทริป)</h3>
-            <div id="insights-year" class="space-y-2"></div>
-          </div>
+        <button onclick="openSummaryModal()" class="btn-secondary text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          สรุปข้อมูล
+        </button>
 
-          <div class="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 class="text-sm font-semibold text-gray-800 mb-3">Top บริษัท (จำนวนทริป)</h3>
-            <div id="insights-company" class="space-y-2"></div>
-          </div>
-        </div>
+        <!-- ✅ NEW: Status Detail Page Button -->
+        <button onclick="openStatusDetailPage()" class="text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg" style="background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);">
+          👥 รายชื่อตามสถานะ
+        </button>
+
+        <!-- Export -->
+        <button onclick="openExportModal()" class="btn-warning text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 shadow-lg">
+          ⬇️ Export (CSV/Excel)
+        </button>
       </div>
+    </div>
+  </header>
 
-      <!-- Filter & Table -->
-      <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden">
-        <!-- Filter Bar -->
-        <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div class="flex flex-wrap items-center gap-4">
-            <label class="text-gray-700 font-medium">กรองปีการศึกษา:</label>
-            <select id="filter-year" onchange="renderTable()"
-              class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
-              <option value="all">ทั้งหมด</option>
-              <option value="2560">2560</option>
-              <option value="2561">2561</option>
-              <option value="2562">2562</option>
-              <option value="2563">2563</option>
-              <option value="2564">2564</option>
-              <option value="2565">2565</option>
-              <option value="2566">2566</option>
-              <option value="2567">2567</option>
-              <option value="2568">2568</option>
-              <option value="2569">2569</option>
-              <option value="2570">2570</option>
-              <option value="2571">2571</option>
-              <option value="2572">2572</option>
-              <option value="2573">2573</option>
-              <option value="2574">2574</option>
-              <option value="2575">2575</option>
-              <option value="2576">2576</option>
-              <option value="2577">2577</option>
-              <option value="2578">2578</option>
-              <option value="2579">2579</option>
-              <option value="2580">2580</option>
-            </select>
-
-            <label class="text-gray-700 font-medium ml-4">ค้นหา:</label>
-            <input type="text" id="search-input" onkeyup="renderTable()" placeholder="รหัส, ชื่อ, เรือ..."
-              class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
-
-            <span id="filter-count" class="text-gray-500 text-sm ml-auto"></span>
-          </div>
+  <!-- Stats Cards (clickable → Status Detail Page) -->
+  <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+    <!-- ยอดนักศึกษา (ไม่ clickable ไป status page เพราะเป็น count ทั้งหมด) -->
+    <div class="stat-card glass-card rounded-2xl p-5">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
         </div>
-
-        <!-- Table -->
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-              <tr>
-                <th class="px-4 py-4 text-left text-sm font-semibold">รหัส</th>
-                <th class="px-4 py-4 text-left text-sm font-semibold">ชื่อ-นามสกุล</th>
-                <th class="px-4 py-4 text-left text-sm font-semibold">Trip #</th>
-                <th class="px-4 py-4 text-left text-sm font-semibold">ลงลำที่</th>
-                <th class="px-4 py-4 text-left text-sm font-semibold">ปีการศึกษา</th>
-                <th class="px-4 py-4 text-left text-sm font-semibold">สาขา</th>
-                <th class="px-4 py-4 text-left text-sm font-semibold">ช่วงเวลา</th>
-                <th class="px-4 py-4 text-left text-sm font-semibold">ชื่อเรือ</th>
-                <th class="px-4 py-4 text-left text-sm font-semibold">บริษัท</th>
-                <th class="px-4 py-4 text-left text-sm font-semibold">สถานะ</th>
-                <th class="px-4 py-4 text-left text-sm font-semibold">หมายเหตุ</th>
-                <th class="px-4 py-4 text-left text-sm font-semibold">จัดการ</th>
-              </tr>
-            </thead>
-            <tbody id="report-table-body" class="divide-y divide-gray-100">
-              <!-- Data rows will be inserted here -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- ✅ NEW: Pagination Bar -->
-        <div id="pagination-bar" class="hidden p-4 border-t border-gray-200 bg-gray-50 flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <button id="pg-prev" onclick="setPage(pagination.page - 1)"
-              class="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-sm font-medium">
-              ◀ ก่อนหน้า
-            </button>
-
-            <div class="text-sm text-gray-700">
-              หน้า <span id="pg-page">1</span> / <span id="pg-total">1</span>
-              <span class="text-gray-400 mx-1">|</span>
-              แสดง <span id="pg-range">0-0</span>
-            </div>
-
-            <button id="pg-next" onclick="setPage(pagination.page + 1)"
-              class="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-sm font-medium">
-              ถัดไป ▶
-            </button>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-700">ต่อหน้า</span>
-            <select id="pg-size" onchange="setPageSize(this.value)"
-              class="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm">
-              <option value="25">25</option>
-              <option value="50" selected>50</option>
-              <option value="100">100</option>
-              <option value="200">200</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div id="empty-state" class="hidden p-12 text-center">
-          <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
-            <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          <h3 class="text-xl font-semibold text-gray-700 mb-2">ยังไม่มีรายงาน</h3>
-          <p class="text-gray-500 mb-4">คลิกปุ่ม "เพิ่มข้อมูล" เพื่อเริ่มบันทึกข้อมูลการฝึกงาน</p>
+        <div>
+          <p class="text-blue-100 text-sm">ยอดนักศึกษา</p>
+          <p id="stat-total" class="text-3xl font-bold text-white">0</p>
         </div>
       </div>
     </div>
 
-    <!-- ✅ NEW: Summary Page (ไม่กระทบ Summary Modal เดิม) -->
-    <div id="summary-page" class="hidden min-h-full p-4 md:p-6 lg:p-8">
-      <header class="glass-card rounded-2xl p-6 mb-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-white">📄 หน้าสรุปข้อมูลรายงานฝึกงาน</h1>
-            <p class="text-blue-100 mt-1">สรุปภาพรวม + Breakdown + Data Quality</p>
-          </div>
-          <div class="flex gap-3">
-            <button onclick="closeSummaryPage()" class="btn-primary text-white px-6 py-3 rounded-xl font-medium shadow-lg">
-              ← กลับหน้า Dashboard
-            </button>
-          </div>
+    <div class="stat-card glass-card rounded-2xl p-5">
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
         </div>
-      </header>
-
-      <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden">
-        <div class="p-6 space-y-6">
-          <div class="text-right text-gray-500 text-sm">
-            วันที่สรุป: <span id="summary-date-page"></span>
-          </div>
-
-          <div id="summary-overall-page" class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5"></div>
-          <div id="summary-top-insights-page" class="bg-white rounded-xl border border-gray-200 p-5"></div>
-
-          <div class="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">🎓 Breakdown ตามสาขา</h3>
-            <div id="summary-by-department-page" class="overflow-x-auto"></div>
-          </div>
-
-          <div class="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">📅 Breakdown ตามปีการศึกษา</h3>
-            <div id="summary-by-year-page" class="overflow-x-auto"></div>
-          </div>
-
-          <div id="summary-warnings-page" class="bg-white rounded-xl border border-gray-200 p-5"></div>
+        <div>
+          <p class="text-blue-100 text-sm">นักศึกษา (ไม่ซ้ำ)</p>
+          <p id="stat-students" class="text-3xl font-bold text-white">0</p>
         </div>
       </div>
     </div>
 
-    <!-- Add Report Modal -->
-    <div id="add-modal" class="fixed inset-0 z-40 hidden">
-      <div class="modal-overlay absolute inset-0" onclick="closeAddModal()"></div>
-      <div class="relative min-h-full flex items-center justify-center p-4">
-        <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto my-4">
-          <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
-            <div class="flex items-center justify-between">
-              <h2 class="text-xl font-bold text-white">📝 เพิ่มข้อมูลใหม่</h2>
-              <button onclick="closeAddModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <form id="add-form" class="p-6 space-y-5">
-            <!-- Academic Year Selection -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา <span class="text-red-500">*</span></label>
-              <select id="form-academic-year" onchange="updateStudentDropdown()" required
-                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="">-- เลือกปีการศึกษา --</option>
-                <option value="2560">2560</option>
-                <option value="2561">2561</option>
-                <option value="2562">2562</option>
-                <option value="2563">2563</option>
-                <option value="2564">2564</option>
-                <option value="2565">2565</option>
-                <option value="2566">2566</option>
-                <option value="2567">2567</option>
-                <option value="2568">2568</option>
-                <option value="2569">2569</option>
-                <option value="2570">2570</option>
-                <option value="2571">2571</option>
-                <option value="2572">2572</option>
-                <option value="2573">2573</option>
-                <option value="2574">2574</option>
-                <option value="2575">2575</option>
-                <option value="2576">2576</option>
-                <option value="2577">2577</option>
-                <option value="2578">2578</option>
-                <option value="2579">2579</option>
-                <option value="2580">2580</option>
-              </select>
-            </div>
-
-            <!-- Student Selection -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">นักศึกษา <span class="text-red-500">*</span></label>
-              <select id="form-student-select" onchange="fillStudentInfo()" required disabled
-                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100">
-                <option value="">-- เลือกปีการศึกษาก่อน --</option>
-              </select>
-            </div>
-
-            <!-- Trip History Display -->
-            <div id="trip-history-display"></div>
-
-            <!-- Auto-filled Fields -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
-                <input type="text" id="form-student-id" readonly
-                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
-                <input type="text" id="form-department" readonly
-                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
-              <input type="text" id="form-student-name" readonly
-                class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
-            </div>
-
-            <!-- Boarding & Return Dates -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ลงเรือ <span class="text-red-500">*</span></label>
-                <input type="date" id="form-boarding-date" required
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">วันที่กลับ/ลงจากเรือ <span class="text-red-500">*</span></label>
-                <input type="date" id="form-return-date" required
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              </div>
-            </div>
-
-            <!-- Ship & Company -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อเรือ <span class="text-red-500">*</span></label>
-                <input type="text" id="form-ship-name" required placeholder="เช่น M/V Ocean Star"
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">บริษัท <span class="text-red-500">*</span></label>
-                <input type="text" id="form-company-name" required placeholder="ชื่อบริษัทเดินเรือ"
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              </div>
-            </div>
-
-            <!-- Optional Dates -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ JOIN</label>
-                <input type="date" id="form-join-date"
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ LEAVE</label>
-                <input type="date" id="form-leave-date"
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">ลงลำที่</label>
-                <input type="number" id="form-trip-number" min="1" placeholder="1"
-                  class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              </div>
-            </div>
-
-            <!-- Work Details -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">รายละเอียดการทำงาน</label>
-              <textarea id="form-work-details" rows="3" placeholder="รายละเอียดเกี่ยวกับการฝึกงาน..."
-                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
-            </div>
-
-            <!-- Notes -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
-              <textarea id="form-notes" rows="2" placeholder="หมายเหตุเพิ่มเติม..."
-                class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
-            </div>
-
-            <!-- Submit Button -->
-            <div class="flex gap-3 pt-4">
-              <button type="button" onclick="closeAddModal()"
-                class="flex-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors">
-                ยกเลิก
-              </button>
-              <button type="submit" id="submit-btn"
-                class="flex-1 btn-primary text-white px-6 py-3 rounded-xl font-medium flex items-center justify-center gap-2">
-                <span id="submit-text">บันทึกข้อมูล</span>
-                <div id="submit-spinner" class="spinner hidden"></div>
-              </button>
-            </div>
-          </form>
+    <!-- STANDBY - clickable -->
+    <div class="stat-card-clickable glass-card rounded-2xl p-5 relative group"
+         onclick="openStatusDetailPage('READY TO JOIN SHIP')"
+         title="คลิกดูรายชื่อ READY TO JOIN SHIP">
+      <div class="absolute top-2 right-2 text-white/40 group-hover:text-white/80 text-xs transition-colors">👆 คลิกดู</div>
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-blue-100 text-sm">STANDBYFORSHIP</p>
+          <p id="stat-standby" class="text-3xl font-bold text-white">0</p>
         </div>
       </div>
     </div>
 
-    <!-- Summary Modal -->
-    <div id="summary-modal" class="fixed inset-0 z-40 hidden overflow-y-auto">
-      <div class="modal-overlay absolute inset-0 z-0" onclick="closeSummaryModal()"></div>
-      <div class="relative z-10 min-h-full flex items-start justify-center p-4 py-6">
-        <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto my-4">
-          <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-t-2xl">
-            <div class="flex items-center justify-between">
-              <h2 class="text-xl font-bold text-white">📊 สรุปข้อมูลรายงานฝึกงาน</h2>
-              <button onclick="closeSummaryModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
+    <!-- ON BOARD - clickable -->
+    <div class="stat-card-clickable glass-card rounded-2xl p-5 relative group"
+         onclick="openStatusDetailPage('ON BOARD')"
+         title="คลิกดูรายชื่อ ON BOARD">
+      <div class="absolute top-2 right-2 text-white/40 group-hover:text-white/80 text-xs transition-colors">👆 คลิกดู</div>
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-blue-100 text-sm">ON BOARD</p>
+          <p id="stat-onboard" class="text-3xl font-bold text-white">0</p>
+        </div>
+      </div>
+    </div>
 
-          <div class="p-6 space-y-6">
-            <!-- Summary Date -->
-            <div class="text-right text-gray-500 text-sm">
-              วันที่สรุป: <span id="summary-date"></span>
-            </div>
-
-            <!-- Overall Summary -->
-            <div id="summary-overall" class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5"></div>
-
-            <!-- Top Insights -->
-            <div id="summary-top-insights" class="bg-white rounded-xl border border-gray-200 p-5"></div>
-
-            <!-- Department Breakdown -->
-            <div class="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">🎓 Breakdown ตามสาขา</h3>
-              <div id="summary-by-department" class="overflow-x-auto"></div>
-            </div>
-
-            <!-- Year Breakdown -->
-            <div class="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">📅 Breakdown ตามปีการศึกษา</h3>
-              <div id="summary-by-year" class="overflow-x-auto"></div>
-            </div>
-
-            <!-- Data Quality / Warnings -->
-            <div id="summary-warnings" class="bg-white rounded-xl border border-gray-200 p-5"></div>
-          </div>
+    <!-- ON LEAVE - clickable -->
+    <div class="stat-card-clickable glass-card rounded-2xl p-5 relative group"
+         onclick="openStatusDetailPage('ON LEAVE')"
+         title="คลิกดูรายชื่อ ON LEAVE ทั้งหมด">
+      <div class="absolute top-2 right-2 text-white/40 group-hover:text-white/80 text-xs transition-colors">👆 คลิกดู</div>
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-blue-100 text-sm">ON LEAVE (TOTAL)</p>
+          <p id="stat-onleave" class="text-3xl font-bold text-white">0</p>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Dashboard Insights -->
+  <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden mb-6">
+    <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50 flex flex-wrap items-center justify-between gap-2">
+      <h2 class="text-lg font-semibold text-gray-800">📈 Dashboard Insights</h2>
+      <div class="text-xs text-gray-500">
+        อัปเดตล่าสุด: <span id="insights-updated">-</span>
+        <span class="text-gray-300 mx-2">|</span>
+        ตามตัวกรอง/ค้นหาในตาราง
+      </div>
+    </div>
+
+    <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-gray-800">สถานะ (สัดส่วน %)</h3>
+          <button onclick="openStatusDetailPage()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">ดูทั้งหมด →</button>
+        </div>
+        <div id="insights-status" class="space-y-2"></div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <h3 class="text-sm font-semibold text-gray-800 mb-3">ปีการศึกษา (จำนวนทริป)</h3>
+        <div id="insights-year" class="space-y-2"></div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <h3 class="text-sm font-semibold text-gray-800 mb-3">Top บริษัท (จำนวนทริป)</h3>
+        <div id="insights-company" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Table -->
+  <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden">
+    <!-- Filter Bar -->
+    <div class="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div class="flex flex-wrap items-center gap-4">
+        <label class="text-gray-700 font-medium">กรองปีการศึกษา:</label>
+        <select id="filter-year" onchange="renderTable()"
+          class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+          <option value="all">ทั้งหมด</option>
+          <option value="2560">2560</option><option value="2561">2561</option><option value="2562">2562</option>
+          <option value="2563">2563</option><option value="2564">2564</option><option value="2565">2565</option>
+          <option value="2566">2566</option><option value="2567">2567</option><option value="2568">2568</option>
+          <option value="2569">2569</option><option value="2570">2570</option><option value="2571">2571</option>
+          <option value="2572">2572</option><option value="2573">2573</option><option value="2574">2574</option>
+          <option value="2575">2575</option><option value="2576">2576</option><option value="2577">2577</option>
+          <option value="2578">2578</option><option value="2579">2579</option><option value="2580">2580</option>
+        </select>
+
+        <label class="text-gray-700 font-medium ml-4">ค้นหา:</label>
+        <input type="text" id="search-input" onkeyup="renderTable()" placeholder="รหัส, ชื่อ, เรือ..."
+          class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white">
+
+        <span id="filter-count" class="text-gray-500 text-sm ml-auto"></span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+          <tr>
+            <th class="px-4 py-4 text-left text-sm font-semibold">รหัส</th>
+            <th class="px-4 py-4 text-left text-sm font-semibold">ชื่อ-นามสกุล</th>
+            <th class="px-4 py-4 text-left text-sm font-semibold">Trip #</th>
+            <th class="px-4 py-4 text-left text-sm font-semibold">ลงลำที่</th>
+            <th class="px-4 py-4 text-left text-sm font-semibold">ปีการศึกษา</th>
+            <th class="px-4 py-4 text-left text-sm font-semibold">สาขา</th>
+            <th class="px-4 py-4 text-left text-sm font-semibold">ช่วงเวลา</th>
+            <th class="px-4 py-4 text-left text-sm font-semibold">ชื่อเรือ</th>
+            <th class="px-4 py-4 text-left text-sm font-semibold">บริษัท</th>
+            <th class="px-4 py-4 text-left text-sm font-semibold">สถานะ</th>
+            <th class="px-4 py-4 text-left text-sm font-semibold">หมายเหตุ</th>
+            <th class="px-4 py-4 text-left text-sm font-semibold">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="report-table-body" class="divide-y divide-gray-100"></tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Bar -->
+    <div id="pagination-bar" class="hidden p-4 border-t border-gray-200 bg-gray-50 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <button id="pg-prev" onclick="setPage(pagination.page - 1)"
+          class="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-sm font-medium">
+          ◀ ก่อนหน้า
+        </button>
+        <div class="text-sm text-gray-700">
+          หน้า <span id="pg-page">1</span> / <span id="pg-total">1</span>
+          <span class="text-gray-400 mx-1">|</span>
+          แสดง <span id="pg-range">0-0</span>
+        </div>
+        <button id="pg-next" onclick="setPage(pagination.page + 1)"
+          class="px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-sm font-medium">
+          ถัดไป ▶
+        </button>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-gray-700">ต่อหน้า</span>
+        <select id="pg-size" onchange="setPageSize(this.value)"
+          class="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm">
+          <option value="25">25</option>
+          <option value="50" selected>50</option>
+          <option value="100">100</option>
+          <option value="200">200</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden p-12 text-center">
+      <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+        <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      <h3 class="text-xl font-semibold text-gray-700 mb-2">ยังไม่มีรายงาน</h3>
+      <p class="text-gray-500 mb-4">คลิกปุ่ม "เพิ่มข้อมูล" เพื่อเริ่มบันทึกข้อมูลการฝึกงาน</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ✅ NEW: STATUS DETAIL PAGE                                    -->
+<!-- ============================================================ -->
+<div id="status-detail-page" class="hidden min-h-full p-4 md:p-6 lg:p-8">
+  <header class="glass-card rounded-2xl p-6 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold text-white">👥 รายชื่อนักศึกษาตามสถานะ</h1>
+        <p class="text-blue-100 mt-1" id="status-detail-subtitle">แสดงรายชื่อแยกตามสถานะทั้งหมด</p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <!-- Filter on this page -->
+        <select id="status-detail-filter-year" onchange="renderStatusDetailPage()"
+          class="px-4 py-2 rounded-xl border border-white/30 bg-white/20 text-white focus:bg-white/30 focus:outline-none">
+          <option value="all" class="text-gray-800">ทุกปีการศึกษา</option>
+          <option value="2560" class="text-gray-800">2560</option><option value="2561" class="text-gray-800">2561</option>
+          <option value="2562" class="text-gray-800">2562</option><option value="2563" class="text-gray-800">2563</option>
+          <option value="2564" class="text-gray-800">2564</option><option value="2565" class="text-gray-800">2565</option>
+          <option value="2566" class="text-gray-800">2566</option><option value="2567" class="text-gray-800">2567</option>
+          <option value="2568" class="text-gray-800">2568</option><option value="2569" class="text-gray-800">2569</option>
+          <option value="2570" class="text-gray-800">2570</option><option value="2571" class="text-gray-800">2571</option>
+        </select>
+        <select id="status-detail-filter-dept" onchange="renderStatusDetailPage()"
+          class="px-4 py-2 rounded-xl border border-white/30 bg-white/20 text-white focus:bg-white/30 focus:outline-none">
+          <option value="all" class="text-gray-800">ทุกสาขา</option>
+          <option value="DECK" class="text-gray-800">DECK</option>
+          <option value="ENGINE" class="text-gray-800">ENGINE</option>
+          <option value="PCP" class="text-gray-800">PCP</option>
+        </select>
+        <button onclick="closeStatusDetailPage()" class="btn-primary text-white px-6 py-3 rounded-xl font-medium shadow-lg">
+          ← กลับหน้า Dashboard
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Status Quick-Jump Tabs -->
+  <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden mb-6">
+    <div class="p-4 bg-gradient-to-r from-violet-50 to-purple-50 border-b border-gray-200">
+      <p class="text-sm font-semibold text-gray-700 mb-3">🔗 ข้ามไปสถานะ:</p>
+      <div id="status-jump-tabs" class="flex flex-wrap gap-2"></div>
+    </div>
+  </div>
+
+  <!-- Status Groups Content -->
+  <div id="status-detail-content" class="space-y-6"></div>
+</div>
+
+<!-- Summary Page -->
+<div id="summary-page" class="hidden min-h-full p-4 md:p-6 lg:p-8">
+  <header class="glass-card rounded-2xl p-6 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold text-white">📄 หน้าสรุปข้อมูลรายงานฝึกงาน</h1>
+        <p class="text-blue-100 mt-1">สรุปภาพรวม + Breakdown + Data Quality</p>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeSummaryPage()" class="btn-primary text-white px-6 py-3 rounded-xl font-medium shadow-lg">
+          ← กลับหน้า Dashboard
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="glass-card-solid rounded-2xl shadow-xl overflow-hidden">
+    <div class="p-6 space-y-6">
+      <div class="text-right text-gray-500 text-sm">
+        วันที่สรุป: <span id="summary-date-page"></span>
+      </div>
+      <div id="summary-overall-page" class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5"></div>
+      <div id="summary-top-insights-page" class="bg-white rounded-xl border border-gray-200 p-5"></div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">🎓 Breakdown ตามสาขา</h3>
+        <div id="summary-by-department-page" class="overflow-x-auto"></div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">📅 Breakdown ตามปีการศึกษา</h3>
+        <div id="summary-by-year-page" class="overflow-x-auto"></div>
+      </div>
+      <div id="summary-warnings-page" class="bg-white rounded-xl border border-gray-200 p-5"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Report Modal -->
+<div id="add-modal" class="fixed inset-0 z-40 hidden">
+  <div class="modal-overlay absolute inset-0" onclick="closeAddModal()"></div>
+  <div class="relative min-h-full flex items-center justify-center p-4">
+    <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto my-4">
+      <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold text-white">📝 เพิ่มข้อมูลใหม่</h2>
+          <button onclick="closeAddModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <form id="add-form" class="p-6 space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา <span class="text-red-500">*</span></label>
+          <select id="form-academic-year" onchange="updateStudentDropdown()" required
+            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="">-- เลือกปีการศึกษา --</option>
+            <option value="2560">2560</option><option value="2561">2561</option><option value="2562">2562</option>
+            <option value="2563">2563</option><option value="2564">2564</option><option value="2565">2565</option>
+            <option value="2566">2566</option><option value="2567">2567</option><option value="2568">2568</option>
+            <option value="2569">2569</option><option value="2570">2570</option><option value="2571">2571</option>
+            <option value="2572">2572</option><option value="2573">2573</option><option value="2574">2574</option>
+            <option value="2575">2575</option><option value="2576">2576</option><option value="2577">2577</option>
+            <option value="2578">2578</option><option value="2579">2579</option><option value="2580">2580</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">นักศึกษา <span class="text-red-500">*</span></label>
+          <select id="form-student-select" onchange="fillStudentInfo()" required disabled
+            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100">
+            <option value="">-- เลือกปีการศึกษาก่อน --</option>
+          </select>
+        </div>
+
+        <div id="trip-history-display"></div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
+            <input type="text" id="form-student-id" readonly
+              class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
+            <input type="text" id="form-department" readonly
+              class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
+          <input type="text" id="form-student-name" readonly
+            class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ลงเรือ <span class="text-red-500">*</span></label>
+            <input type="date" id="form-boarding-date" required
+              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่กลับ/ลงจากเรือ <span class="text-red-500">*</span></label>
+            <input type="date" id="form-return-date" required
+              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อเรือ <span class="text-red-500">*</span></label>
+            <input type="text" id="form-ship-name" required placeholder="เช่น M/V Ocean Star"
+              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">บริษัท <span class="text-red-500">*</span></label>
+            <input type="text" id="form-company-name" required placeholder="ชื่อบริษัทเดินเรือ"
+              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ JOIN</label>
+            <input type="date" id="form-join-date"
+              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ LEAVE</label>
+            <input type="date" id="form-leave-date"
+              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">ลงลำที่</label>
+            <input type="number" id="form-trip-number" min="1" placeholder="1"
+              class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">รายละเอียดการทำงาน</label>
+          <textarea id="form-work-details" rows="3" placeholder="รายละเอียดเกี่ยวกับการฝึกงาน..."
+            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
+          <textarea id="form-notes" rows="2" placeholder="หมายเหตุเพิ่มเติม..."
+            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"></textarea>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button type="button" onclick="closeAddModal()"
+            class="flex-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors">
+            ยกเลิก
+          </button>
+          <button type="submit" id="submit-btn"
+            class="flex-1 btn-primary text-white px-6 py-3 rounded-xl font-medium flex items-center justify-center gap-2">
+            <span id="submit-text">บันทึกข้อมูล</span>
+            <div id="submit-spinner" class="spinner hidden"></div>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Modal -->
+<div id="summary-modal" class="fixed inset-0 z-40 hidden overflow-y-auto">
+  <div class="modal-overlay absolute inset-0 z-0" onclick="closeSummaryModal()"></div>
+  <div class="relative z-10 min-h-full flex items-start justify-center p-4 py-6">
+    <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto my-4">
+      <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-t-2xl">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold text-white">📊 สรุปข้อมูลรายงานฝึกงาน</h2>
+          <button onclick="closeSummaryModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-6">
+        <div class="text-right text-gray-500 text-sm">
+          วันที่สรุป: <span id="summary-date"></span>
+        </div>
+        <div id="summary-overall" class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5"></div>
+        <div id="summary-top-insights" class="bg-white rounded-xl border border-gray-200 p-5"></div>
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">🎓 Breakdown ตามสาขา</h3>
+          <div id="summary-by-department" class="overflow-x-auto"></div>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">📅 Breakdown ตามปีการศึกษา</h3>
+          <div id="summary-by-year" class="overflow-x-auto"></div>
+        </div>
+        <div id="summary-warnings" class="bg-white rounded-xl border border-gray-200 p-5"></div>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
   <script>
     /** =========================================================
-     *  ✅ Firebase Config (ใช้ร่วมกันทั้ง dataSdk และ students)
+     *  Firebase Config
      * ========================================================= */
     const firebaseConfig = {
       apiKey: "AIzaSyC-kwdTAPH9Vdqy9PABUAjMv635aZLQh8s",
@@ -611,34 +659,22 @@
       measurementId: "G-5TK1HK3HBC"
     };
 
-    // ทำให้ onclick ใน HTML เรียกได้
     Object.assign(window, {
-      openAddModal,
-      closeAddModal,
-      openStudentModal,
-      closeStudentModal,
-      openSummaryModal,
-      closeSummaryModal,
-      openSummaryPage,     // ✅ NEW
-      closeSummaryPage,    // ✅ NEW
-      openExportModal,     // ✅ NEW
-      closeExportModal,    // ✅ NEW
-      exportReportsCSV,    // ✅ NEW
-      exportReportsXLSX,   // ✅ NEW
-      exportStudentsCSV,   // ✅ NEW
-      exportStudentsXLSX,  // ✅ NEW
-      setPage,             // ✅ NEW
-      setPageSize,         // ✅ NEW
-      updateStudentDropdown,
-      fillStudentInfo,
-      clearStudentInfo,
-      renderTable,
-      updateStatus,
-      openEditModal,
-      closeEditModal,
+      openAddModal, closeAddModal,
+      openStudentModal, closeStudentModal,
+      openSummaryModal, closeSummaryModal,
+      openSummaryPage, closeSummaryPage,
+      openStatusDetailPage, closeStatusDetailPage,   // ✅ NEW
+      renderStatusDetailPage,                         // ✅ NEW
+      openExportModal, closeExportModal,
+      exportReportsCSV, exportReportsXLSX,
+      exportStudentsCSV, exportStudentsXLSX,
+      setPage, setPageSize,
+      updateStudentDropdown, fillStudentInfo, clearStudentInfo,
+      renderTable, updateStatus,
+      openEditModal, closeEditModal,
       deleteReport,
-      cancelOverlapSubmit,
-      confirmOverlapSubmit,
+      cancelOverlapSubmit, confirmOverlapSubmit,
       deleteStudent
     });
 
@@ -678,7 +714,6 @@
           "ธนพล2": { id: "2073", fullName: "นายธนพล ปินตาไฝ" }
         }
       },
-
       "PCP": {
         "2566": {
           "1417": { id: "1417", fullName: "นายจิรวัฒน์ ศรีจันทร์" },
@@ -700,7 +735,6 @@
           "กิตติภพ": { id: "1521", fullName: "นายกิตติภพ ฉัตรแก้ว" }
         }
       },
-
       "ENGINE": {
         "2566": {
           "1563": { id: "1563", fullName: "นายอภิสิทธิ์ วงศ์หนูพะเนา" },
@@ -718,53 +752,35 @@
     let pendingTripData = null;
     let pendingOverlapConfirmed = false;
 
-    // ============================================
-    // ✅ NEW: PAGINATION STATE
-    // ============================================
-    const pagination = {
-      page: 1,
-      pageSize: 50,
-      lastKey: ''
-    };
+    // Pagination State
+    const pagination = { page: 1, pageSize: 50, lastKey: '' };
 
     function setPage(p) {
       pagination.page = Math.max(1, parseInt(p, 10) || 1);
       renderTable();
     }
-
     function setPageSize(size) {
       pagination.pageSize = Math.max(1, parseInt(size, 10) || 50);
       pagination.page = 1;
       renderTable();
     }
-
     function updatePaginationBar(total, totalPages, startIdx, endIdx) {
       const bar = document.getElementById('pagination-bar');
       if (!bar) return;
-
-      if (total <= 0) {
-        bar.classList.add('hidden');
-        return;
-      }
+      if (total <= 0) { bar.classList.add('hidden'); return; }
       bar.classList.remove('hidden');
-
       const pgPage = document.getElementById('pg-page');
       const pgTotal = document.getElementById('pg-total');
       const pgRange = document.getElementById('pg-range');
       const btnPrev = document.getElementById('pg-prev');
       const btnNext = document.getElementById('pg-next');
       const selSize = document.getElementById('pg-size');
-
       if (pgPage) pgPage.textContent = String(pagination.page);
       if (pgTotal) pgTotal.textContent = String(totalPages);
       if (pgRange) pgRange.textContent = `${startIdx}-${endIdx} จาก ${total}`;
-
       if (btnPrev) btnPrev.disabled = (pagination.page <= 1);
       if (btnNext) btnNext.disabled = (pagination.page >= totalPages);
-
-      if (selSize && String(selSize.value) !== String(pagination.pageSize)) {
-        selSize.value = String(pagination.pageSize);
-      }
+      if (selSize && String(selSize.value) !== String(pagination.pageSize)) selSize.value = String(pagination.pageSize);
     }
 
     // ============================================
@@ -775,7 +791,6 @@
     // ============================================
     // STATUS NORMALIZATION
     // ============================================
-    // ✅ เพิ่ม: APPLIED, ON LEAVE - WAIT FOR GRADUATION PROCESS
     const ALLOWED_STATUSES = [
       'NO REQUEST TO JOIN THE SHIP',
       'THE VOYAGE PROCESS',
@@ -791,38 +806,25 @@
     function normalizeStatus(status) {
       const DEFAULT = 'NO REQUEST TO JOIN THE SHIP';
       if (status === null || status === undefined) return DEFAULT;
-
       const raw = String(status).trim();
       if (!raw) return DEFAULT;
-
       const u = raw.toUpperCase().replace(/\s+/g, ' ').trim();
-
-
-      // Backward compatibility
       if (u === 'PENDING') return 'READY TO JOIN SHIP';
       if (u === 'STANDBYFORSHIP' || u === 'STANDBY FOR SHIP') return 'READY TO JOIN SHIP';
       if (u === 'ONBOARD' || u === 'ON BOARD') return 'ON BOARD';
       if (u === 'GRADUATION' || u === 'GRAD' || u === 'GRADUATED') return 'GRADUATED';
-
-      // Flexible inputs
       if (u.includes('NO REQUEST')) return 'NO REQUEST TO JOIN THE SHIP';
       if (u.includes('VOYAGE')) return 'THE VOYAGE PROCESS';
       if (u.includes('READY') && u.includes('JOIN')) return 'READY TO JOIN SHIP';
-
-      // ON LEAVE
       if (u.startsWith('ON LEAVE')) {
-        // ✅ NEW: WAIT FOR GRADUATION PROCESS
         if (u.includes('WAIT') && u.includes('GRAD')) return 'ON LEAVE - WAIT FOR GRADUATION PROCESS';
-
         if (u.includes('GRAD')) return 'ON LEAVE - APPLY FOR GRADUATION';
         if (u.includes('OWN') || u.includes('BUSINESS')) return 'ON LEAVE - OWN BUSINESS';
         if (u.includes('REJOIN') || u.includes('WAIT')) return 'ON LEAVE - WAIT FOR REJOIN';
         return 'ON LEAVE - WAIT FOR REJOIN';
       }
-
       const exact = ALLOWED_STATUSES.find(s => s === u);
       if (exact) return exact;
-
       return DEFAULT;
     }
 
@@ -834,11 +836,8 @@
     // MULTI-TRIP SUPPORT
     // ============================================
     function isDateOverlap(aStart, aEnd, bStart, bEnd) {
-      const a1 = new Date(aStart).getTime();
-      const a2 = new Date(aEnd).getTime();
-      const b1 = new Date(bStart).getTime();
-      const b2 = new Date(bEnd).getTime();
-
+      const a1 = new Date(aStart).getTime(), a2 = new Date(aEnd).getTime();
+      const b1 = new Date(bStart).getTime(), b2 = new Date(bEnd).getTime();
       if (isNaN(a1) || isNaN(a2) || isNaN(b1) || isNaN(b2)) return false;
       if (a2 < a1 || b2 < b1) return false;
       return a1 <= b2 && b1 <= a2;
@@ -847,36 +846,30 @@
     function computeNextTripSeq(allReports, studentId, academicYear) {
       const existingTrips = allReports.filter(r => r.student_id === studentId && r.academic_year === academicYear);
       if (existingTrips.length === 0) return 1;
-      const maxSeq = Math.max(...existingTrips.map(r => r.trip_seq || 0));
-      return maxSeq + 1;
+      return Math.max(...existingTrips.map(r => r.trip_seq || 0)) + 1;
     }
 
     function buildTripId(formData) {
       const { student_id, academic_year, ship_name, boarding_date } = formData;
-      const sanitizedShip = (ship_name || '')
-        .replace(/\s+/g, '-')
-        .replace(/[^a-zA-Z0-9-]/g, '')
-        .toUpperCase();
+      const sanitizedShip = (ship_name || '').replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '').toUpperCase();
       return `${student_id}_${academic_year}_${sanitizedShip}_${boarding_date}`;
     }
 
     function duplicateCheck(allReports, formData) {
-      const duplicate = allReports.find(r =>
+      return allReports.find(r =>
         r.student_id === formData.student_id &&
         r.academic_year === formData.academic_year &&
         r.ship_name === formData.ship_name &&
         r.boarding_date === formData.boarding_date &&
         r.return_date === formData.return_date
-      );
-      return duplicate || null;
+      ) || null;
     }
 
     function findOverlappingTrips(allReports, formData) {
       const { student_id, academic_year, boarding_date, return_date } = formData;
-
-      const studentTrips = allReports.filter(r => r.student_id === student_id && r.academic_year === academicYear);
-      const overlapping = studentTrips.filter(trip => isDateOverlap(boarding_date, return_date, trip.boarding_date, trip.return_date));
-      return overlapping;
+      return allReports
+        .filter(r => r.student_id === student_id && r.academic_year === academic_year)
+        .filter(trip => isDateOverlap(boarding_date, return_date, trip.boarding_date, trip.return_date));
     }
 
     function getRecentTrips(allReports, studentId, limit = 3) {
@@ -894,14 +887,12 @@
         allReports = data || [];
         updateStats();
         renderTable();
-        // ✅ NEW: refresh insights whenever data changes
         renderDashboardInsights();
-
-        // ✅ ถ้าอยู่หน้า Summary Page ให้รีเฟรชทันที
         const page = document.getElementById('summary-page');
-        if (page && !page.classList.contains('hidden')) {
-          updateSummaryPage();
-        }
+        if (page && !page.classList.contains('hidden')) updateSummaryPage();
+        // ✅ Refresh status detail page if open
+        const sdPage = document.getElementById('status-detail-page');
+        if (sdPage && !sdPage.classList.contains('hidden')) renderStatusDetailPage();
       }
     };
 
@@ -943,31 +934,24 @@
     function renderStudentList() {
       const el = document.getElementById('student-list');
       if (!el) return;
-
-      const rows = allStudents
-        .slice()
-        .sort((a, b) =>
-          (a.academic_year || '').localeCompare(b.academic_year || '') ||
-          (a.department || '').localeCompare(b.department || '') ||
-          (a.id || '').localeCompare(b.id || '')
-        );
-
+      const rows = allStudents.slice().sort((a, b) =>
+        (a.academic_year || '').localeCompare(b.academic_year || '') ||
+        (a.department || '').localeCompare(b.department || '') ||
+        (a.id || '').localeCompare(b.id || '')
+      );
       if (rows.length === 0) {
         el.innerHTML = `<p class="text-gray-500 text-sm">ยังไม่มีนักศึกษาใน Firestore</p>`;
         return;
       }
-
       el.innerHTML = `
         <table class="min-w-[900px] w-full text-sm">
-          <thead>
-            <tr class="bg-gray-50 text-gray-700">
-              <th class="text-left px-3 py-2 font-semibold">ปี</th>
-              <th class="text-left px-3 py-2 font-semibold">สาขา</th>
-              <th class="text-left px-3 py-2 font-semibold">รหัส</th>
-              <th class="text-left px-3 py-2 font-semibold">ชื่อ</th>
-              <th class="text-left px-3 py-2 font-semibold">จัดการ</th>
-            </tr>
-          </thead>
+          <thead><tr class="bg-gray-50 text-gray-700">
+            <th class="text-left px-3 py-2 font-semibold">ปี</th>
+            <th class="text-left px-3 py-2 font-semibold">สาขา</th>
+            <th class="text-left px-3 py-2 font-semibold">รหัส</th>
+            <th class="text-left px-3 py-2 font-semibold">ชื่อ</th>
+            <th class="text-left px-3 py-2 font-semibold">จัดการ</th>
+          </tr></thead>
           <tbody class="divide-y divide-gray-100">
             ${rows.map(s => `
               <tr>
@@ -989,15 +973,11 @@
     }
 
     async function deleteStudent(docId) {
-      const ok = confirm('ต้องการลบนักศึกษารายการนี้ใช่ไหม?');
-      if (!ok) return;
-
+      if (!confirm('ต้องการลบนักศึกษารายการนี้ใช่ไหม?')) return;
       const authed = await ensureAuthGlobal();
       if (!authed) return showToast('Auth ไม่ผ่าน', 'error');
-
       try {
-        const db = firebase.firestore();
-        await db.collection('students').doc(docId).delete();
+        await firebase.firestore().collection('students').doc(docId).delete();
         showToast('ลบนักศึกษาสำเร็จ', 'success');
       } catch (e) {
         console.error(e);
@@ -1008,10 +988,8 @@
     async function startStudentsListener() {
       const authed = await ensureAuthGlobal();
       if (!authed) return;
-
       const db = firebase.firestore();
       if (studentsUnsub) studentsUnsub();
-
       studentsUnsub = db.collection('students').onSnapshot(snap => {
         allStudents = snap.docs.map(d => ({ ...(d.data() || {}), __backendId: d.id }));
         renderStudentList();
@@ -1020,42 +998,27 @@
 
     (function bindStudentForm() {
       const sf = document.getElementById('student-form');
-      if (!sf) {
-        document.addEventListener('DOMContentLoaded', bindStudentForm, { once: true });
-        return;
-      }
+      if (!sf) { document.addEventListener('DOMContentLoaded', bindStudentForm, { once: true }); return; }
       if (sf.__bound) return;
       sf.__bound = true;
 
       sf.addEventListener('submit', async function (e) {
         e.preventDefault();
-
         const year = document.getElementById('stu-year').value.trim();
         const dept = document.getElementById('stu-dept').value.trim();
         const id = document.getElementById('stu-id').value.trim();
         const name = document.getElementById('stu-name').value.trim();
-
         if (!year || !dept || !id || !name) return showToast('กรอกข้อมูลให้ครบ', 'error');
-
         const authed = await ensureAuthGlobal();
         if (!authed) return showToast('Auth ไม่ผ่าน', 'error');
-
         try {
-          const db = firebase.firestore();
           const docId = buildStudentDocId(year, dept, id);
-
-          await db.collection('students').doc(docId).set({
-            academic_year: year,
-            department: dept,
-            id,
-            fullName: name,
+          await firebase.firestore().collection('students').doc(docId).set({
+            academic_year: year, department: dept, id, fullName: name,
             updated_at: new Date().toISOString()
           }, { merge: true });
-
           showToast('บันทึกนักศึกษาสำเร็จ', 'success');
           document.getElementById('student-form').reset();
-
-          // อัปเดต dropdown ทันที
           updateStudentDropdown();
         } catch (e2) {
           console.error(e2);
@@ -1063,24 +1026,16 @@
         }
       });
 
-      // รวมข้อมูลนักศึกษา (ฐานเดิม + Firestore)
       function getStudentsForYear(year) {
         const list = [];
-
-        // base (studentDatabase)
         for (const [dept, years] of Object.entries(studentDatabase)) {
           if (!years[year]) continue;
           for (const info of Object.values(years[year])) {
             list.push({ department: dept, id: info.id, fullName: info.fullName });
           }
         }
-
-        // dynamic (Firestore)
-        allStudents
-          .filter(s => String(s.academic_year || '') === String(year))
+        allStudents.filter(s => String(s.academic_year || '') === String(year))
           .forEach(s => list.push({ department: s.department || '', id: s.id || '', fullName: s.fullName || '' }));
-
-        // dedupe dept|id
         const seen = new Set();
         return list.filter(s => {
           const key = `${s.department}|${s.id}`;
@@ -1090,7 +1045,6 @@
         });
       }
       window.getStudentsForYear = getStudentsForYear;
-
     })();
 
     // ============================================
@@ -1104,57 +1058,40 @@
             const titleEl = document.getElementById('dashboard-title');
             if (titleEl) titleEl.textContent = config.dashboard_title || defaultConfig.dashboard_title;
           },
-          mapToCapabilities: (config) => ({
-            recolorables: [],
-            borderables: [],
-            fontEditable: undefined,
-            fontSizeable: undefined
-          }),
-          mapToEditPanelValues: (config) => new Map([
-            ["dashboard_title", config.dashboard_title || defaultConfig.dashboard_title]
-          ])
+          mapToCapabilities: (config) => ({ recolorables: [], borderables: [], fontEditable: undefined, fontSizeable: undefined }),
+          mapToEditPanelValues: (config) => new Map([["dashboard_title", config.dashboard_title || defaultConfig.dashboard_title]])
         });
       }
-
       if (window.dataSdk) {
         const result = await window.dataSdk.init(dataHandler);
         if (!result.isOk) showToast('ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
       }
-
       startStudentsListener();
       updateStats();
       renderTable();
-      renderDashboardInsights(); // ✅ NEW
+      renderDashboardInsights();
     }
 
     /** =========================================================
-     *  dataSdk Fallback (Firestore) สำหรับ GitHub Pages
+     *  dataSdk Fallback (Firestore)
      * ========================================================= */
     (function () {
       if (window.dataSdk) return;
-
       const ok = (value) => ({ isOk: true, value });
       const err = (error) => ({ isOk: false, error });
-
-      let handlerRef = null;
-      let unsubscribe = null;
+      let handlerRef = null, unsubscribe = null;
 
       function initFirebaseOnce() {
         if (!firebase?.apps?.length) firebase.initializeApp(firebaseConfig);
       }
-
       async function ensureAuth() {
         try {
           initFirebaseOnce();
           const auth = firebase.auth();
           if (!auth.currentUser) await auth.signInAnonymously();
           return true;
-        } catch (e) {
-          console.error("Anonymous sign-in failed:", e);
-          return false;
-        }
+        } catch (e) { console.error("Anonymous sign-in failed:", e); return false; }
       }
-
       function mapDoc(docSnap) {
         const data = docSnap.data() || {};
         data.__backendId = docSnap.id;
@@ -1165,75 +1102,50 @@
         async init(handler) {
           try {
             handlerRef = handler;
-
             const authed = await ensureAuth();
-            if (!authed) return err("Auth failed (check Anonymous sign-in).");
-
+            if (!authed) return err("Auth failed");
             const db = firebase.firestore();
-
             if (unsubscribe) unsubscribe();
             unsubscribe = db.collection("reports").onSnapshot(
-              (snap) => {
-                const list = snap.docs.map(mapDoc);
-                handlerRef?.onDataChanged?.(list);
-              },
+              (snap) => { handlerRef?.onDataChanged?.(snap.docs.map(mapDoc)); },
               (e) => console.error("onSnapshot error:", e)
             );
-
             return ok(true);
-          } catch (e) {
-            return err(e?.message || "init failed");
-          }
+          } catch (e) { return err(e?.message || "init failed"); }
         },
-
         async create(report) {
           try {
             const authed = await ensureAuth();
             if (!authed) return err("Auth failed");
-
             const db = firebase.firestore();
             const payload = { ...report };
             Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
-
             const ref = await db.collection("reports").add(payload);
             return ok({ ...payload, __backendId: ref.id });
-          } catch (e) {
-            return err(e?.message || "create failed");
-          }
+          } catch (e) { return err(e?.message || "create failed"); }
         },
-
         async update(report) {
           try {
             const authed = await ensureAuth();
             if (!authed) return err("Auth failed");
             if (!report?.__backendId) return err("missing __backendId");
-
             const db = firebase.firestore();
             const id = report.__backendId;
-
             const payload = { ...report };
             delete payload.__backendId;
             Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
-
             await db.collection("reports").doc(id).update(payload);
             return ok(true);
-          } catch (e) {
-            return err(e?.message || "update failed");
-          }
+          } catch (e) { return err(e?.message || "update failed"); }
         },
-
         async delete(id) {
           try {
             const authed = await ensureAuth();
             if (!authed) return err("Auth failed");
             if (!id) return err("missing id");
-
-            const db = firebase.firestore();
-            await db.collection("reports").doc(id).delete();
+            await firebase.firestore().collection("reports").doc(id).delete();
             return ok(true);
-          } catch (e) {
-            return err(e?.message || "delete failed");
-          }
+          } catch (e) { return err(e?.message || "delete failed"); }
         }
       };
     })();
@@ -1241,7 +1153,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       initApp();
       bindAddForm();
-      // bindEditForm / bindStudentForm เป็น IIFE แล้ว
     });
 
     // ============================================
@@ -1250,11 +1161,9 @@
     function updateStats() {
       const total = allReports.length;
       const uniqueStudents = new Set(allReports.map(r => r.student_id)).size;
-
       const ready = allReports.filter(r => normalizeStatus(r.status) === 'READY TO JOIN SHIP').length;
       const onboard = allReports.filter(r => normalizeStatus(r.status) === 'ON BOARD').length;
       const onleave = allReports.filter(r => isOnLeaveStatus(r.status)).length;
-
       if (document.getElementById('stat-total')) document.getElementById('stat-total').textContent = total;
       if (document.getElementById('stat-students')) document.getElementById('stat-students').textContent = uniqueStudents;
       if (document.getElementById('stat-standby')) document.getElementById('stat-standby').textContent = ready;
@@ -1263,21 +1172,15 @@
     }
 
     // ============================================
-    // ✅ NEW: FILTER SNAPSHOT (ใช้ทั้งตาราง+export+insights)
+    // FILTER SNAPSHOT
     // ============================================
     function getFilteredReportsSnapshot() {
       const filterYear = document.getElementById('filter-year');
       const searchInput = document.getElementById('search-input');
-
       const yearFilter = filterYear ? filterYear.value : 'all';
       const searchTerm = searchInput ? (searchInput.value || '').toLowerCase() : '';
-
       let filteredReports = allReports.slice();
-
-      if (yearFilter !== 'all') {
-        filteredReports = filteredReports.filter(r => r.academic_year === yearFilter);
-      }
-
+      if (yearFilter !== 'all') filteredReports = filteredReports.filter(r => r.academic_year === yearFilter);
       if (searchTerm) {
         filteredReports = filteredReports.filter(r =>
           (r.student_id || '').toLowerCase().includes(searchTerm) ||
@@ -1286,63 +1189,284 @@
           (r.company_name || '').toLowerCase().includes(searchTerm)
         );
       }
-
       filteredReports = filteredReports.sort((a, b) => {
         if (a.student_id !== b.student_id) return (a.student_id || '').localeCompare((b.student_id || ''));
         if (a.academic_year !== b.academic_year) return (b.academic_year || '').localeCompare((a.academic_year || ''));
         return (b.trip_seq || 0) - (a.trip_seq || 0);
       });
-
       return { yearFilter, searchTerm, filteredReports };
     }
 
     // ============================================
-    // ✅ NEW: EXPORT MODAL + EXPORTERS
+    // ✅ NEW: STATUS DETAIL PAGE
     // ============================================
-    function openExportModal() {
-      document.getElementById('export-modal')?.classList.remove('hidden');
+
+    // Status metadata (icon, color, label)
+    const STATUS_META = {
+      'NO REQUEST TO JOIN THE SHIP':         { icon: '🚫', color: 'gray',    bgCard: 'bg-gray-50',    borderCard: 'border-gray-200',    badgeCls: 'bg-gray-100 text-gray-800' },
+      'THE VOYAGE PROCESS':                  { icon: '🌊', color: 'blue',    bgCard: 'bg-blue-50',    borderCard: 'border-blue-200',    badgeCls: 'bg-blue-100 text-blue-800' },
+      'READY TO JOIN SHIP':                  { icon: '⏳', color: 'yellow',  bgCard: 'bg-yellow-50',  borderCard: 'border-yellow-200',  badgeCls: 'bg-yellow-100 text-yellow-800' },
+      'ON BOARD':                            { icon: '✅', color: 'green',   bgCard: 'bg-green-50',   borderCard: 'border-green-200',   badgeCls: 'bg-green-100 text-green-800' },
+      'ON LEAVE - APPLY FOR GRADUATION':     { icon: '🎓', color: 'purple',  bgCard: 'bg-purple-50',  borderCard: 'border-purple-200',  badgeCls: 'bg-purple-100 text-purple-800' },
+      'ON LEAVE - WAIT FOR GRADUATION PROCESS': { icon: '⏳🎓', color: 'fuchsia', bgCard: 'bg-fuchsia-50', borderCard: 'border-fuchsia-200', badgeCls: 'bg-fuchsia-100 text-fuchsia-800' },
+      'ON LEAVE - OWN BUSINESS':             { icon: '💼', color: 'orange',  bgCard: 'bg-orange-50',  borderCard: 'border-orange-200',  badgeCls: 'bg-orange-100 text-orange-800' },
+      'ON LEAVE - WAIT FOR REJOIN':          { icon: '⏸️', color: 'rose',    bgCard: 'bg-rose-50',    borderCard: 'border-rose-200',    badgeCls: 'bg-rose-100 text-rose-800' },
+      'GRADUATED':                           { icon: '🎉', color: 'emerald', bgCard: 'bg-emerald-50', borderCard: 'border-emerald-200', badgeCls: 'bg-emerald-100 text-emerald-800' },
+    };
+
+    // Header color gradient per status
+    const STATUS_HEADER_GRADIENT = {
+      'gray':    'from-gray-500 to-gray-700',
+      'blue':    'from-blue-500 to-blue-700',
+      'yellow':  'from-yellow-400 to-orange-500',
+      'green':   'from-green-500 to-emerald-600',
+      'purple':  'from-purple-500 to-purple-700',
+      'fuchsia': 'from-fuchsia-500 to-purple-600',
+      'orange':  'from-orange-400 to-orange-600',
+      'rose':    'from-rose-400 to-rose-600',
+      'emerald': 'from-emerald-500 to-teal-600',
+    };
+
+    // Current focused status (null = show all)
+    let statusDetailFocused = null;
+
+    function openStatusDetailPage(focusStatus) {
+      statusDetailFocused = focusStatus || null;
+
+      // Hide all other pages
+      document.getElementById('dashboard-page').classList.add('hidden');
+      document.getElementById('summary-page').classList.add('hidden');
+
+      const page = document.getElementById('status-detail-page');
+      page.classList.remove('hidden');
+
+      // Update subtitle
+      const subtitle = document.getElementById('status-detail-subtitle');
+      if (focusStatus && focusStatus !== 'ON LEAVE') {
+        const meta = STATUS_META[focusStatus] || {};
+        subtitle.textContent = `${meta.icon || ''} แสดงรายชื่อสำหรับสถานะ: ${focusStatus}`;
+      } else if (focusStatus === 'ON LEAVE') {
+        subtitle.textContent = '🏖️ แสดงรายชื่อ ON LEAVE ทั้งหมด (ทุก sub-status)';
+      } else {
+        subtitle.textContent = 'แสดงรายชื่อแยกตามสถานะทั้งหมด';
+      }
+
+      renderStatusDetailPage();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    function closeExportModal() {
-      document.getElementById('export-modal')?.classList.add('hidden');
+
+    function closeStatusDetailPage() {
+      statusDetailFocused = null;
+      document.getElementById('status-detail-page').classList.add('hidden');
+      document.getElementById('dashboard-page').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    function renderStatusDetailPage() {
+      // Get filters from the status detail page
+      const yearFilterEl = document.getElementById('status-detail-filter-year');
+      const deptFilterEl = document.getElementById('status-detail-filter-dept');
+      const yearFilter = yearFilterEl ? yearFilterEl.value : 'all';
+      const deptFilter = deptFilterEl ? deptFilterEl.value : 'all';
+
+      // Filter reports
+      let reports = allReports.slice();
+      if (yearFilter !== 'all') reports = reports.filter(r => r.academic_year === yearFilter);
+      if (deptFilter !== 'all') reports = reports.filter(r => (r.department || '') === deptFilter);
+
+      // Group by normalized status
+      const grouped = {};
+      ALLOWED_STATUSES.forEach(s => { grouped[s] = []; });
+
+      reports.forEach(r => {
+        const s = normalizeStatus(r.status);
+        if (!grouped[s]) grouped[s] = [];
+        grouped[s].push(r);
+      });
+
+      // Sort each group by student_id then boarding_date desc
+      Object.keys(grouped).forEach(s => {
+        grouped[s].sort((a, b) =>
+          (a.student_id || '').localeCompare(b.student_id || '') ||
+          new Date(b.boarding_date) - new Date(a.boarding_date)
+        );
+      });
+
+      // Determine which statuses to show
+      let statusesToShow = ALLOWED_STATUSES;
+      if (statusDetailFocused === 'ON LEAVE') {
+        statusesToShow = ALLOWED_STATUSES.filter(s => s.startsWith('ON LEAVE -'));
+      } else if (statusDetailFocused && ALLOWED_STATUSES.includes(statusDetailFocused)) {
+        statusesToShow = [statusDetailFocused];
+      }
+
+      // Build quick-jump tabs
+      const tabsEl = document.getElementById('status-jump-tabs');
+      if (tabsEl) {
+        const tabStatuses = statusDetailFocused === 'ON LEAVE'
+          ? ALLOWED_STATUSES.filter(s => s.startsWith('ON LEAVE -'))
+          : (statusDetailFocused && ALLOWED_STATUSES.includes(statusDetailFocused))
+            ? [statusDetailFocused]
+            : ALLOWED_STATUSES;
+
+        tabsEl.innerHTML = tabStatuses.map(s => {
+          const meta = STATUS_META[s] || {};
+          const cnt = grouped[s] ? grouped[s].length : 0;
+          const anchor = s.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+          const colorClass = getStatusColorClass(s);
+          return `
+            <a href="#status-group-${anchor}"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium ${colorClass} hover:opacity-80 transition-opacity border border-current/20 no-underline">
+              ${meta.icon || ''} ${escapeHtml(s)}
+              <span class="bg-white/60 rounded-full px-1.5 py-0.5 text-xs font-bold">${cnt}</span>
+            </a>
+          `;
+        }).join('');
+      }
+
+      // Build content
+      const contentEl = document.getElementById('status-detail-content');
+      if (!contentEl) return;
+
+      if (statusesToShow.length === 0) {
+        contentEl.innerHTML = `<div class="glass-card-solid rounded-2xl p-8 text-center text-gray-500">ไม่พบข้อมูล</div>`;
+        return;
+      }
+
+      contentEl.innerHTML = statusesToShow.map(status => {
+        const meta = STATUS_META[status] || { icon: '', color: 'gray', bgCard: 'bg-gray-50', borderCard: 'border-gray-200', badgeCls: 'bg-gray-100 text-gray-800' };
+        const gradientClass = STATUS_HEADER_GRADIENT[meta.color] || 'from-gray-500 to-gray-700';
+        const records = grouped[status] || [];
+        const anchor = status.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
+
+        // Group records by department for sub-header
+        const byDept = {};
+        records.forEach(r => {
+          const dept = (r.department || 'ไม่ระบุสาขา').trim();
+          if (!byDept[dept]) byDept[dept] = [];
+          byDept[dept].push(r);
+        });
+
+        const deptNames = Object.keys(byDept).sort();
+
+        return `
+          <div id="status-group-${anchor}" class="status-group-card glass-card-solid rounded-2xl shadow-xl overflow-hidden">
+            <!-- Status Header -->
+            <div class="bg-gradient-to-r ${gradientClass} p-5 flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <span class="text-3xl">${meta.icon}</span>
+                <div>
+                  <h2 class="text-xl font-bold text-white">${escapeHtml(status)}</h2>
+                  <p class="text-white/80 text-sm mt-0.5">
+                    ${records.length} ทริป
+                    · ${new Set(records.map(r => r.student_id)).size} นักศึกษา (ไม่ซ้ำ)
+                    ${yearFilter !== 'all' ? `· ปี ${yearFilter}` : ''}
+                    ${deptFilter !== 'all' ? `· สาขา ${deptFilter}` : ''}
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="bg-white/20 text-white text-2xl font-bold px-4 py-2 rounded-xl">
+                  ${records.length}
+                </span>
+              </div>
+            </div>
+
+            ${records.length === 0 ? `
+              <div class="p-8 text-center text-gray-400">
+                <div class="text-4xl mb-2">—</div>
+                <p class="text-sm">ไม่มีนักศึกษาในสถานะนี้</p>
+              </div>
+            ` : `
+              <div class="p-4">
+                ${deptNames.map(dept => {
+                  const deptRecords = byDept[dept];
+                  return `
+                    <div class="mb-4 last:mb-0">
+                      <!-- Dept sub-header -->
+                      <div class="flex items-center gap-2 mb-2">
+                        <div class="h-px flex-1 bg-gray-200"></div>
+                        <span class="text-xs font-bold text-gray-500 px-2 py-1 bg-gray-100 rounded-full">
+                          🎓 ${escapeHtml(dept)} (${deptRecords.length})
+                        </span>
+                        <div class="h-px flex-1 bg-gray-200"></div>
+                      </div>
+
+                      <!-- Table -->
+                      <div class="overflow-x-auto rounded-xl border border-gray-200">
+                        <table class="w-full text-sm">
+                          <thead class="${meta.bgCard}">
+                            <tr>
+                              <th class="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">#</th>
+                              <th class="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">รหัส</th>
+                              <th class="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">ชื่อ-นามสกุล</th>
+                              <th class="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">Trip #</th>
+                              <th class="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">ปีการศึกษา</th>
+                              <th class="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">ช่วงเวลา</th>
+                              <th class="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">เรือ</th>
+                              <th class="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">บริษัท</th>
+                              <th class="text-left px-4 py-3 font-semibold text-gray-700 whitespace-nowrap">หมายเหตุ</th>
+                            </tr>
+                          </thead>
+                          <tbody class="divide-y divide-gray-100 bg-white">
+                            ${deptRecords.map((r, idx) => `
+                              <tr class="status-detail-row">
+                                <td class="px-4 py-3 text-gray-400 text-xs">${idx + 1}</td>
+                                <td class="px-4 py-3 font-semibold text-gray-800 whitespace-nowrap">${escapeHtml(r.student_id || '')}</td>
+                                <td class="px-4 py-3 text-gray-800 whitespace-nowrap">${escapeHtml(r.student_name || '')}</td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                    Trip #${r.trip_seq || 1}
+                                  </span>
+                                </td>
+                                <td class="px-4 py-3 text-gray-600 whitespace-nowrap">${escapeHtml(r.academic_year || '-')}</td>
+                                <td class="px-4 py-3 text-gray-600 whitespace-nowrap text-xs">
+                                  ${formatDateThai(r.boarding_date)}<br>
+                                  <span class="text-gray-400">→</span> ${formatDateThai(r.return_date)}
+                                </td>
+                                <td class="px-4 py-3 text-gray-700 whitespace-nowrap">${escapeHtml(r.ship_name || '-')}</td>
+                                <td class="px-4 py-3 text-gray-700">${escapeHtml(r.company_name || '-')}</td>
+                                <td class="px-4 py-3 text-gray-500 text-xs">${escapeHtml(r.notes || '-')}</td>
+                              </tr>
+                            `).join('')}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ============================================
+    // EXPORT MODAL + EXPORTERS
+    // ============================================
+    function openExportModal() { document.getElementById('export-modal')?.classList.remove('hidden'); }
+    function closeExportModal() { document.getElementById('export-modal')?.classList.add('hidden'); }
 
     function downloadBlob(blob, filename) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     }
 
     function toCSV(rows, headers) {
-      const esc = (v) => {
-        const s = (v ?? '').toString().replace(/\r?\n/g, ' ').trim().replace(/"/g, '""');
-        return `"${s}"`;
-      };
-      return [
-        headers.join(','),
-        ...rows.map(r => headers.map(h => esc(r[h])).join(','))
-      ].join('\n');
+      const esc = (v) => { const s = (v ?? '').toString().replace(/\r?\n/g, ' ').trim().replace(/"/g, '""'); return `"${s}"`; };
+      return [headers.join(','), ...rows.map(r => headers.map(h => esc(r[h])).join(','))].join('\n');
     }
 
     function exportReportsCSV() {
       const snap = getFilteredReportsSnapshot();
       const rows = snap.filteredReports;
       if (!rows.length) return showToast('ไม่มีรายงานให้ Export', 'error');
-
-      const headers = [
-        'student_id','student_name','academic_year','department','trip_seq','trip_number',
-        'boarding_date','return_date','join_date','leave_date',
-        'ship_name','company_name','status','notes','work_details',
-        'trip_id','submitted_at','__backendId'
-      ];
-
-      const csv = toCSV(rows, headers);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      downloadBlob(blob, `reports_${new Date().toISOString().slice(0,10)}.csv`);
+      const headers = ['student_id','student_name','academic_year','department','trip_seq','trip_number','boarding_date','return_date','join_date','leave_date','ship_name','company_name','status','notes','work_details','trip_id','submitted_at','__backendId'];
+      downloadBlob(new Blob([toCSV(rows, headers)], { type: 'text/csv;charset=utf-8;' }), `reports_${new Date().toISOString().slice(0,10)}.csv`);
       showToast('Export รายงาน (CSV) สำเร็จ', 'success');
     }
 
@@ -1350,141 +1474,77 @@
       const snap = getFilteredReportsSnapshot();
       const rows = snap.filteredReports;
       if (!rows.length) return showToast('ไม่มีรายงานให้ Export', 'error');
-
-      if (typeof XLSX === 'undefined') {
-        showToast('ไม่พบ XLSX library → Export เป็น CSV แทน', 'error');
-        return exportReportsCSV();
-      }
-
+      if (typeof XLSX === 'undefined') { showToast('ไม่พบ XLSX library', 'error'); return exportReportsCSV(); }
       const data = rows.map(r => ({
-        student_id: r.student_id || '',
-        student_name: r.student_name || '',
-        academic_year: r.academic_year || '',
-        department: r.department || '',
-        trip_seq: r.trip_seq || 1,
-        trip_number: r.trip_number ?? '',
-        boarding_date: r.boarding_date || '',
-        return_date: r.return_date || '',
-        join_date: r.join_date || '',
-        leave_date: r.leave_date || '',
-        ship_name: r.ship_name || '',
-        company_name: r.company_name || '',
-        status: normalizeStatus(r.status),
-        notes: r.notes || '',
-        work_details: r.work_details || '',
-        trip_id: r.trip_id || '',
-        submitted_at: r.submitted_at || '',
-        backend_id: r.__backendId || ''
+        student_id: r.student_id||'', student_name: r.student_name||'', academic_year: r.academic_year||'',
+        department: r.department||'', trip_seq: r.trip_seq||1, trip_number: r.trip_number??'',
+        boarding_date: r.boarding_date||'', return_date: r.return_date||'', join_date: r.join_date||'',
+        leave_date: r.leave_date||'', ship_name: r.ship_name||'', company_name: r.company_name||'',
+        status: normalizeStatus(r.status), notes: r.notes||'', work_details: r.work_details||'',
+        trip_id: r.trip_id||'', submitted_at: r.submitted_at||'', backend_id: r.__backendId||''
       }));
-
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Reports');
       const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-
-      downloadBlob(
-        new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
-        `reports_${new Date().toISOString().slice(0,10)}.xlsx`
-      );
+      downloadBlob(new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `reports_${new Date().toISOString().slice(0,10)}.xlsx`);
       showToast('Export รายงาน (Excel) สำเร็จ', 'success');
     }
 
     function getAllStudentsMergedForExport() {
       const list = [];
-
-      // base studentDatabase
       for (const [dept, years] of Object.entries(studentDatabase || {})) {
         for (const [year, map] of Object.entries(years || {})) {
           for (const info of Object.values(map || {})) {
-            list.push({
-              academic_year: String(year),
-              department: String(dept),
-              id: String(info.id || ''),
-              fullName: String(info.fullName || '')
-            });
+            list.push({ academic_year: String(year), department: String(dept), id: String(info.id||''), fullName: String(info.fullName||'') });
           }
         }
       }
-
-      // Firestore students
-      (allStudents || []).forEach(s => {
-        list.push({
-          academic_year: String(s.academic_year || ''),
-          department: String(s.department || ''),
-          id: String(s.id || ''),
-          fullName: String(s.fullName || '')
-        });
-      });
-
-      // dedupe year|dept|id
+      (allStudents || []).forEach(s => list.push({ academic_year: String(s.academic_year||''), department: String(s.department||''), id: String(s.id||''), fullName: String(s.fullName||'') }));
       const seen = new Set();
       const merged = list.filter(s => {
         const key = `${s.academic_year}|${s.department}|${s.id}`;
-        if (!s.academic_year || !s.department || !s.id) return false;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
+        if (!s.academic_year || !s.department || !s.id || seen.has(key)) return false;
+        seen.add(key); return true;
       });
-
-      merged.sort((a, b) =>
-        a.academic_year.localeCompare(b.academic_year) ||
-        a.department.localeCompare(b.department) ||
-        a.id.localeCompare(b.id)
-      );
-
+      merged.sort((a, b) => a.academic_year.localeCompare(b.academic_year) || a.department.localeCompare(b.department) || a.id.localeCompare(b.id));
       return merged;
     }
 
     function exportStudentsCSV() {
       const rows = getAllStudentsMergedForExport();
       if (!rows.length) return showToast('ไม่มีนักศึกษาให้ Export', 'error');
-
-      const headers = ['academic_year','department','id','fullName'];
-      const csv = toCSV(rows, headers);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      downloadBlob(blob, `students_${new Date().toISOString().slice(0,10)}.csv`);
+      downloadBlob(new Blob([toCSV(rows, ['academic_year','department','id','fullName'])], { type: 'text/csv;charset=utf-8;' }), `students_${new Date().toISOString().slice(0,10)}.csv`);
       showToast('Export นักศึกษา (CSV) สำเร็จ', 'success');
     }
 
     function exportStudentsXLSX() {
       const rows = getAllStudentsMergedForExport();
       if (!rows.length) return showToast('ไม่มีนักศึกษาให้ Export', 'error');
-
-      if (typeof XLSX === 'undefined') {
-        showToast('ไม่พบ XLSX library → Export เป็น CSV แทน', 'error');
-        return exportStudentsCSV();
-      }
-
+      if (typeof XLSX === 'undefined') { showToast('ไม่พบ XLSX library', 'error'); return exportStudentsCSV(); }
       const ws = XLSX.utils.json_to_sheet(rows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Students');
       const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-
-      downloadBlob(
-        new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
-        `students_${new Date().toISOString().slice(0,10)}.xlsx`
-      );
+      downloadBlob(new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `students_${new Date().toISOString().slice(0,10)}.xlsx`);
       showToast('Export นักศึกษา (Excel) สำเร็จ', 'success');
     }
 
     // ============================================
-    // ✅ NEW: DASHBOARD INSIGHTS (กราฟแท่งด้วย div)
+    // DASHBOARD INSIGHTS
     // ============================================
     function renderInsightsBars(targetId, items, total, mode = 'percent') {
       const el = document.getElementById(targetId);
       if (!el) return;
-
       if (!items.length || total <= 0) {
         el.innerHTML = `<div class="text-sm text-gray-500">ยังไม่มีข้อมูล</div>`;
         return;
       }
-
       el.innerHTML = items.map(it => {
         const value = it.value || 0;
         const pct = total ? (value / total * 100) : 0;
         const w = Math.max(0, Math.min(100, pct));
         const rightText = (mode === 'count') ? `${value}` : `${pct.toFixed(1)}% (${value})`;
-
         return `
           <div class="space-y-1">
             <div class="flex items-center justify-between gap-2">
@@ -1501,59 +1561,31 @@
 
     function renderDashboardInsights() {
       const updated = document.getElementById('insights-updated');
-      if (updated) {
-        updated.textContent = new Date().toLocaleString('th-TH', { hour: '2-digit', minute: '2-digit' });
-      }
+      if (updated) updated.textContent = new Date().toLocaleString('th-TH', { hour: '2-digit', minute: '2-digit' });
 
       const snap = getFilteredReportsSnapshot();
       const reps = snap.filteredReports || [];
       const totalTrips = reps.length;
 
-      // Status distribution
       const statusCount = {};
-      reps.forEach(r => {
-        const s = normalizeStatus(r.status);
-        statusCount[s] = (statusCount[s] || 0) + 1;
-      });
-
-      const statusItems = Object.entries(statusCount)
-        .map(([label, value]) => ({ label, value }))
-        .sort((a, b) => b.value - a.value);
-
+      reps.forEach(r => { const s = normalizeStatus(r.status); statusCount[s] = (statusCount[s] || 0) + 1; });
+      const statusItems = Object.entries(statusCount).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
       renderInsightsBars('insights-status', statusItems, totalTrips, 'percent');
 
-      // Academic year distribution
       const yearCount = {};
-      reps.forEach(r => {
-        const y = (r.academic_year || 'ไม่ระบุปี').trim() || 'ไม่ระบุปี';
-        yearCount[y] = (yearCount[y] || 0) + 1;
-      });
-
-      const yearItems = Object.entries(yearCount)
-        .map(([label, value]) => ({ label, value }))
-        .sort((a, b) => (a.label || '').localeCompare(b.label || ''));
-
+      reps.forEach(r => { const y = (r.academic_year || 'ไม่ระบุปี').trim() || 'ไม่ระบุปี'; yearCount[y] = (yearCount[y] || 0) + 1; });
+      const yearItems = Object.entries(yearCount).map(([label, value]) => ({ label, value })).sort((a, b) => (a.label || '').localeCompare(b.label || ''));
       renderInsightsBars('insights-year', yearItems, totalTrips, 'count');
 
-      // Top companies (within filtered)
       const companyCount = {};
-      reps.forEach(r => {
-        const c = (r.company_name || '').trim();
-        if (!c) return;
-        companyCount[c] = (companyCount[c] || 0) + 1;
-      });
-
-      const companyItems = Object.entries(companyCount)
-        .map(([label, value]) => ({ label, value }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 10);
-
+      reps.forEach(r => { const c = (r.company_name || '').trim(); if (!c) return; companyCount[c] = (companyCount[c] || 0) + 1; });
+      const companyItems = Object.entries(companyCount).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value).slice(0, 10);
       const companyTotal = companyItems.reduce((s, x) => s + x.value, 0) || 0;
       renderInsightsBars('insights-company', companyItems, companyTotal, 'count');
     }
 
     // ============================================
-    // RENDER TABLE (✅ PAGINATION)
+    // RENDER TABLE (PAGINATION)
     // ============================================
     function renderTable() {
       const tbody = document.getElementById('report-table-body');
@@ -1564,12 +1596,8 @@
       const snap = getFilteredReportsSnapshot();
       let filteredReports = snap.filteredReports;
 
-      // ✅ reset page ถ้าตัวกรอง/ค้นหาเปลี่ยน
       const key = `${snap.yearFilter}|${snap.searchTerm}|${pagination.pageSize}`;
-      if (pagination.lastKey !== key) {
-        pagination.lastKey = key;
-        pagination.page = 1;
-      }
+      if (pagination.lastKey !== key) { pagination.lastKey = key; pagination.page = 1; }
 
       const total = filteredReports.length;
       const totalPages = Math.max(1, Math.ceil(total / pagination.pageSize));
@@ -1596,7 +1624,6 @@
 
       tbody.innerHTML = pageReports.map(report => {
         const displayStatus = normalizeStatus(report.status);
-
         return `
           <tr class="table-row" data-backend-id="${report.__backendId}">
             <td class="px-4 py-4 text-sm text-gray-900 font-medium">${escapeHtml(report.student_id || '')}</td>
@@ -1646,7 +1673,7 @@
       }).join('');
 
       updatePaginationBar(total, totalPages, startIndex0 + 1, endIndex0);
-      renderDashboardInsights(); // ✅ NEW: insights follow filters/search
+      renderDashboardInsights();
     }
 
     // ============================================
@@ -1669,14 +1696,8 @@
     function openEditModal(backendId) {
       const report = allReports.find(r => r.__backendId === backendId);
       if (!report) return;
-
       editingBackendId = backendId;
-
-      const setVal = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.value = val ?? '';
-      };
-
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
       setVal('edit-student-id', report.student_id || '');
       setVal('edit-student-name', report.student_name || '');
       setVal('edit-academic-year', report.academic_year || '');
@@ -1684,7 +1705,6 @@
       setVal('edit-trip-seq', String(report.trip_seq ?? ''));
       setVal('edit-trip-id', report.trip_id || '');
       setVal('edit-submitted-at', report.submitted_at || '');
-
       setVal('edit-boarding-date', report.boarding_date || '');
       setVal('edit-return-date', report.return_date || '');
       setVal('edit-join-date', report.join_date || '');
@@ -1694,11 +1714,9 @@
       setVal('edit-trip-number', String(report.trip_number ?? 1));
       setVal('edit-work-details', report.work_details || '');
       setVal('edit-notes', report.notes || '');
-
       const st = normalizeStatus(report.status);
       const statusEl = document.getElementById('edit-status');
       if (statusEl) statusEl.value = st;
-
       document.getElementById('edit-modal').classList.remove('hidden');
     }
 
@@ -1710,57 +1728,37 @@
     async function deleteReport(backendId) {
       const report = allReports.find(r => r.__backendId === backendId);
       if (!report) return;
-
       const okConfirm = confirm(
-        `ต้องการลบรายการนี้ใช่ไหม?\n` +
-        `${report.student_id || ''} ${report.student_name || ''}\n` +
-        `เรือ: ${report.ship_name || '-'}\n` +
-        `ช่วง: ${report.boarding_date || '-'} ถึง ${report.return_date || '-'}\n\n` +
-        `*ลบแล้วกู้คืนไม่ได้*`
+        `ต้องการลบรายการนี้ใช่ไหม?\n${report.student_id || ''} ${report.student_name || ''}\nเรือ: ${report.ship_name || '-'}\nช่วง: ${report.boarding_date || '-'} ถึง ${report.return_date || '-'}\n\n*ลบแล้วกู้คืนไม่ได้*`
       );
       if (!okConfirm) return;
-
       const delFn = window.dataSdk?.delete;
       if (!delFn) return showToast('ระบบนี้ยังไม่รองรับการลบ', 'error');
-
       const result = await delFn.call(window.dataSdk, backendId);
       if (result?.isOk) showToast('ลบสำเร็จ', 'success');
-      else {
-        showToast('ลบไม่สำเร็จ กรุณาลองใหม่', 'error');
-        console.error('Delete error:', result?.error);
-      }
+      else { showToast('ลบไม่สำเร็จ', 'error'); console.error('Delete error:', result?.error); }
     }
 
     (function bindEditForm() {
       const ef = document.getElementById('edit-form');
-      if (!ef) {
-        document.addEventListener('DOMContentLoaded', bindEditForm, { once: true });
-        return;
-      }
+      if (!ef) { document.addEventListener('DOMContentLoaded', bindEditForm, { once: true }); return; }
       if (ef.__bound) return;
       ef.__bound = true;
 
       ef.addEventListener('submit', async function (e) {
         e.preventDefault();
         if (!editingBackendId) return;
-
         const old = allReports.find(r => r.__backendId === editingBackendId);
         if (!old) return;
-
         const boarding = document.getElementById('edit-boarding-date').value;
         const ret = document.getElementById('edit-return-date').value;
-
         if (!boarding || !ret) return showToast('กรุณากรอกวันที่ให้ครบ', 'error');
         if (new Date(ret) < new Date(boarding)) return showToast('วันที่กลับต้องมากกว่าหรือเท่ากับวันลงเรือ', 'error');
 
         const updated = {
           ...old,
-          boarding_date: boarding,
-          return_date: ret,
-
-          // ✅ แก้สาขาได้
+          boarding_date: boarding, return_date: ret,
           department: (document.getElementById('edit-department').value || old.department || '').trim(),
-
           join_date: document.getElementById('edit-join-date').value || '',
           leave_date: document.getElementById('edit-leave-date').value || '',
           ship_name: document.getElementById('edit-ship-name').value || '',
@@ -1772,50 +1770,33 @@
         };
 
         const dup = allReports.find(r =>
-          r.__backendId !== updated.__backendId &&
-          r.student_id === updated.student_id &&
-          r.academic_year === updated.academic_year &&
-          r.ship_name === updated.ship_name &&
-          r.boarding_date === updated.boarding_date &&
-          r.return_date === updated.return_date
+          r.__backendId !== updated.__backendId && r.student_id === updated.student_id &&
+          r.academic_year === updated.academic_year && r.ship_name === updated.ship_name &&
+          r.boarding_date === updated.boarding_date && r.return_date === updated.return_date
         );
-        if (dup) {
-          showToast('ซ้ำกับรายการเดิมในระบบ', 'error');
-          highlightDuplicateInTable(dup.__backendId);
-          return;
-        }
+        if (dup) { showToast('ซ้ำกับรายการเดิมในระบบ', 'error'); highlightDuplicateInTable(dup.__backendId); return; }
 
         const overlaps = allReports
           .filter(r => r.__backendId !== updated.__backendId)
           .filter(r => r.student_id === updated.student_id && r.academic_year === updated.academic_year)
           .filter(r => isDateOverlap(updated.boarding_date, updated.return_date, r.boarding_date, r.return_date));
 
-        if (overlaps.length > 0) {
-          const okOverlap = confirm('ช่วงวันที่แก้ไข "ทับซ้อน" กับทริปเดิมของนักศึกษาในปีเดียวกัน\nต้องการบันทึกต่อไหม?');
-          if (!okOverlap) return;
-        }
+        if (overlaps.length > 0 && !confirm('ช่วงวันที่แก้ไข "ทับซ้อน" กับทริปเดิม\nต้องการบันทึกต่อไหม?')) return;
 
         const result = await window.dataSdk.update(updated);
-        if (result?.isOk) {
-          showToast('แก้ไขสำเร็จ', 'success');
-          closeEditModal();
-        } else {
-          showToast('แก้ไขไม่สำเร็จ', 'error');
-          console.error('Edit error:', result?.error);
-        }
+        if (result?.isOk) { showToast('แก้ไขสำเร็จ', 'success'); closeEditModal(); }
+        else { showToast('แก้ไขไม่สำเร็จ', 'error'); console.error('Edit error:', result?.error); }
       });
     })();
 
     async function updateStatus(backendId, newStatus) {
       const report = allReports.find(r => r.__backendId === backendId);
       if (!report) return;
-
       const updatedReport = { ...report, status: normalizeStatus(newStatus) };
-
       if (window.dataSdk) {
         const result = await window.dataSdk.update(updatedReport);
         if (result?.isOk) showToast('อัปเดตสถานะสำเร็จ', 'success');
-        else showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+        else showToast('เกิดข้อผิดพลาด', 'error');
       }
     }
 
@@ -1824,37 +1805,20 @@
     // ============================================
     function openAddModal() {
       const modal = document.getElementById('add-modal');
-      if (modal) {
-        modal.classList.remove('hidden');
-        resetAddForm();
-      }
+      if (modal) { modal.classList.remove('hidden'); resetAddForm(); }
     }
-
     function closeAddModal() {
       const modal = document.getElementById('add-modal');
-      if (modal) {
-        modal.classList.add('hidden');
-        resetAddForm();
-      }
+      if (modal) { modal.classList.add('hidden'); resetAddForm(); }
       pendingTripData = null;
       pendingOverlapConfirmed = false;
     }
-
     function resetAddForm() {
       const form = document.getElementById('add-form');
       if (form) form.reset();
-
       const studentSelect = document.getElementById('form-student-select');
-      if (studentSelect) {
-        studentSelect.innerHTML = '<option value="">-- เลือกปีการศึกษาก่อน --</option>';
-        studentSelect.disabled = true;
-      }
-
-      ['form-student-id', 'form-student-name', 'form-department'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
-
+      if (studentSelect) { studentSelect.innerHTML = '<option value="">-- เลือกปีการศึกษาก่อน --</option>'; studentSelect.disabled = true; }
+      ['form-student-id', 'form-student-name', 'form-department'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
       const historyDisplay = document.getElementById('trip-history-display');
       if (historyDisplay) historyDisplay.innerHTML = '';
     }
@@ -1862,27 +1826,15 @@
     function updateStudentDropdown() {
       const yearSelect = document.getElementById('form-academic-year');
       const studentSelect = document.getElementById('form-student-select');
-
       if (!yearSelect || !studentSelect) return;
-
       const year = yearSelect.value;
-
       if (!year) {
         studentSelect.innerHTML = '<option value="">-- เลือกปีการศึกษาก่อน --</option>';
-        studentSelect.disabled = true;
-        clearStudentInfo();
-        return;
+        studentSelect.disabled = true; clearStudentInfo(); return;
       }
-
       let options = '<option value="">-- เลือกนักศึกษา --</option>';
       const list = (window.getStudentsForYear ? window.getStudentsForYear(year) : []);
-
-      list.forEach(s => {
-        options += `<option value="${s.department}|${s.id}|${s.fullName}">
-          ${s.id} - ${s.fullName} (${s.department})
-        </option>`;
-      });
-
+      list.forEach(s => { options += `<option value="${s.department}|${s.id}|${s.fullName}">${s.id} - ${s.fullName} (${s.department})</option>`; });
       studentSelect.innerHTML = options;
       studentSelect.disabled = false;
       clearStudentInfo();
@@ -1890,58 +1842,39 @@
 
     function fillStudentInfo() {
       const studentSelect = document.getElementById('form-student-select');
-      if (!studentSelect || !studentSelect.value) {
-        clearStudentInfo();
-        return;
-      }
-
+      if (!studentSelect || !studentSelect.value) { clearStudentInfo(); return; }
       const [dept, id, fullName] = studentSelect.value.split('|');
-
       const idField = document.getElementById('form-student-id');
       const nameField = document.getElementById('form-student-name');
       const deptField = document.getElementById('form-department');
-
       if (idField) idField.value = id;
       if (nameField) nameField.value = fullName;
       if (deptField) deptField.value = dept;
 
       const recentTrips = getRecentTrips(allReports, id, 3);
       const historyContainer = document.getElementById('trip-history-display');
-
       if (historyContainer) {
         if (recentTrips.length === 0) {
-          historyContainer.innerHTML = `
-            <div class="bg-blue-50 rounded-lg p-3 text-sm text-gray-600">
-              ℹ️ นักศึกษายังไม่มีประวัติทริปในระบบ
-            </div>
-          `;
+          historyContainer.innerHTML = `<div class="bg-blue-50 rounded-lg p-3 text-sm text-gray-600">ℹ️ นักศึกษายังไม่มีประวัติทริปในระบบ</div>`;
         } else {
           historyContainer.innerHTML = `
             <div class="bg-green-50 rounded-lg p-4 space-y-2">
               <p class="text-sm font-semibold text-gray-700 mb-2">📋 ประวัติทริปล่าสุด:</p>
               ${recentTrips.map(trip => {
                 const st = normalizeStatus(trip.status);
-                return `
-                  <div class="text-xs text-gray-600 border-l-2 border-green-400 pl-2">
-                    <strong>Trip #${trip.trip_seq}</strong> |
-                    ${escapeHtml(trip.ship_name)} |
-                    ${formatDateThai(trip.boarding_date)} - ${formatDateThai(trip.return_date)} |
-                    <span class="px-2 py-0.5 rounded text-xs ${getStatusColorClass(st)}">${st}</span>
-                  </div>
-                `;
+                return `<div class="text-xs text-gray-600 border-l-2 border-green-400 pl-2">
+                  <strong>Trip #${trip.trip_seq}</strong> | ${escapeHtml(trip.ship_name)} |
+                  ${formatDateThai(trip.boarding_date)} - ${formatDateThai(trip.return_date)} |
+                  <span class="px-2 py-0.5 rounded text-xs ${getStatusColorClass(st)}">${st}</span>
+                </div>`;
               }).join('')}
-            </div>
-          `;
+            </div>`;
         }
       }
     }
 
     function clearStudentInfo() {
-      ['form-student-id', 'form-student-name', 'form-department'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
-
+      ['form-student-id', 'form-student-name', 'form-department'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
       const historyDisplay = document.getElementById('trip-history-display');
       if (historyDisplay) historyDisplay.innerHTML = '';
     }
@@ -1952,7 +1885,6 @@
     function showOverlapWarning(overlappingTrips, newTripData) {
       const existingModal = document.getElementById('overlap-warning-modal');
       if (existingModal) existingModal.remove();
-
       const modal = document.createElement('div');
       modal.id = 'overlap-warning-modal';
       modal.className = 'fixed inset-0 z-50 flex items-center justify-center';
@@ -1962,16 +1894,12 @@
           <div class="flex items-start gap-4 mb-4">
             <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
               <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
               </svg>
             </div>
             <div class="flex-1">
               <h3 class="text-lg font-bold text-gray-900 mb-2">⚠️ ช่วงเวลาทริปทับซ้อน</h3>
-              <p class="text-gray-600 text-sm mb-3">
-                ทริปใหม่ (${formatDateThai(newTripData.boarding_date)} - ${formatDateThai(newTripData.return_date)})
-                มีช่วงเวลาทับกับทริปเดิม:
-              </p>
+              <p class="text-gray-600 text-sm mb-3">ทริปใหม่ (${formatDateThai(newTripData.boarding_date)} - ${formatDateThai(newTripData.return_date)}) มีช่วงเวลาทับกับทริปเดิม:</p>
               <div class="bg-red-50 rounded-lg p-3 space-y-2 mb-4">
                 ${overlappingTrips.map(trip => `
                   <div class="text-sm text-red-700">
@@ -1982,20 +1910,12 @@
               </div>
             </div>
           </div>
-
           <div class="flex gap-3">
-            <button onclick="cancelOverlapSubmit()"
-              class="flex-1 px-4 py-2 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
-              ❌ ยกเลิก / แก้ไขวันที่
-            </button>
-            <button onclick="confirmOverlapSubmit()"
-              class="flex-1 px-4 py-2 rounded-xl btn-warning text-white font-medium">
-              ✅ ยืนยันบันทึกทับซ้อน
-            </button>
+            <button onclick="cancelOverlapSubmit()" class="flex-1 px-4 py-2 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">❌ ยกเลิก / แก้ไขวันที่</button>
+            <button onclick="confirmOverlapSubmit()" class="flex-1 px-4 py-2 rounded-xl btn-warning text-white font-medium">✅ ยืนยันบันทึกทับซ้อน</button>
           </div>
         </div>
       `;
-
       document.body.appendChild(modal);
       pendingTripData = newTripData;
       pendingOverlapConfirmed = false;
@@ -2034,28 +1954,13 @@
         const boardingDate = document.getElementById('form-boarding-date').value;
         const returnDate = document.getElementById('form-return-date').value;
 
-        if (!studentId || !studentName || !academicYear || !department) {
-          showToast('กรุณาเลือกนักศึกษา', 'error');
-          return;
-        }
-
-        if (!boardingDate || !returnDate) {
-          showToast('กรุณากรอกวันที่ลงเรือและวันที่กลับ', 'error');
-          return;
-        }
-
-        if (new Date(returnDate) < new Date(boardingDate)) {
-          showToast('วันที่กลับต้องมากกว่าหรือเท่ากับวันลงเรือ', 'error');
-          return;
-        }
+        if (!studentId || !studentName || !academicYear || !department) { showToast('กรุณาเลือกนักศึกษา', 'error'); return; }
+        if (!boardingDate || !returnDate) { showToast('กรุณากรอกวันที่ลงเรือและวันที่กลับ', 'error'); return; }
+        if (new Date(returnDate) < new Date(boardingDate)) { showToast('วันที่กลับต้องมากกว่าหรือเท่ากับวันลงเรือ', 'error'); return; }
 
         const formData = {
-          student_id: studentId,
-          student_name: studentName,
-          academic_year: academicYear,
-          department: department,
-          boarding_date: boardingDate,
-          return_date: returnDate,
+          student_id: studentId, student_name: studentName, academic_year: academicYear, department,
+          boarding_date: boardingDate, return_date: returnDate,
           join_date: document.getElementById('form-join-date').value || '',
           ship_name: document.getElementById('form-ship-name').value || '',
           company_name: document.getElementById('form-company-name').value || '',
@@ -2068,28 +1973,17 @@
         };
 
         const duplicate = duplicateCheck(allReports, formData);
-        if (duplicate) {
-          showToast('มีทริปนี้อยู่แล้วในระบบ กรุณาตรวจสอบ', 'error');
-          highlightDuplicateInTable(duplicate.__backendId);
-          return;
-        }
+        if (duplicate) { showToast('มีทริปนี้อยู่แล้วในระบบ', 'error'); highlightDuplicateInTable(duplicate.__backendId); return; }
 
         const overlapping = findOverlappingTrips(allReports, formData);
-        if (overlapping.length > 0 && !pendingOverlapConfirmed) {
-          showOverlapWarning(overlapping, formData);
-          return;
-        }
+        if (overlapping.length > 0 && !pendingOverlapConfirmed) { showOverlapWarning(overlapping, formData); return; }
 
         await submitTrip(formData);
       });
     }
 
     async function submitTrip(formData) {
-      if (allReports.length >= 999) {
-        showToast('ถึงขีดจำกัด 999 รายการ กรุณาติดต่ออาจารย์', 'error');
-        return;
-      }
-
+      if (allReports.length >= 999) { showToast('ถึงขีดจำกัด 999 รายการ', 'error'); return; }
       formData.trip_seq = computeNextTripSeq(allReports, formData.student_id, formData.academic_year);
       formData.trip_id = buildTripId(formData);
       formData.status = normalizeStatus(formData.status);
@@ -2098,27 +1992,20 @@
       const submitBtn = document.getElementById('submit-btn');
       const submitText = document.getElementById('submit-text');
       const submitSpinner = document.getElementById('submit-spinner');
-
       if (submitBtn) submitBtn.disabled = true;
       if (submitText) submitText.textContent = 'กำลังบันทึก...';
       if (submitSpinner) submitSpinner.classList.remove('hidden');
 
       if (window.dataSdk) {
         const result = await window.dataSdk.create(formData);
-        if (result.isOk) {
-          showToast(`บันทึก Trip #${formData.trip_seq} สำเร็จ`, 'success');
-          closeAddModal();
-        } else {
-          showToast('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง', 'error');
-          console.error('Data SDK Error:', result.error);
-        }
+        if (result.isOk) { showToast(`บันทึก Trip #${formData.trip_seq} สำเร็จ`, 'success'); closeAddModal(); }
+        else { showToast('เกิดข้อผิดพลาด กรุณาลองใหม่', 'error'); console.error('Data SDK Error:', result.error); }
       }
 
       isSubmitting = false;
       if (submitBtn) submitBtn.disabled = false;
       if (submitText) submitText.textContent = 'บันทึกข้อมูล';
       if (submitSpinner) submitSpinner.classList.add('hidden');
-
       pendingTripData = null;
       pendingOverlapConfirmed = false;
     }
@@ -2128,108 +2015,72 @@
     // ============================================
     function openSummaryModal() {
       const modal = document.getElementById('summary-modal');
-      if (modal) {
-        modal.classList.remove('hidden');
-        updateSummary();
-      }
+      if (modal) { modal.classList.remove('hidden'); updateSummary(); }
     }
-
     function closeSummaryModal() {
       const modal = document.getElementById('summary-modal');
       if (modal) modal.classList.add('hidden');
     }
 
-    // ✅ NEW: Summary Page Open/Close (ไม่กระทบส่วนอื่น)
     function openSummaryPage() {
-      const dash = document.getElementById('dashboard-page');
-      const page = document.getElementById('summary-page');
-      if (dash) dash.classList.add('hidden');
-      if (page) page.classList.remove('hidden');
+      document.getElementById('dashboard-page').classList.add('hidden');
+      document.getElementById('summary-page').classList.remove('hidden');
       updateSummaryPage();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-
     function closeSummaryPage() {
-      const dash = document.getElementById('dashboard-page');
-      const page = document.getElementById('summary-page');
-      if (page) page.classList.add('hidden');
-      if (dash) dash.classList.remove('hidden');
+      document.getElementById('summary-page').classList.add('hidden');
+      document.getElementById('dashboard-page').classList.remove('hidden');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function safeParseDate(dateStr) {
       if (!dateStr) return null;
       const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return null;
-      return d;
+      return isNaN(d.getTime()) ? null : d;
     }
 
     function countStatuses(reports) {
-      const base = {
-        total: 0,
-        STANDBYFORSHIP: 0,
-        ON_LEAVE_TOTAL: 0,
-        GRADUATION: 0,
-        UNKNOWN: 0
-      };
-
+      const base = { total: 0, STANDBYFORSHIP: 0, ON_LEAVE_TOTAL: 0, GRADUATION: 0, UNKNOWN: 0 };
       (ALLOWED_STATUSES || []).forEach(s => { base[s] = 0; });
-
       reports.forEach(r => {
         base.total++;
         const s = normalizeStatus(r.status);
         if (base[s] !== undefined) base[s]++;
         else base.UNKNOWN++;
       });
-
       base.STANDBYFORSHIP = base['READY TO JOIN SHIP'] || 0;
-
-      base.ON_LEAVE_TOTAL =
-        (base['ON LEAVE - APPLY FOR GRADUATION'] || 0) +
-        (base['ON LEAVE - WAIT FOR GRADUATION PROCESS'] || 0) +
-        (base['ON LEAVE - WAIT FOR REJOIN'] || 0) +
-        (base['ON LEAVE - OWN BUSINESS'] || 0);
-
+      base.ON_LEAVE_TOTAL = (base['ON LEAVE - APPLY FOR GRADUATION'] || 0) + (base['ON LEAVE - WAIT FOR GRADUATION PROCESS'] || 0) + (base['ON LEAVE - WAIT FOR REJOIN'] || 0) + (base['ON LEAVE - OWN BUSINESS'] || 0);
       base.GRADUATION = base['GRADUATED'] || 0;
-
       return base;
     }
 
     function renderBreakdownTable(groupCounts, groupLabel) {
       const rows = Object.entries(groupCounts);
       if (rows.length === 0) return `<p class="text-gray-500">ยังไม่มีข้อมูล</p>`;
-
       rows.sort((a, b) => (b[1].total || 0) - (a[1].total || 0));
-
       return `
         <table class="min-w-[860px] w-full text-sm">
-          <thead>
-            <tr class="bg-gray-50 text-gray-700">
-              <th class="text-left px-3 py-2 font-semibold">${escapeHtml(groupLabel)}</th>
-              <th class="text-right px-3 py-2 font-semibold">TOTAL</th>
-              <th class="text-right px-3 py-2 font-semibold">STANDBYFORSHIP</th>
-              <th class="text-right px-3 py-2 font-semibold">ON BOARD</th>
-              <th class="text-right px-3 py-2 font-semibold">ON LEAVE (TOTAL)</th>
-              <th class="text-right px-3 py-2 font-semibold">GRADUATION</th>
-            </tr>
-          </thead>
+          <thead><tr class="bg-gray-50 text-gray-700">
+            <th class="text-left px-3 py-2 font-semibold">${escapeHtml(groupLabel)}</th>
+            <th class="text-right px-3 py-2 font-semibold">TOTAL</th>
+            <th class="text-right px-3 py-2 font-semibold">STANDBYFORSHIP</th>
+            <th class="text-right px-3 py-2 font-semibold">ON BOARD</th>
+            <th class="text-right px-3 py-2 font-semibold">ON LEAVE (TOTAL)</th>
+            <th class="text-right px-3 py-2 font-semibold">GRADUATION</th>
+          </tr></thead>
           <tbody class="divide-y divide-gray-100">
             ${rows.map(([key, c]) => `
               <tr>
                 <td class="px-3 py-2 text-gray-800 font-medium">${escapeHtml(key)}</td>
-                <td class="px-3 py-2 text-right text-gray-700">${c.total}</td>
-                <td class="px-3 py-2 text-right text-gray-700">${c.STANDBYFORSHIP}</td>
-                <td class="px-3 py-2 text-right text-gray-700">${c['ON BOARD']}</td>
-                <td class="px-3 py-2 text-right text-gray-700">
+                <td class="px-3 py-2 text-right">${c.total}</td>
+                <td class="px-3 py-2 text-right">${c.STANDBYFORSHIP}</td>
+                <td class="px-3 py-2 text-right">${c['ON BOARD']}</td>
+                <td class="px-3 py-2 text-right">
                   <div class="font-semibold">${c.ON_LEAVE_TOTAL}</div>
-                  <div class="text-xs text-gray-500 whitespace-nowrap">
-                    GP ${c['ON LEAVE - APPLY FOR GRADUATION'] || 0} /
-                    WG ${c['ON LEAVE - WAIT FOR GRADUATION PROCESS'] || 0} /
-                    WR ${c['ON LEAVE - WAIT FOR REJOIN'] || 0} /
-                    OB ${c['ON LEAVE - OWN BUSINESS'] || 0}
-                  </div>
+                  <div class="text-xs text-gray-500 whitespace-nowrap">GP ${c['ON LEAVE - APPLY FOR GRADUATION']||0} / WG ${c['ON LEAVE - WAIT FOR GRADUATION PROCESS']||0} / WR ${c['ON LEAVE - WAIT FOR REJOIN']||0} / OB ${c['ON LEAVE - OWN BUSINESS']||0}</div>
                 </td>
-                <td class="px-3 py-2 text-right text-gray-700">${c.GRADUATION}</td>
+                <td class="px-3 py-2 text-right">${c.GRADUATION}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -2239,36 +2090,26 @@
 
     function updateSummary() {
       const summaryDate = document.getElementById('summary-date');
-      if (summaryDate) {
-        summaryDate.textContent = new Date().toLocaleDateString('th-TH', {
-          year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
-      }
-
-      const overallEl = document.getElementById('summary-overall');
-      const topEl = document.getElementById('summary-top-insights');
-      const deptEl = document.getElementById('summary-by-department');
-      const yearEl = document.getElementById('summary-by-year');
-      const warnEl = document.getElementById('summary-warnings');
-
-      renderSummaryToTargets({ overallEl, topEl, deptEl, yearEl, warnEl });
+      if (summaryDate) summaryDate.textContent = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      renderSummaryToTargets({
+        overallEl: document.getElementById('summary-overall'),
+        topEl: document.getElementById('summary-top-insights'),
+        deptEl: document.getElementById('summary-by-department'),
+        yearEl: document.getElementById('summary-by-year'),
+        warnEl: document.getElementById('summary-warnings')
+      });
     }
 
     function updateSummaryPage() {
       const summaryDate = document.getElementById('summary-date-page');
-      if (summaryDate) {
-        summaryDate.textContent = new Date().toLocaleDateString('th-TH', {
-          year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
-      }
-
-      const overallEl = document.getElementById('summary-overall-page');
-      const topEl = document.getElementById('summary-top-insights-page');
-      const deptEl = document.getElementById('summary-by-department-page');
-      const yearEl = document.getElementById('summary-by-year-page');
-      const warnEl = document.getElementById('summary-warnings-page');
-
-      renderSummaryToTargets({ overallEl, topEl, deptEl, yearEl, warnEl });
+      if (summaryDate) summaryDate.textContent = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      renderSummaryToTargets({
+        overallEl: document.getElementById('summary-overall-page'),
+        topEl: document.getElementById('summary-top-insights-page'),
+        deptEl: document.getElementById('summary-by-department-page'),
+        yearEl: document.getElementById('summary-by-year-page'),
+        warnEl: document.getElementById('summary-warnings-page')
+      });
     }
 
     function renderSummaryToTargets({ overallEl, topEl, deptEl, yearEl, warnEl }) {
@@ -2278,61 +2119,24 @@
       if (overallEl) {
         overallEl.innerHTML = `
           <h3 class="text-lg font-semibold text-gray-800 mb-4">📌 Overall Summary</h3>
-
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div class="bg-white/70 rounded-lg p-4 text-center border border-white">
-              <p class="text-3xl font-bold text-indigo-600">${overallCounts.total}</p>
-              <p class="text-xs text-gray-600">ยอดนักศึกษา</p>
-            </div>
-            <div class="bg-white/70 rounded-lg p-4 text-center border border-white">
-              <p class="text-3xl font-bold text-teal-600">${uniqueStudents}</p>
-              <p class="text-xs text-gray-600">นักศึกษา</p>
-            </div>
-            <div class="bg-white/70 rounded-lg p-4 text-center border border-white">
-              <p class="text-3xl font-bold text-yellow-600">${overallCounts.STANDBYFORSHIP}</p>
-              <p class="text-xs text-gray-600">STANDBYFORSHIP</p>
-            </div>
-            <div class="bg-white/70 rounded-lg p-4 text-center border border-white">
-              <p class="text-3xl font-bold text-green-600">${overallCounts['ON BOARD']}</p>
-              <p class="text-xs text-gray-600">ON BOARD</p>
-            </div>
+            <div class="bg-white/70 rounded-lg p-4 text-center border border-white"><p class="text-3xl font-bold text-indigo-600">${overallCounts.total}</p><p class="text-xs text-gray-600">ยอดนักศึกษา</p></div>
+            <div class="bg-white/70 rounded-lg p-4 text-center border border-white"><p class="text-3xl font-bold text-teal-600">${uniqueStudents}</p><p class="text-xs text-gray-600">นักศึกษา</p></div>
+            <div class="bg-white/70 rounded-lg p-4 text-center border border-white"><p class="text-3xl font-bold text-yellow-600">${overallCounts.STANDBYFORSHIP}</p><p class="text-xs text-gray-600">STANDBYFORSHIP</p></div>
+            <div class="bg-white/70 rounded-lg p-4 text-center border border-white"><p class="text-3xl font-bold text-green-600">${overallCounts['ON BOARD']}</p><p class="text-xs text-gray-600">ON BOARD</p></div>
           </div>
-
           <div class="bg-white/70 rounded-lg p-4 border border-white">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start lg:items-center">
-              <div class="lg:col-span-3">
-                <p class="text-sm font-semibold text-gray-800">ON LEAVE (TOTAL)</p>
-                <p class="text-2xl font-bold text-purple-700">${overallCounts.ON_LEAVE_TOTAL}</p>
-              </div>
-
+              <div class="lg:col-span-3"><p class="text-sm font-semibold text-gray-800">ON LEAVE (TOTAL)</p><p class="text-2xl font-bold text-purple-700">${overallCounts.ON_LEAVE_TOTAL}</p></div>
               <div class="lg:col-span-6">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                  <div class="bg-purple-100 text-purple-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-                    <span class="min-w-0 truncate font-semibold">APPLY FOR GRADUATION </span>
-                    <span class="font-bold">${overallCounts['ON LEAVE - APPLY FOR GRADUATION'] || 0}</span>
-                  </div>
-
-                  <div class="bg-violet-100 text-violet-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-                    <span class="min-w-0 truncate font-semibold">WAIT GRAD</span>
-                    <span class="font-bold">${overallCounts['ON LEAVE - WAIT FOR GRADUATION PROCESS'] || 0}</span>
-                  </div>
-
-                  <div class="bg-rose-100 text-rose-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-                    <span class="min-w-0 truncate font-semibold">WAIT REJOIN</span>
-                    <span class="font-bold">${overallCounts['ON LEAVE - WAIT FOR REJOIN'] || 0}</span>
-                  </div>
-
-                  <div class="bg-orange-100 text-orange-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-                    <span class="min-w-0 truncate font-semibold">OWN BUSINESS</span>
-                    <span class="font-bold">${overallCounts['ON LEAVE - OWN BUSINESS'] || 0}</span>
-                  </div>
+                  <div class="bg-purple-100 text-purple-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2"><span class="min-w-0 truncate font-semibold">APPLY FOR GRADUATION</span><span class="font-bold">${overallCounts['ON LEAVE - APPLY FOR GRADUATION']||0}</span></div>
+                  <div class="bg-violet-100 text-violet-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2"><span class="min-w-0 truncate font-semibold">WAIT GRAD</span><span class="font-bold">${overallCounts['ON LEAVE - WAIT FOR GRADUATION PROCESS']||0}</span></div>
+                  <div class="bg-rose-100 text-rose-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2"><span class="min-w-0 truncate font-semibold">WAIT REJOIN</span><span class="font-bold">${overallCounts['ON LEAVE - WAIT FOR REJOIN']||0}</span></div>
+                  <div class="bg-orange-100 text-orange-800 rounded-lg px-3 py-2 flex items-center justify-between gap-2"><span class="min-w-0 truncate font-semibold">OWN BUSINESS</span><span class="font-bold">${overallCounts['ON LEAVE - OWN BUSINESS']||0}</span></div>
                 </div>
               </div>
-
-              <div class="lg:col-span-3 lg:text-right">
-                <p class="text-sm font-semibold text-gray-800">GRADUATION</p>
-                <p class="text-2xl font-bold text-gray-700">${overallCounts.GRADUATION}</p>
-              </div>
+              <div class="lg:col-span-3 lg:text-right"><p class="text-sm font-semibold text-gray-800">GRADUATION</p><p class="text-2xl font-bold text-gray-700">${overallCounts.GRADUATION}</p></div>
             </div>
           </div>
         `;
@@ -2340,19 +2144,11 @@
 
       if (topEl) {
         const companyCount = {};
-        allReports.forEach(r => {
-          const name = (r.company_name || '').trim();
-          if (!name) return;
-          companyCount[name] = (companyCount[name] || 0) + 1;
-        });
+        allReports.forEach(r => { const name = (r.company_name || '').trim(); if (!name) return; companyCount[name] = (companyCount[name] || 0) + 1; });
         const topCompanies = Object.entries(companyCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
         const shipCount = {};
-        allReports.forEach(r => {
-          const name = (r.ship_name || '').trim();
-          if (!name) return;
-          shipCount[name] = (shipCount[name] || 0) + 1;
-        });
+        allReports.forEach(r => { const name = (r.ship_name || '').trim(); if (!name) return; shipCount[name] = (shipCount[name] || 0) + 1; });
         const topShips = Object.entries(shipCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
         const studentsMap = {};
@@ -2364,154 +2160,82 @@
           if (!studentsMap[sid].name && r.student_name) studentsMap[sid].name = r.student_name;
         });
 
-        const multiTripTop = Object.values(studentsMap)
-          .filter(s => s.trips.length > 1)
-          .map(s => {
-            let latest = s.trips[0];
-            s.trips.forEach(t => {
-              const d1 = safeParseDate(latest.boarding_date);
-              const d2 = safeParseDate(t.boarding_date);
-              const t1 = d1 ? d1.getTime() : -Infinity;
-              const t2 = d2 ? d2.getTime() : -Infinity;
-              if (t2 > t1) latest = t;
-            });
-            return {
-              id: s.id,
-              name: s.name || '',
-              count: s.trips.length,
-              latestStatus: normalizeStatus(latest.status),
-              latestBoarding: latest.boarding_date || ''
-            };
-          })
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 10);
+        const multiTripTop = Object.values(studentsMap).filter(s => s.trips.length > 1).map(s => {
+          let latest = s.trips[0];
+          s.trips.forEach(t => { const t1 = safeParseDate(latest.boarding_date)?.getTime() || -Infinity; const t2 = safeParseDate(t.boarding_date)?.getTime() || -Infinity; if (t2 > t1) latest = t; });
+          return { id: s.id, name: s.name || '', count: s.trips.length, latestStatus: normalizeStatus(latest.status), latestBoarding: latest.boarding_date || '' };
+        }).sort((a, b) => b.count - a.count).slice(0, 10);
 
         const totalTripsForPct = overallCounts.total || 0;
-        const pctItems = [...(ALLOWED_STATUSES || []), 'UNKNOWN']
-          .map(s => {
-            const cnt = (s === 'UNKNOWN') ? (overallCounts.UNKNOWN || 0) : (overallCounts[s] || 0);
-            const pct = totalTripsForPct ? (cnt / totalTripsForPct * 100) : 0;
-            return { status: s, cnt, pct };
-          })
-          .sort((a, b) => b.pct - a.pct);
+        const pctItems = [...(ALLOWED_STATUSES || []), 'UNKNOWN'].map(s => {
+          const cnt = (s === 'UNKNOWN') ? (overallCounts.UNKNOWN || 0) : (overallCounts[s] || 0);
+          return { status: s, cnt, pct: totalTripsForPct ? (cnt / totalTripsForPct * 100) : 0 };
+        }).sort((a, b) => b.pct - a.pct);
 
         topEl.innerHTML = `
           <h3 class="text-lg font-semibold text-gray-800 mb-4">💡 Top Insight</h3>
-
           <div class="bg-white rounded-lg p-4 border border-gray-200 mb-4">
             <p class="font-semibold text-gray-800 mb-2">📈 สัดส่วนแต่ละสถานะ (%)</p>
-
-            ${totalTripsForPct === 0 ? `
-              <p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>
-            ` : `
+            ${totalTripsForPct === 0 ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>` : `
               <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                 ${pctItems.map(it => `
                   <div class="flex items-center justify-between gap-3 bg-gray-50 rounded-lg p-2">
-                    <span class="px-2 py-1 rounded text-xs font-semibold ${getStatusColorClass(it.status)}">
-                      ${escapeHtml(it.status)}
-                    </span>
-                    <span class="text-sm font-bold text-gray-800">
-                      ${it.pct.toFixed(1)}%
-                      <span class="text-xs text-gray-500">(${it.cnt})</span>
-                    </span>
-                  </div>
-                `).join('')}
-              </div>
-            `}
+                    <span class="px-2 py-1 rounded text-xs font-semibold ${getStatusColorClass(it.status)}">${escapeHtml(it.status)}</span>
+                    <span class="text-sm font-bold text-gray-800">${it.pct.toFixed(1)}% <span class="text-xs text-gray-500">(${it.cnt})</span></span>
+                  </div>`).join('')}
+              </div>`}
           </div>
-
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <p class="font-semibold text-gray-800 mb-2">🏢 Top 5 บริษัท (ตามจำนวนทริป)</p>
-              ${topCompanies.length === 0
-                ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>`
-                : `<ol class="space-y-1 text-sm">
-                    ${topCompanies.map(([name, cnt], idx) => `
-                      <li class="flex justify-between">
-                        <span class="text-gray-700">${idx + 1}. ${escapeHtml(name)}</span>
-                        <span class="font-semibold text-indigo-600">${cnt}</span>
-                      </li>
-                    `).join('')}
-                  </ol>`
-              }
+              <p class="font-semibold text-gray-800 mb-2">🏢 Top 5 บริษัท</p>
+              ${topCompanies.length === 0 ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>` :
+                `<ol class="space-y-1 text-sm">${topCompanies.map(([name, cnt], idx) => `<li class="flex justify-between"><span class="text-gray-700">${idx+1}. ${escapeHtml(name)}</span><span class="font-semibold text-indigo-600">${cnt}</span></li>`).join('')}</ol>`}
             </div>
-
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <p class="font-semibold text-gray-800 mb-2">🚢 Top 5 เรือ (ตามจำนวนทริป)</p>
-              ${topShips.length === 0
-                ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>`
-                : `<ol class="space-y-1 text-sm">
-                    ${topShips.map(([name, cnt], idx) => `
-                      <li class="flex justify-between">
-                        <span class="text-gray-700">${idx + 1}. ${escapeHtml(name)}</span>
-                        <span class="font-semibold text-teal-600">${cnt}</span>
-                      </li>
-                    `).join('')}
-                  </ol>`
-              }
+              <p class="font-semibold text-gray-800 mb-2">🚢 Top 5 เรือ</p>
+              ${topShips.length === 0 ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>` :
+                `<ol class="space-y-1 text-sm">${topShips.map(([name, cnt], idx) => `<li class="flex justify-between"><span class="text-gray-700">${idx+1}. ${escapeHtml(name)}</span><span class="font-semibold text-teal-600">${cnt}</span></li>`).join('')}</ol>`}
             </div>
           </div>
-
           <div class="bg-white rounded-lg p-4 border border-gray-200">
-            <p class="font-semibold text-gray-800 mb-2">🔄 นักศึกษาที่มีหลายทริป (Top 10) + สถานะล่าสุด</p>
+            <p class="font-semibold text-gray-800 mb-2">🔄 นักศึกษาที่มีหลายทริป (Top 10)</p>
             ${multiTripTop.length === 0 ? `<p class="text-gray-500 text-sm">ยังไม่มีข้อมูล</p>` : `
               <div class="overflow-x-auto">
                 <table class="min-w-[760px] w-full text-sm">
-                  <thead>
-                    <tr class="bg-gray-50 text-gray-700">
-                      <th class="text-left px-3 py-2 font-semibold">รหัส</th>
-                      <th class="text-left px-3 py-2 font-semibold">ชื่อ</th>
-                      <th class="text-right px-3 py-2 font-semibold">จำนวนทริป</th>
-                      <th class="text-left px-3 py-2 font-semibold">สถานะล่าสุด</th>
-                      <th class="text-left px-3 py-2 font-semibold">Boarding ล่าสุด</th>
-                    </tr>
-                  </thead>
+                  <thead><tr class="bg-gray-50 text-gray-700">
+                    <th class="text-left px-3 py-2 font-semibold">รหัส</th><th class="text-left px-3 py-2 font-semibold">ชื่อ</th>
+                    <th class="text-right px-3 py-2 font-semibold">จำนวนทริป</th><th class="text-left px-3 py-2 font-semibold">สถานะล่าสุด</th>
+                    <th class="text-left px-3 py-2 font-semibold">Boarding ล่าสุด</th>
+                  </tr></thead>
                   <tbody class="divide-y divide-gray-100">
-                    ${multiTripTop.map(s => `
-                      <tr>
-                        <td class="px-3 py-2 text-gray-800 font-medium">${escapeHtml(s.id)}</td>
-                        <td class="px-3 py-2 text-gray-700">${escapeHtml(s.name)}</td>
-                        <td class="px-3 py-2 text-right font-semibold text-purple-700">${s.count}</td>
-                        <td class="px-3 py-2">
-                          <span class="px-2 py-1 rounded text-xs ${getStatusColorClass(s.latestStatus)}">${s.latestStatus}</span>
-                        </td>
-                        <td class="px-3 py-2 text-gray-600">${formatDateThai(s.latestBoarding)}</td>
-                      </tr>
-                    `).join('')}
+                    ${multiTripTop.map(s => `<tr>
+                      <td class="px-3 py-2 font-medium">${escapeHtml(s.id)}</td><td class="px-3 py-2">${escapeHtml(s.name)}</td>
+                      <td class="px-3 py-2 text-right font-semibold text-purple-700">${s.count}</td>
+                      <td class="px-3 py-2"><span class="px-2 py-1 rounded text-xs ${getStatusColorClass(s.latestStatus)}">${s.latestStatus}</span></td>
+                      <td class="px-3 py-2 text-gray-600">${formatDateThai(s.latestBoarding)}</td>
+                    </tr>`).join('')}
                   </tbody>
                 </table>
-              </div>
-            `}
+              </div>`}
           </div>
         `;
       }
 
       const deptGroups = {};
-      allReports.forEach(r => {
-        const dept = (r.department || '').trim() || 'ไม่ระบุสาขา';
-        if (!deptGroups[dept]) deptGroups[dept] = [];
-        deptGroups[dept].push(r);
-      });
+      allReports.forEach(r => { const dept = (r.department || '').trim() || 'ไม่ระบุสาขา'; if (!deptGroups[dept]) deptGroups[dept] = []; deptGroups[dept].push(r); });
       const deptCounts = {};
       Object.entries(deptGroups).forEach(([dept, reps]) => { deptCounts[dept] = countStatuses(reps); });
       if (deptEl) deptEl.innerHTML = renderBreakdownTable(deptCounts, 'สาขา');
 
       const yearGroups = {};
-      allReports.forEach(r => {
-        const y = (r.academic_year || '').trim() || 'ไม่ระบุปี';
-        if (!yearGroups[y]) yearGroups[y] = [];
-        yearGroups[y].push(r);
-      });
+      allReports.forEach(r => { const y = (r.academic_year || '').trim() || 'ไม่ระบุปี'; if (!yearGroups[y]) yearGroups[y] = []; yearGroups[y].push(r); });
       const yearCounts = {};
       Object.entries(yearGroups).forEach(([y, reps]) => { yearCounts[y] = countStatuses(reps); });
       if (yearEl) yearEl.innerHTML = renderBreakdownTable(yearCounts, 'ปีการศึกษา');
 
-      let invalidDateCount = 0;
-      let returnBeforeBoardingCount = 0;
-
+      let invalidDateCount = 0, returnBeforeBoardingCount = 0;
       allReports.forEach(r => {
-        const bd = safeParseDate(r.boarding_date);
-        const rd = safeParseDate(r.return_date);
+        const bd = safeParseDate(r.boarding_date), rd = safeParseDate(r.return_date);
         if (!bd || !rd) { invalidDateCount++; return; }
         if (rd.getTime() < bd.getTime()) returnBeforeBoardingCount++;
       });
@@ -2523,20 +2247,13 @@
             <div class="rounded-lg p-4 border ${returnBeforeBoardingCount > 0 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}">
               <p class="font-semibold text-gray-800 mb-1">รายการที่ return_date &lt; boarding_date</p>
               <p class="text-3xl font-bold ${returnBeforeBoardingCount > 0 ? 'text-red-600' : 'text-gray-700'}">${returnBeforeBoardingCount}</p>
-              <p class="text-xs text-gray-500 mt-1">ระบบไม่แก้ข้อมูลให้ (แสดงเพื่อเตือนเท่านั้น)</p>
             </div>
-
             <div class="rounded-lg p-4 border ${invalidDateCount > 0 ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'}">
-              <p class="font-semibold text-gray-800 mb-1">รายการที่ boarding_date หรือ return_date ว่าง/invalid</p>
+              <p class="font-semibold text-gray-800 mb-1">รายการที่วันที่ว่าง/invalid</p>
               <p class="text-3xl font-bold ${invalidDateCount > 0 ? 'text-yellow-700' : 'text-gray-700'}">${invalidDateCount}</p>
-              <p class="text-xs text-gray-500 mt-1">ระบบไม่แก้ข้อมูลให้ (แสดงเพื่อเตือนเท่านั้น)</p>
             </div>
           </div>
-
-          ${(returnBeforeBoardingCount === 0 && invalidDateCount === 0)
-            ? `<p class="text-sm text-emerald-700 mt-4">✅ ไม่พบความผิดปกติของวันที่ในข้อมูล</p>`
-            : ''
-          }
+          ${(returnBeforeBoardingCount === 0 && invalidDateCount === 0) ? `<p class="text-sm text-emerald-700 mt-4">✅ ไม่พบความผิดปกติของวันที่</p>` : ''}
         `;
       }
     }
@@ -2559,193 +2276,158 @@
 
     function getStatusColorClass(status) {
       const s = normalizeStatus(status);
-
-      
       if (s === 'ON LEAVE - WAIT FOR GRADUATION PROCESS') return 'bg-fuchsia-100 text-fuchsia-800';
-
       if (s === 'READY TO JOIN SHIP') return 'bg-yellow-100 text-yellow-800';
       if (s === 'ON BOARD') return 'bg-green-100 text-green-800';
-
       if (s === 'ON LEAVE - APPLY FOR GRADUATION') return 'bg-purple-100 text-purple-800';
       if (s === 'ON LEAVE - WAIT FOR REJOIN') return 'bg-rose-100 text-rose-800';
       if (s === 'ON LEAVE - OWN BUSINESS') return 'bg-orange-100 text-orange-800';
-
       if (s === 'THE VOYAGE PROCESS') return 'bg-blue-100 text-blue-800';
       if (s === 'GRADUATED') return 'bg-emerald-100 text-emerald-800';
-
       return 'bg-gray-100 text-gray-800';
     }
 
     function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
       if (!container) return;
-
       const toast = document.createElement('div');
-      toast.className = `toast px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 ${
-        type === 'success' ? 'bg-green-500 text-white' :
-        type === 'error' ? 'bg-red-500 text-white' :
-        'bg-blue-500 text-white'
-      }`;
-
+      toast.className = `toast px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 ${type === 'success' ? 'bg-green-500 text-white' : type === 'error' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'}`;
       const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
       toast.innerHTML = `<span>${icon}</span><span>${escapeHtml(message)}</span>`;
-
       container.appendChild(toast);
       setTimeout(() => toast.remove(), 3000);
     }
   </script>
 
-  <!-- Edit Report Modal (SHOW ALL FIELDS) -->
+  <!-- Edit Report Modal -->
+
   <div id="edit-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-overlay absolute inset-0" onclick="closeEditModal()"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
       <div class="glass-card-solid rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto my-4">
         <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl">
           <div class="flex items-center justify-between">
-            <h2 class="text-xl font-bold text-white">✏️ แก้ไขรายงาน (แสดงข้อมูลทั้งหมด)</h2>
+            <h2 class="text-xl font-bold text-white">✏️ แก้ไขรายงาน</h2>
             <button onclick="closeEditModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">✕</button>
           </div>
         </div>
 
-        <form id="edit-form" class="p-6 space-y-5">
-          <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
-            <p class="text-sm font-semibold text-gray-800 mb-3">ข้อมูลนักศึกษา / อ้างอิง (อ่านอย่างเดียว)</p>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
-                <input type="text" id="edit-student-id" readonly
-                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
-                <input type="text" id="edit-student-name" readonly
-                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา</label>
-                <input type="text" id="edit-academic-year" readonly
-                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
-                <input type="text" id="edit-department"
-                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Trip # (ลำดับในปี)</label>
-                <input type="text" id="edit-trip-seq" readonly
-                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Trip ID (อ้างอิง)</label>
-                <input type="text" id="edit-trip-id" readonly
-                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Submitted At</label>
-                <input type="text" id="edit-submitted-at" readonly
-                  class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
-              </div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ลงเรือ <span class="text-red-500">*</span></label>
-              <input type="date" id="edit-boarding-date" required
-                class="w-full px-4 py-3 rounded-xl border border-gray-300">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">วันที่กลับ/ลงจากเรือ <span class="text-red-500">*</span></label>
-              <input type="date" id="edit-return-date" required
-                class="w-full px-4 py-3 rounded-xl border border-gray-300">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ JOIN</label>
-              <input type="date" id="edit-join-date"
-                class="w-full px-4 py-3 rounded-xl border border-gray-300">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ LEAVE</label>
-              <input type="date" id="edit-leave-date"
-                class="w-full px-4 py-3 rounded-xl border border-gray-300">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อเรือ</label>
-              <input type="text" id="edit-ship-name"
-                class="w-full px-4 py-3 rounded-xl border border-gray-300">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">บริษัทเรือ</label>
-              <input type="text" id="edit-company-name"
-                class="w-full px-4 py-3 rounded-xl border border-gray-300">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">ลงลำที่</label>
-              <input type="number" id="edit-trip-number" min="1"
-                class="w-full px-4 py-3 rounded-xl border border-gray-300">
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">สถานะ</label>
-              <select id="edit-status" class="w-full px-4 py-3 rounded-xl border border-gray-300">
-                <option value="NO REQUEST TO JOIN THE SHIP">🚫 NO REQUEST TO JOIN THE SHIP</option>
-                <option value="THE VOYAGE PROCESS">🌊 THE VOYAGE PROCESS</option>
-                <option value="READY TO JOIN SHIP">⏳ READY TO JOIN SHIP</option>
-                <option value="ON BOARD">✅ ON BOARD</option>
-                <option value="ON LEAVE - APPLY FOR GRADUATION">🎓 ON LEAVE - APPLY FOR GRADUATION</option>
-                <option value="ON LEAVE - WAIT FOR GRADUATION PROCESS">⏳🎓 ON LEAVE - WAIT FOR GRADUATION PROCESS</option>
-                <option value="ON LEAVE - OWN BUSINESS">💼 ON LEAVE - OWN BUSINESS</option>
-                <option value="ON LEAVE - WAIT FOR REJOIN">⏸️ ON LEAVE - WAIT FOR REJOIN</option>
-                <option value="GRADUATED">🎉 GRADUATED</option>
-              </select>
-            </div>
-          </div>
-
+```
+    <form id="edit-form" class="p-6 space-y-5">
+      <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+        <p class="text-sm font-semibold text-gray-800 mb-3">ข้อมูลนักศึกษา (อ่านอย่างเดียว)</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">รายละเอียดการทำงาน</label>
-            <textarea id="edit-work-details" rows="3"
-              class="w-full px-4 py-3 rounded-xl border border-gray-300 resize-none"></textarea>
+            <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
+            <input type="text" id="edit-student-id" readonly class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
           </div>
-
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
-            <textarea id="edit-notes" rows="2"
-              class="w-full px-4 py-3 rounded-xl border border-gray-300 resize-none"></textarea>
+            <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อ-นามสกุล</label>
+            <input type="text" id="edit-student-name" readonly class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
           </div>
-
-          <div class="flex gap-3 pt-4">
-            <button type="button" onclick="closeEditModal()"
-              class="flex-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
-              ยกเลิก
-            </button>
-            <button type="submit"
-              class="flex-1 btn-primary text-white px-6 py-3 rounded-xl font-medium">
-              บันทึกการแก้ไข
-            </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">ปีการศึกษา</label>
+            <input type="text" id="edit-academic-year" readonly class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
           </div>
-        </form>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">สาขา</label>
+            <input type="text" id="edit-department" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Trip # (ลำดับในปี)</label>
+            <input type="text" id="edit-trip-seq" readonly class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Trip ID</label>
+            <input type="text" id="edit-trip-id" readonly class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Submitted At</label>
+            <input type="text" id="edit-submitted-at" readonly class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-gray-700">
+          </div>
+        </div>
       </div>
-    </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ลงเรือ <span class="text-red-500">*</span></label>
+          <input type="date" id="edit-boarding-date" required class="w-full px-4 py-3 rounded-xl border border-gray-300">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">วันที่กลับ <span class="text-red-500">*</span></label>
+          <input type="date" id="edit-return-date" required class="w-full px-4 py-3 rounded-xl border border-gray-300">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ JOIN</label>
+          <input type="date" id="edit-join-date" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">วันที่ LEAVE</label>
+          <input type="date" id="edit-leave-date" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">ชื่อเรือ</label>
+          <input type="text" id="edit-ship-name" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">บริษัทเรือ</label>
+          <input type="text" id="edit-company-name" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">ลงลำที่</label>
+          <input type="number" id="edit-trip-number" min="1" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">สถานะ</label>
+          <select id="edit-status" class="w-full px-4 py-3 rounded-xl border border-gray-300">
+            <option value="NO REQUEST TO JOIN THE SHIP">🚫 NO REQUEST TO JOIN THE SHIP</option>
+            <option value="THE VOYAGE PROCESS">🌊 THE VOYAGE PROCESS</option>
+            <option value="READY TO JOIN SHIP">⏳ READY TO JOIN SHIP</option>
+            <option value="ON BOARD">✅ ON BOARD</option>
+            <option value="ON LEAVE - APPLY FOR GRADUATION">🎓 ON LEAVE - APPLY FOR GRADUATION</option>
+            <option value="ON LEAVE - WAIT FOR GRADUATION PROCESS">⏳🎓 ON LEAVE - WAIT FOR GRADUATION PROCESS</option>
+            <option value="ON LEAVE - OWN BUSINESS">💼 ON LEAVE - OWN BUSINESS</option>
+            <option value="ON LEAVE - WAIT FOR REJOIN">⏸️ ON LEAVE - WAIT FOR REJOIN</option>
+            <option value="GRADUATED">🎉 GRADUATED</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">รายละเอียดการทำงาน</label>
+        <textarea id="edit-work-details" rows="3" class="w-full px-4 py-3 rounded-xl border border-gray-300 resize-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
+        <textarea id="edit-notes" rows="2" class="w-full px-4 py-3 rounded-xl border border-gray-300 resize-none"></textarea>
+      </div>
+
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="closeEditModal()" class="flex-1 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">ยกเลิก</button>
+        <button type="submit" class="flex-1 btn-primary text-white px-6 py-3 rounded-xl font-medium">บันทึกการแก้ไข</button>
+      </div>
+    </form>
+  </div>
+</div>
+```
+
   </div>
 
   <!-- Student Modal -->
+
   <div id="student-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-overlay absolute inset-0" onclick="closeStudentModal()"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
@@ -2756,7 +2438,6 @@
             <button onclick="closeStudentModal()" class="text-white hover:bg-white/20 rounded-lg p-2 transition-colors">✕</button>
           </div>
         </div>
-
         <div class="p-6 space-y-6">
           <form id="student-form" class="space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2769,7 +2450,6 @@
                 <input id="stu-dept" placeholder="เช่น DECK" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
               </div>
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">รหัสนักศึกษา</label>
@@ -2780,12 +2460,10 @@
                 <input id="stu-name" class="w-full px-4 py-3 rounded-xl border border-gray-300" required>
               </div>
             </div>
-
             <div class="flex gap-3">
               <button type="submit" class="btn-primary text-white px-6 py-3 rounded-xl font-medium">➕ เพิ่ม/อัปเดต</button>
             </div>
           </form>
-
           <div class="border-t pt-4">
             <div class="flex items-center gap-3 mb-3">
               <span class="font-semibold text-gray-800">รายการนักศึกษาใน Firestore</span>
@@ -2798,7 +2476,8 @@
     </div>
   </div>
 
-  <!-- ✅ NEW: Export Modal -->
+  <!-- Export Modal -->
+
   <div id="export-modal" class="fixed inset-0 z-50 hidden">
     <div class="modal-overlay absolute inset-0" onclick="closeExportModal()"></div>
     <div class="relative min-h-full flex items-center justify-center p-4">
@@ -2809,24 +2488,16 @@
             <button onclick="closeExportModal()" class="text-white hover:bg-white/20 rounded-lg px-3 py-1">✕</button>
           </div>
         </div>
-
         <div class="p-5 space-y-3">
-          <div class="text-sm text-gray-600">
-            รายงานจะ Export “ตามตัวกรอง/ค้นหา ณ ตอนนี้”
-          </div>
-
+          <div class="text-sm text-gray-600">รายงานจะ Export "ตามตัวกรอง/ค้นหา ณ ตอนนี้"</div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <button onclick="exportReportsCSV()" class="btn-primary text-white px-4 py-3 rounded-xl font-medium">รายงาน (CSV)</button>
             <button onclick="exportReportsXLSX()" class="btn-secondary text-white px-4 py-3 rounded-xl font-medium">รายงาน (Excel)</button>
-
             <button onclick="exportStudentsCSV()" class="btn-primary text-white px-4 py-3 rounded-xl font-medium">นักศึกษา (CSV)</button>
             <button onclick="exportStudentsXLSX()" class="btn-secondary text-white px-4 py-3 rounded-xl font-medium">นักศึกษา (Excel)</button>
           </div>
-
           <div class="pt-2">
-            <button onclick="closeExportModal()" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">
-              ปิด
-            </button>
+            <button onclick="closeExportModal()" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-50">ปิด</button>
           </div>
         </div>
       </div>
